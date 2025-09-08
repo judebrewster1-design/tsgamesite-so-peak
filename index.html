@@ -3,49 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Click-a-Jude Menu</title>
+<title>JudeVerse Menu</title>
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #6a0dad;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: white;
-  }
-
-  button {
-    padding: 25px 50px;
-    font-size: 2em;
-    background: linear-gradient(45deg, #ff66ff, #cc33ff);
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-
-  button:hover {
-    background: linear-gradient(45deg, #cc33ff, #ff66ff);
-    transform: scale(1.05);
-  }
+body {margin:0; font-family:Arial,sans-serif; background:#111; color:#fff; text-align:center;}
+h1 {margin-top:50px; font-size:3em;}
+.menu {margin-top:50px;}
+.button {display:block; margin:20px auto; padding:20px 40px; font-size:1.5em; cursor:pointer; border-radius:10px; background:#ff0080; color:#fff; border:none; transition:0.2s;}
+.button:hover {background:#ff33aa;}
 </style>
 </head>
 <body>
-
-<button onclick="openGame()">Play Click-a-Jude</button>
-
-<script>
-function openGame() {
-    // Opens the game in the same tab
-    window.location.href = "click-a-jude.html
-";
-
-    // If you want to open in a new tab instead, use:
-    // window.open("click-a-jude.html", "_blank");
-}
-</script>
-
+<h1>Welcome to JudeVerse</h1>
+<div class="menu">
+  <button class="button" onclick="location.href='click-a-jude.html'">Play Click-a-Jude</button>
+</div>
 </body>
 </html>
