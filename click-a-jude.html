@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click-a-Jude</title>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#111;
+  color:#fff;
+  text-align:center;
+}
+h1 {margin-top:20px;}
+#judeImage {
+  width:150px;
+  height:150px;
+  cursor:pointer;
+  transition:transform 0.1s;
+}
+#judeImage:active { transform:scale(1.1); }
+.button {
+  margin:10px;
+  padding:10px 20px;
+  font-size:16px;
+  cursor:pointer;
+  border-radius:10px;
+  border:none;
+}
+#ascCoins { font-size:1.2em; margin:10px; }
+.section { display:none; margin-top:20px; }
+.skin {
+  width:100px;
+  height:100px;
+  display:inline-block;
+  margin:10px;
+  cursor:pointer;
+  border:2px solid #fff;
+}
+.disabled { opacity:0.5; cursor:not-allowed; }
+</style>
+</head>
+<body>
+
+<h1>Click-a-Jude</h1>
+<div id="ascCoins">ASC Coins: 0</div>
+<img id="judeImage" src="jude.png" alt="Jude">
+
+<div>
+  <button class="button" onclick="toggleSection('shop')">Shop / Blackjack</button>
+  <button class="button" onclick="toggleSection('inventory')">Inventory</button>
+  <button class="button" onclick="clickAd()">Click Ad (+5 ASC, max 5)</button>
+</div>
+
+<div id="shop" class="section">
+  <h2>Skin Shop</h2>
+  <div id="skinsContainer"></div>
+  <h2>Blackjack</h2>
+  <div>
+    <div id="blackjackMsg"></div>
+    <input type="number" id="blackjackBet" placeholder="Bet ASC Coins">
+    <button onclick="startBlackjack()">Play</button>
+    <div id="blackjackResult"></div>
+  </div>
+</div>
+
+<div id="inventory" class="section">
+  <h2>Inventory</h2>
+  <div id="inventoryContainer"></div>
+</div>
+
+<script>
+// --- GAME STATE ---
+let ascCoins = parseInt(localStorage.getItem('ascCoins')) || 0;
+let skinsOwned = JSON.parse(localStorage.getItem('skinsOwned')) || [];
+let currentSkin = localStorage.getItem('currentSkin') || '';
+let adClicks = parseInt(localStorage.getItem('adClicks')) || 0;
+let autoClickInterval;
+let rainbowInterval;
+
+// --- DOM ---
+const judeImage = document.getElementById('judeImage');
+const ascDisplay = document.getElementById('ascCoins');
+const skinsContainer = document.getElementById('skinsContainer');
+const inventoryContainer = document.getElementById('inventoryContainer');
+const shopSection = document.getElementById('shop');
+const inventorySection = document.getElementById('inventory');
+const blackjackMsg = document.getElementById('blackjackMsg');
+const blackjackResult = document.getElementById('blackjackResult');
+
+// --- SKINS ---
+const skins = [
+  {name:'Jude Pink', price:25, bonus:1, hue: 320},
+  {name:'Jude Blue', price:50, bonus:2, hue: 200},
+  {name:'Jude Green', price:75, bonus:3, hue: 100},
+  {name:'Jude Yellow', price:100, bonus:4, hue: 50},
+  {name:'Jude Red', price:25, bonus:1, hue: 0}
+];
+const rainbowJude = {name:'Rainbow Jude', bonus:10, hue:'rainbow'};
+
+// --- SAVE & UPDATE ---
+function save(){
+  localStorage.setItem('ascCoins',ascCoins);
+  localStorage.setItem('skinsOwned',JSON.stringify(skinsOwned));
+  localStorage.setItem('currentSkin',currentSkin);
+  localStorage.setItem('adClicks',adClicks);
+}
+function updateDisplay(){ ascDisplay.innerText=`ASC Coins: ${ascCoins}`; }
+
+// --- CLICK ---
+function clickJude(){
+  let bonus = 1;
+  if(currentSkin){
+    const skin = skins.concat(rainbowJude).find(s=>s.name===currentSkin);
+    if(skin) bonus = skin.bonus;
+  }
+  ascCoins += bonus;
+  updateDisplay();
+  save();
+}
+
+// --- AUTO CLICK ---
+judeImage.addEventListener('mousedown',()=>{ autoClickInterval=setInterval(clickJude,100); });
+judeImage.addEventListener('mouseup',()=>clearInterval(autoClickInterval));
+judeImage.addEventListener('mouseleave',()=>clearInterval(autoClickInterval));
+document.addEventListener('keydown',e=>{ if(e.code==='Space'||e.code==='Enter') clickJude(); });
+
+// --- SECTIONS ---
+function toggleSection(id){
+  const sec=id==='shop'?shopSection:inventorySection;
+  sec.style.display=sec.style.display==='none'?'block':'none';
+  if(id==='shop') renderSkins();
+  if(id==='inventory') renderInventory();
+}
+
+// --- SKIN APPLICATION ---
+function applySkin(skinName){
+  const skin = skins.concat(rainbowJude).find(s=>s.name===skinName);
+  if(!skin) return;
+  stopRainbowAnimation();
+  if(skin.hue==='rainbow'){ startRainbowAnimation(); } 
+  else judeImage.style.filter = `hue-rotate(${skin.hue}deg) saturate(150%)`;
+  currentSkin = skinName;
+  save();
+}
+
+// --- RENDER SKINS ---
+function renderSkins(){
+  skinsContainer.innerHTML='';
+  skins.concat(rainbowJude).forEach(skin=>{
+    const btn=document.createElement('div');
+    btn.className='skin';
+    btn.style.background='#888';
+    btn.title=`${skin.name} - ${skin.price||'Gamble'} ASC Coins`;
+    if(skinsOwned.includes(skin.name)) btn.classList.add('disabled');
+    btn.onclick=()=>{
+      if(skin.name===rainbowJude.name){
+        if(Math.random()<0.05){ skinsOwned.push(rainbowJude.name); applySkin(rainbowJude.name); alert('You won Rainbow Jude!'); }
+        else alert('Try again!');
+      } else if(skinsOwned.includes(skin.name)){ applySkin(skin.name); alert(`${skin.name} equipped!`); }
+      else if(ascCoins>=skin.price){ ascCoins-=skin.price; skinsOwned.push(skin.name); applySkin(skin.name); updateDisplay(); alert(`${skin.name} purchased and equipped!`); renderSkins();}
+      else alert('Not enough ASC Coins');
+      save();
+    };
+    skinsContainer.appendChild(btn);
+  });
+}
+
+// --- RENDER INVENTORY ---
+function renderInventory(){ inventoryContainer.innerHTML=''; skinsOwned.forEach(item=>{ const div=document.createElement('div'); div.innerText=item; inventoryContainer.appendChild(div); }); }
+
+// --- AD CLICK ---
+function clickAd(){ if(adClicks>=5) return alert('Max 5 ad clicks!'); adClicks++; ascCoins+=5; updateDisplay(); save(); }
+
+// --- RAINBOW ANIMATION ---
+function startRainbowAnimation(){
+  let hue=0;
+  rainbowInterval=setInterval(()=>{ hue=(hue+5)%360; judeImage.style.filter=`hue-rotate(${hue}deg) saturate(150%)`; },50);
+}
+function stopRainbowAnimation(){ clearInterval(rainbowInterval); }
+
+// --- BLACKJACK ---
+let blackjackDeck=[],playerHand=[],dealerHand=[],blackjackBet=0;
+function createDeck(){ const suits=['♠','♥','♦','♣'],values=['2','3','4','5','6','7','8','9','10','J','Q','K','A']; blackjackDeck=[]; suits.forEach(suit=>{ values.forEach(val=>{ blackjackDeck.push({suit,val}); }); }); }
+function drawCard(){ if(blackjackDeck.length===0) createDeck(); const idx=Math.floor(Math.random()*blackjackDeck.length); return blackjackDeck.splice(idx,1)[0]; }
+function cardValue(card){ if(['J','Q','K'].includes(card.val)) return 10; if(card.val==='A') return 11; return parseInt(card.val);}
+function handValue(hand){ let val=hand.reduce((a,c)=>a+cardValue(c),0); let aces=hand.filter(c=>c.val==='A').length; while(val>21&&aces>0){ val-=10; aces--; } return val; }
+function startBlackjack(){
+  blackjackBet=parseInt(document.getElementById('blackjackBet').value);
+  if(isNaN(blackjackBet)||blackjackBet<=0||blackjackBet>ascCoins) return alert('Invalid bet!');
+  createDeck(); playerHand=[drawCard(),drawCard()]; dealerHand=[drawCard(),drawCard()];
+  blackjackMsg.innerText=`Your hand: ${playerHand.map(c=>c.val+c.suit).join(', ')} | Dealer shows: ${dealerHand[0].val+dealerHand[0].suit}`;
+  blackjackResult.innerHTML=`<button onclick="hit()">Hit</button> <button onclick="stand()">Stand</button>`;
+}
+function hit(){ playerHand.push(drawCard()); const val=handValue(playerHand); blackjackMsg.innerText=`Your hand: ${playerHand.map(c=>c.val+c.suit).join(', ')} (Value: ${val}) | Dealer shows: ${dealerHand[0].val+dealerHand[0].suit}`; if(val>21) endBlackjack('lose');}
+function stand(){ let dealerVal=handValue(dealerHand); while(dealerVal<17){ dealerHand.push(drawCard()); dealerVal=handValue(dealerHand);} const playerVal=handValue(playerHand); if(dealerVal>21||playerVal>dealerVal) endBlackjack('win'); else if(playerVal<dealerVal) endBlackjack('lose'); else endBlackjack('push'); }
+function endBlackjack(result){ if(result==='win'){ ascCoins+=blackjackBet; blackjackMsg.innerText+=' You win!'; } else if(result==='lose'){ ascCoins-=blackjackBet; blackjackMsg.innerText+=' You lose!'; } else blackjackMsg.innerText+=' Push!'; blackjackResult.innerHTML=''; updateDisplay(); save();}
+
+// --- INIT ---
+updateDisplay();
+renderSkins();
+renderInventory();
+if(currentSkin) applySkin(currentSkin);
+</script>
+
+</body>
+</html>
