@@ -3,19 +3,99 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JudeVerse Menu</title>
+<title>Click a Jude — Main Branch</title>
 <style>
-body {margin:0; font-family:Arial,sans-serif; background:#111; color:#fff; text-align:center;}
-h1 {margin-top:50px; font-size:3em;}
-.menu {margin-top:50px;}
-.button {display:block; margin:20px auto; padding:20px 40px; font-size:1.5em; cursor:pointer; border-radius:10px; background:#ff0080; color:#fff; border:none; transition:0.2s;}
-.button:hover {background:#ff33aa;}
+:root{
+--bg:#08090b;
+--panel:#0f1316;
+--accent:#00e6ff;
+--accent2:#7b61ff;
+--muted:#99a3b2;
+--card-radius:14px;
+--text:#e8f7ff;
+}
+body{
+margin:0;
+font-family:Inter,sans-serif;
+background:linear-gradient(180deg,#050506 0%,#0c0f12 100%);
+color:var(--text);
+}
+a{text-decoration:none;color:var(--accent);}
+.app{max-width:1100px;margin:12px auto;padding:16px;display:grid;gap:12px;}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 6px;}
+.brand{display:flex;gap:12px;align-items:center;}
+.logo{width:64px;height:64px;border-radius:14px;overflow:hidden;border:3px solid rgba(0,230,255,0.08);background:#071018;display:flex;align-items:center;justify-content:center;}
+.logo img{width:100%;height:100%;object-fit:cover;}
+.title{font-weight:700;font-size:22px;}
+.subtitle{font-size:14px;color:var(--muted);}
+.main-content{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:900px){.main-content{grid-template-columns:1fr 1fr;}}
+.panel{background:var(--panel);border-radius:var(--card-radius);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
+h2,h3{margin:6px 0;}
+.poster{position:relative;display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--card-radius);background:linear-gradient(135deg,#7b61ff,#00e6ff);color:#fff;font-size:28px;font-weight:800;text-align:center;}
+.poster span{position:absolute;bottom:12px;font-size:14px;font-weight:500;color:var(--muted);}
+.game-list{display:grid;gap:12px;max-height:420px;overflow:auto;}
+.game-card{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:var(--card-radius);padding:12px;text-align:center;cursor:pointer;transition:transform .12s;}
+.game-card:hover{transform:translateY(-4px);}
+.game-card img{width:100%;max-width:120px;border-radius:12px;border:2px solid rgba(0,230,255,0.06);object-fit:cover;}
+.input-section{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+input,textarea{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);color:#fff;padding:8px 10px;border-radius:10px;font-size:14px;outline:none;}
+textarea{resize:none;}
+button{background:var(--accent);color:#000;font-weight:700;border:none;padding:10px 16px;border-radius:12px;cursor:pointer;transition:transform .12s;}
+button:active{transform:translateY(1px);}
+.footer{text-align:center;color:var(--muted);margin-top:16px;font-size:12px;}
 </style>
 </head>
 <body>
-<h1>Welcome to JudeVerse</h1>
-<div class="menu">
-  <button class="button" onclick="location.href='click-a-jude.html'">Play Click-a-Jude</button>
+<div class="app">
+<header>
+<div class="brand">
+<div class="logo"><img src="IMG_7281.jpeg" alt="Click a Jude Logo"></div>
+<div>
+<div class="title">Click a Jude — Main Branch</div>
+<div class="subtitle">All your favorite Jude games in one place</div>
 </div>
+</div>
+</header>
+
+<div class="main-content">
+
+<div class="panel">
+<h2>Coming Soon!</h2>
+<div class="poster">
+Flappy Jude
+<span>And More Coming Soon...</span>
+</div>
+<p style="margin-top:12px;color:var(--muted);font-size:14px;">
+Get ready for new games featuring Jude and more dopamine-packed fun. Stay tuned!
+</p>
+</div>
+
+<div class="panel">
+<h2>We Want Your Ideas!</h2>
+<p style="color:var(--muted);font-size:14px;">Have an idea for a new Jude game? Send it directly to my email:</p>
+<div class="input-section">
+<label for="emailIdea">Your Idea (Optional)</label>
+<textarea id="emailIdea" rows="4" placeholder="Type your idea here..."></textarea>
+<button onclick="sendIdea()">Send Idea</button>
+</div>
+<p id="ideaStatus" style="margin-top:8px;color:var(--accent2);font-weight:700;"></p>
+</div>
+
+</div>
+
+<div class="footer">
+&copy; 2025 Click a Jude — All rights reserved
+</div>
+</div>
+
+<script>
+function sendIdea(){
+const idea=document.getElementById("emailIdea").value.trim();
+if(!idea){document.getElementById("ideaStatus").innerText="Please enter an idea first!";return;}
+window.location.href=`mailto:judebrewster1@gmail.com?subject=New%20Jude%20Game%20Idea&body=${encodeURIComponent(idea)}`;
+document.getElementById("ideaStatus").innerText="Opening your email client...";
+}
+</script>
 </body>
 </html>
