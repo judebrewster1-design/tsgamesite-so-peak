@@ -28,15 +28,15 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
 .title{font-weight:700;font-size:22px;}
 .subtitle{font-size:14px;color:var(--muted);}
 .main-content{display:grid;grid-template-columns:1fr;gap:16px;}
-@media(min-width:900px){.main-content{grid-template-columns:1fr 1fr;}}
-.panel{background:var(--panel);border-radius:var(--card-radius);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
+@media(min-width:900px){.main-content{grid-template-columns:1fr;}}
+.panel{background:var(--panel);border-radius:var(--card-radius);padding:24px;box-shadow:0 12px 32px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
 h2,h3{margin:6px 0;}
 .board{
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
-padding:24px;
+padding:32px;
 border-radius:var(--card-radius);
 background:linear-gradient(135deg,#7b61ff,#00e6ff);
 color:#fff;
@@ -53,12 +53,12 @@ font-weight:500;
 color:var(--muted);
 }
 .enter-btn{
-margin-top:12px;
+margin-top:16px;
 background:var(--accent);
 color:#000;
 font-weight:800;
 border:none;
-padding:16px 24px;
+padding:16px 28px;
 border-radius:12px;
 cursor:pointer;
 font-size:18px;
@@ -68,14 +68,6 @@ position:relative;
 }
 .enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,230,255,0.5);}
 .enter-btn:active{transform:translateY(1px);}
-.input-section{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
-input,textarea{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);color:#fff;padding:8px 10px;border-radius:10px;font-size:14px;outline:none;}
-textarea{resize:none;}
-button{cursor:pointer;}
-.submit-btn{background:var(--accent);color:#000;font-weight:700;border:none;padding:10px 16px;border-radius:12px;font-size:16px;transition:transform .12s;}
-.submit-btn:active{transform:translateY(1px);}
-#ideaList{margin-top:8px;padding:8px;background:rgba(0,0,0,0.2);border-radius:10px;max-height:150px;overflow:auto;}
-.idea-item{margin-bottom:6px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);}
 .footer{text-align:center;color:var(--muted);margin-top:16px;font-size:12px;}
 </style>
 </head>
@@ -102,17 +94,6 @@ Flappy Jude
 <button class="enter-btn" onclick="enterClickGame()">Enter Click a Jude</button>
 </div>
 
-<div class="panel">
-<h2>Submit Your Game Ideas</h2>
-<p style="color:var(--muted);font-size:14px;">Type your idea below and it will appear instantly:</p>
-<div class="input-section">
-<label for="userIdea">Your Idea</label>
-<textarea id="userIdea" rows="4" placeholder="Type your idea here..." required></textarea>
-<button class="submit-btn" onclick="addIdea()">Submit Idea</button>
-</div>
-<div id="ideaList"></div>
-</div>
-
 </div>
 
 <div class="footer">
@@ -123,18 +104,6 @@ Flappy Jude
 <script>
 function enterClickGame(){
 window.location.href="clickajude.html";
-}
-
-function addIdea(){
-const ideaInput=document.getElementById("userIdea");
-const idea=ideaInput.value.trim();
-if(!idea)return;
-const list=document.getElementById("ideaList");
-const item=document.createElement("div");
-item.className="idea-item";
-item.textContent=idea;
-list.prepend(item); // newest first
-ideaInput.value="";
 }
 </script>
 </body>
