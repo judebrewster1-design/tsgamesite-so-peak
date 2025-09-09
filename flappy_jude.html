@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Flappy Jude</title>
+<script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  canvas {
+    display: block;
+    background: #87CEEB;
+  }
+</style>
+</head>
+<body>
+<canvas id="testCanvas" width="800" height="600"></canvas>
+<script>
+var stage, w, h, loader, bird, ground, pipes;
+var startX, startY, wiggleDelta;
+var started = false;
+var startJump = false;
+var dead = false;
+var jumpAmount = 120;
+var jumpTime = 266;
+var KEYCODE_SPACE = 32;
+var gap = 250;
+var masterPipeDelay = 78;
+var pipeDelay = masterPipeDelay;
+var counter, counterOutline, counterShow = false;
+
+document.onkeydown = handleKeyDown;
+
+function init() {
+    stage = new createjs.Stage("testCanvas");
+    createjs.Touch.enable(stage);
+
+    w = stage.canvas.width;
+    h = stage.canvas.height;
+
+    var manifest = [
+        {src:"0", id:"bird"}, // replace with your face
+        {src:"http://www.appcycle.me/flappy/img/background.png", id:"background"},
+        {src:"http://www.appcycle.me/flappy/img/ground.png", id:"ground"},
+        {src:"http://www.appcycle.me/flappy/img/pipe.png", id:"pipe"},
+        {src:"http://www.appcycle.me/flappy/img/restart.png", id:"start"},
+        {src:"http://www.appcycle.me/flappy/img/share.png", id:"share"}
+    ];
+
+    loader = new createjs.LoadQueue(false);
+    loader.addEventListener("complete", handleComplete);
+    loader.loadManifest(manifest);
+}
+
+function handleComplete() {
+    var background = new createjs.Shape();
+    background.graphics.beginBitmapFill(loader.getResult("background")).drawRect(0,0,w,h);
+    stage.addChild(background);
+
+    var groundImg = loader.getResult("ground");
+    ground = new createjs.Shape();
+    ground.graphics.beginBitmapFill(groundImg).drawRect(0, 0, w+groundImg.width, groundImg.height);
+    ground.tileW = groundImg.width;
+    ground.y = h-groundImg.height;
+    stage.addChild(ground);
+
+    var data = new createjs.SpriteSheet({
+        images:[loader.getResult("bird")],
+        frames: {width:92, height:64, regX:46, regY:32, count:1},
+        animations: {fly:[0,0,"fly",1]}
+    });
+    bird = new createjs.Sprite(data, "fly");
+    startX = w/2 - 46;
+    startY = 512;
+    wiggleDelta = 18;
+    bird.setTransform(startX, startY, 1, 1);
+    createjs.Tween.get(bird, {loop:true}).to({y:startY + wiggleDelta}, 380, createjs.Ease.sineInOut).to({y:startY}, 380, createjs.Ease.sineInOut);
+    stage.addChild(bird);
+
+    pipes = new createjs.Container();
+    stage.addChild(pipes);
+
+    stage.addEventListener("stagemousedown", handleJumpStart);
+
+    counter = new createjs.Text(0, "86px Arial", "#ffffff");
+    counterOutline = new createjs.Text(0, "86px Arial", "#000000");
+    counterOutline.outline = 5;
+    counterOutline.textAlign = 'center';
+    counter.textAlign = 'center';
+    counterOutline.x = counter.x = w/2;
+    counterOutline.y = counter.y = 150;
+    stage.addChild(counter, counterOutline);
+
+    createjs.Ticker.timingMode = createjs.Ticker.RAF;
+    createjs.Ticker.addEventListener("tick", tick);
+}
+
+function handleKeyDown(e){if(!e){e=window.event}if(e.keyCode==KEYCODE_SPACE){handleJumpStart();}}
+function handleJumpStart(){if(!dead){createjs.Tween.removeTweens(bird); startJump=true; if(!started){started=true; counterShow=true;}}}
+function diveBird(){bird.gotoAndPlay("fly");}
+function tick(event){
+    var deltaS = event.delta/1000;
+
+    if(bird.y>(ground.y-40)&&!dead){dead=true; createjs.Tween.removeTweens(bird); createjs.Tween.get(bird).to({y:ground.y-30},1);}
+
+    if(!dead){ground.x=(ground.x-deltaS*300)%ground.tileW;}
+
+    if(startJump){
+        startJump=false;
+        createjs.Tween.get(bird).to({y:bird.y - jumpAmount}, jumpTime, createjs.Ease.quadOut).to({y:bird.y}, jumpTime, createjs.Ease.quadIn);
+    }
+
+    stage.update(event);
+}
+
+init();
+</script>
+</body>
+</html>
