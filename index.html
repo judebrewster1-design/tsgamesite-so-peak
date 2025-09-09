@@ -20,8 +20,7 @@ font-family:Inter,sans-serif;
 background:linear-gradient(180deg,#050506 0%,#0c0f12 100%);
 color:var(--text);
 }
-a{text-decoration:none;color:var(--accent);}
-.app{max-width:1100px;margin:12px auto;padding:16px;display:grid;gap:12px;}
+.app{max-width:1100px;margin:16px auto;padding:16px;display:grid;gap:16px;}
 header{display:flex;justify-content:space-between;align-items:center;padding:12px 6px;}
 .brand{display:flex;gap:12px;align-items:center;}
 .logo{width:64px;height:64px;border-radius:14px;overflow:hidden;border:3px solid rgba(0,230,255,0.08);background:#071018;display:flex;align-items:center;justify-content:center;}
@@ -32,17 +31,47 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
 @media(min-width:900px){.main-content{grid-template-columns:1fr 1fr;}}
 .panel{background:var(--panel);border-radius:var(--card-radius);padding:18px;box-shadow:0 12px 32px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
 h2,h3{margin:6px 0;}
-.poster{position:relative;display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--card-radius);background:linear-gradient(135deg,#7b61ff,#00e6ff);color:#fff;font-size:28px;font-weight:800;text-align:center;}
-.poster span{position:absolute;bottom:12px;font-size:14px;font-weight:500;color:var(--muted);}
+.board{
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+padding:24px;
+border-radius:var(--card-radius);
+background:linear-gradient(135deg,#7b61ff,#00e6ff);
+color:#fff;
+text-align:center;
+position:relative;
+box-shadow:0 12px 32px rgba(0,0,0,0.7);
+}
+.board span{
+position:absolute;
+bottom:12px;
+font-size:14px;
+font-weight:500;
+color:var(--muted);
+}
+.enter-btn{
+margin-top:16px;
+background:var(--accent);
+color:#000;
+font-weight:800;
+border:none;
+padding:16px 24px;
+border-radius:12px;
+cursor:pointer;
+font-size:18px;
+transition:transform .12s,box-shadow .12s;
+}
+.enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,230,255,0.5);}
+.enter-btn:active{transform:translateY(1px);}
 .game-list{display:grid;gap:12px;max-height:420px;overflow:auto;}
-.game-card{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:var(--card-radius);padding:12px;text-align:center;cursor:pointer;transition:transform .12s;}
-.game-card:hover{transform:translateY(-4px);}
-.game-card img{width:100%;max-width:120px;border-radius:12px;border:2px solid rgba(0,230,255,0.06);object-fit:cover;}
 .input-section{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
 input,textarea{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);color:#fff;padding:8px 10px;border-radius:10px;font-size:14px;outline:none;}
 textarea{resize:none;}
-button{background:var(--accent);color:#000;font-weight:700;border:none;padding:10px 16px;border-radius:12px;cursor:pointer;transition:transform .12s;}
-button:active{transform:translateY(1px);}
+button{cursor:pointer;}
+.submit-btn{background:var(--accent);color:#000;font-weight:700;border:none;padding:10px 16px;border-radius:12px;font-size:16px;transition:transform .12s;}
+.submit-btn:active{transform:translateY(1px);}
 .footer{text-align:center;color:var(--muted);margin-top:16px;font-size:12px;}
 </style>
 </head>
@@ -62,22 +91,22 @@ button:active{transform:translateY(1px);}
 
 <div class="panel">
 <h2>Coming Soon!</h2>
-<div class="poster">
+<div class="board">
 Flappy Jude
 <span>And More Coming Soon...</span>
+<button class="enter-btn" onclick="enterClickGame()">Enter Click a Jude</button>
 </div>
-<p style="margin-top:12px;color:var(--muted);font-size:14px;">
-Get ready for new games featuring Jude and more dopamine-packed fun. Stay tuned!
-</p>
 </div>
 
 <div class="panel">
-<h2>We Want Your Ideas!</h2>
-<p style="color:var(--muted);font-size:14px;">Have an idea for a new Jude game? Send it directly to my email:</p>
+<h2>Submit Your Game Ideas</h2>
+<p style="color:var(--muted);font-size:14px;">Have an idea for a new Jude game? Fill in your email and idea below:</p>
 <div class="input-section">
-<label for="emailIdea">Your Idea (Optional)</label>
-<textarea id="emailIdea" rows="4" placeholder="Type your idea here..."></textarea>
-<button onclick="sendIdea()">Send Idea</button>
+<label for="userEmail">Your Email</label>
+<input type="email" id="userEmail" placeholder="you@example.com" required>
+<label for="userIdea">Your Idea</label>
+<textarea id="userIdea" rows="4" placeholder="Type your idea here..." required></textarea>
+<button class="submit-btn" onclick="sendIdea()">Send Idea</button>
 </div>
 <p id="ideaStatus" style="margin-top:8px;color:var(--accent2);font-weight:700;"></p>
 </div>
@@ -90,10 +119,18 @@ Get ready for new games featuring Jude and more dopamine-packed fun. Stay tuned!
 </div>
 
 <script>
+function enterClickGame(){
+window.location.href="clickajude.html"; // link to your main Click a Jude game page
+}
+
 function sendIdea(){
-const idea=document.getElementById("emailIdea").value.trim();
-if(!idea){document.getElementById("ideaStatus").innerText="Please enter an idea first!";return;}
-window.location.href=`mailto:judebrewster1@gmail.com?subject=New%20Jude%20Game%20Idea&body=${encodeURIComponent(idea)}`;
+const email=document.getElementById("userEmail").value.trim();
+const idea=document.getElementById("userIdea").value.trim();
+if(!email || !idea){
+document.getElementById("ideaStatus").innerText="Please fill in both email and idea!";
+return;
+}
+window.location.href=`mailto:judebrewster1@gmail.com?subject=New Jude Game Idea&body=Email: ${encodeURIComponent(email)}%0A%0AIdea:%0A${encodeURIComponent(idea)}`;
 document.getElementById("ideaStatus").innerText="Opening your email client...";
 }
 </script>
