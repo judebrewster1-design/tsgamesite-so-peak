@@ -445,7 +445,6 @@ function renderClickGrid(){
   CLICK_DEFS.forEach((d,i) => {
     const [name, base] = d;
     const level = state.clickUpgrades[i] || 0;
-    // cost scaling: stronger separation
     const baseCost = Math.round(12 * Math.pow(3.5, i));
     const cost = Math.max(1, Math.floor((baseCost * Math.pow(1.15, level)) / 5)); // 5x Cheaper
     const card = document.createElement("div");
@@ -474,7 +473,11 @@ function renderAutoGrid(){
     const [name, base] = d;
     const level = state.autoUpgrades[i] || 0;
     const baseCost = Math.round(80 * Math.pow(3.2, i));
-    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.12, level)));
+    let cost = Math.max(1, Math.floor(baseCost * Math.pow(1.12, level)));
+    // "Robot Fingers" is at index 4. Apply discount from this index onwards.
+    if (i >= 4) {
+      cost = Math.max(1, Math.floor(cost / 5));
+    }
     const card = document.createElement("div");
     card.className = "upgrade";
     if (state.money >= cost) card.classList.add("glow");
