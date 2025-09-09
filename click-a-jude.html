@@ -1,208 +1,1032 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Click-a-Jude</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Click a Jude — Full Edition</title>
 <style>
-body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#111;
-  color:#fff;
-  text-align:center;
+/* =========================
+   Theme & Layout
+   ========================= */
+:root{
+  --bg:#08090b;
+  --panel:#0f1316;
+  --muted:#99a3b2;
+  --accent:#00e6ff;
+  --accent-2:#7b61ff;
+  --good:#6ef08a;
+  --bad:#ff6e6e;
+  --card-radius:12px;
+  --glass: rgba(255,255,255,0.03);
 }
-h1 {margin-top:20px;}
-#judeImage {
-  width:150px;
-  height:150px;
-  cursor:pointer;
-  transition:transform 0.1s;
-}
-#judeImage:active { transform:scale(1.1); }
-.button {
-  margin:10px;
-  padding:10px 20px;
-  font-size:16px;
-  cursor:pointer;
-  border-radius:10px;
-  border:none;
-}
-#ascCoins { font-size:1.2em; margin:10px; }
-.section { display:none; margin-top:20px; }
-.skin {
-  width:100px;
-  height:100px;
-  display:inline-block;
-  margin:10px;
-  cursor:pointer;
-  border:2px solid #fff;
-}
-.disabled { opacity:0.5; cursor:not-allowed; }
+html,body{height:100%;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#050506 0%, #0c0f12 100%);color:#e8f7ff;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+*{box-sizing:border-box;}
+.app{max-width:1100px;margin:10px auto;padding:12px;display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:900px){ .app{ grid-template-columns:360px 1fr 360px; align-items:start; } }
+header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 6px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{width:56px;height:56px;border-radius:12px;overflow:hidden;border:3px solid rgba(0,230,255,0.08);background:#071018;display:flex;align-items:center;justify-content:center;}
+.logo img{width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none;}
+.title{font-weight:700;letter-spacing:0.4px;font-size:18px;margin:0;}
+.subtitle{font-size:12px;color:var(--muted);margin-top:3px;}
+.top-stats{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.stat{min-width:120px;background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius:10px; padding:8px 10px; text-align:center; border:1px solid rgba(255,255,255,0.03); box-shadow: 0 10px 30px rgba(0,0,0,0.6);}
+.stat .label{font-size:12px;color:var(--muted);}
+.stat .value{font-weight:800;color:var(--accent);margin-top:6px;font-size:16px;}
+.panel{background:var(--panel);border-radius:var(--card-radius);padding:12px;box-shadow: 0 12px 32px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03);}
+.click-area{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px;}
+#clickImg{width:220px;height:220px;border-radius:14px;object-fit:cover;border:5px solid rgba(0,230,255,0.06);transition: transform .08s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor:pointer;}
+#clickImg:active{ transform: scale(.96) rotate(-1deg); }
+.big-number{font-size:20px;font-weight:700;color:#fff;}
+.small{font-size:12px;color:var(--muted);}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
+button.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;transition: transform .12s ease, background .12s ease;}
+button.btn.secondary{background: rgba(255,255,255,0.02);color:#fff;}
+button.btn:active{ transform: translateY(1px); }
+button.btn.disabled{ opacity:.45; pointer-events:none; }
+.upgrades{display:grid;gap:12px;}
+.upgrid{display:grid;grid-template-columns: repeat(1,1fr);gap:8px;max-height:420px;overflow:auto;padding-right:6px;}
+@media(min-width:1100px){ .upgrid { grid-template-columns: repeat(2,1fr);} }
+.upgrade{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px;border-radius:10px;background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); border:1px solid rgba(255,255,255,0.03); cursor:pointer; transition: transform .12s, box-shadow .12s; }
+.upgrade:hover{ transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.6); }
+.upgrade .meta{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;}
+.upgrade .title{font-weight:800;font-size:14px;}
+.upgrade .desc{font-size:12px;color:var(--muted);}
+.upgrade .cost{font-weight:800;color:var(--accent);}
+.glow{ box-shadow: 0 0 28px rgba(0,230,255,0.15), 0 0 80px rgba(0,230,255,0.06) !important; border-color: rgba(0,230,255,0.12) !important; }
+.right-stack{display:flex;flex-direction:column;gap:12px;}
+.ad-btn{width:100%;background:transparent;border:1px solid rgba(255,255,255,0.04);color:#fff;padding:10px;border-radius:10px;cursor:pointer;font-weight:800;}
+.ad-btn.disabled{opacity:.45;pointer-events:none;}
+.modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background: rgba(0,0,0,0.65);z-index:9999;}
+.modal{background:var(--panel);padding:18px;border-radius:12px;width:min(820px,96%);border:1px solid rgba(255,255,255,0.03);}
+.modal h3{margin:0 0 8px 0;}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+.float{position:fixed;pointer-events:none;font-weight:800;color:var(--accent);text-shadow:0 6px 18px rgba(0,0,0,0.6);transform-origin:center;}
+.spark{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;opacity:0.95;}
+.muted{color:var(--muted);font-size:13px;}
+.centered{display:flex;align-items:center;justify-content:center;}
+.inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
+.skin-card{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;}
+.skin-preview{width:84px;height:84px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,0.03);}
+@keyframes rainbow { 0%{filter:hue-rotate(0deg);}50%{filter:hue-rotate(180deg);}100%{filter:hue-rotate(360deg);} }
+.rainbow { animation: rainbow 2.25s linear infinite; }
+#appGuideBtn{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-weight:700;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;z-index:10000;font-size:14px;}
+@media(max-width:600px){ #clickImg{width:160px;height:160px;} .big-number{font-size:18px;} .stat{min-width:80px;} }
 </style>
 </head>
 <body>
+  <div class="app" id="appRoot">
+    <header>
+      <div class="brand">
+        <div class="logo"><img id="logoImg" src="IMG_7281.jpeg" alt="logo" draggable="false" /></div>
+        <div>
+          <div class="title">Click a Jude — Full Edition</div>
+          <div class="subtitle">Tap, upgrade, ascend — mobile + desktop optimized</div>
+        </div>
+      </div>
 
-<h1>Click-a-Jude</h1>
-<div id="ascCoins">ASC Coins: 0</div>
-<img id="judeImage" src="jude.png" alt="Jude">
+      <div class="top-stats">
+        <div class="stat"><div class="label">Money</div><div class="value" id="moneyDisplay">$0</div></div>
+        <div class="stat"><div class="label">Per Click</div><div class="value" id="perClickDisplay">1</div></div>
+        <div class="stat"><div class="label">Auto / sec</div><div class="value" id="autoDisplay">0</div></div>
+        <div class="stat"><div class="label">Asc Coins</div><div class="value" id="ascDisplay">0</div></div>
+      </div>
+    </header>
 
-<div>
-  <button class="button" onclick="toggleSection('shop')">Shop / Blackjack</button>
-  <button class="button" onclick="toggleSection('inventory')">Inventory</button>
-  <button class="button" onclick="clickAd()">Click Ad (+5 ASC, max 5)</button>
-</div>
+    <!-- Left column -->
+    <div class="panel centered" id="leftCol">
+      <div class="click-area" style="width:100%">
+        <div class="big-number">Click the Jude</div>
+        <img id="clickImg" src="IMG_7281.jpeg" alt="Click Jude" draggable="false" />
+        <div class="small">Tap or press Space / Enter (one tap per press)</div>
 
-<div id="shop" class="section">
-  <h2>Skin Shop</h2>
-  <div id="skinsContainer"></div>
-  <h2>Blackjack</h2>
-  <div>
-    <div id="blackjackMsg"></div>
-    <input type="number" id="blackjackBet" placeholder="Bet ASC Coins">
-    <button onclick="startBlackjack()">Play</button>
-    <div id="blackjackResult"></div>
+        <div class="controls" style="margin-top:8px">
+          <button class="btn secondary" id="exportBtn" type="button">Export Save</button>
+          <button class="btn secondary" id="importBtn" type="button">Import Save</button>
+          <button class="btn" id="resetBtn" type="button">Reset</button>
+          <button class="btn" id="openSkinBtn" type="button">Open Skin Shop</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center upgrades -->
+    <div class="panel upgrades" id="centerCol">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <h3 style="margin:0">Click Upgrades</h3>
+        <div class="muted">Tap to buy — costs increase after purchase</div>
+      </div>
+      <div id="clickGrid" class="upgrid"></div>
+
+      <div style="height:8px"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <h3 style="margin:0">Auto Upgrades</h3>
+        <div class="muted">Earn while away (runs every second)</div>
+      </div>
+      <div id="autoGrid" class="upgrid"></div>
+
+      <div style="height:8px"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <h3 style="margin:0">Ascension Upgrades</h3>
+        <div class="muted">Spend Asc Coins for permanent boosts</div>
+      </div>
+      <div id="ascGrid" class="upgrid"></div>
+
+    </div>
+
+    <!-- Right: skins, gamble, ads -->
+    <div class="panel right-stack" id="rightCol">
+      <div>
+        <h3 style="margin:0 0 8px 0">Skin Shop & Inventory</h3>
+        <div class="muted" style="margin-bottom:8px">Preview & purchase skins (Ascension Coins)</div>
+        <div id="skinGrid" class="inventory-grid"></div>
+
+        <div style="height:12px"></div>
+        <h4 style="margin:0 0 6px 0">Your Inventory</h4>
+        <div class="muted" style="margin-bottom:6px">Click to equip a skin from inventory</div>
+        <div id="inventoryPanel" class="inventory-grid"></div>
+
+        <div style="height:12px"></div>
+        <h4 style="margin:0 0 6px 0">Gamble Box</h4>
+        <div class="muted" style="margin-bottom:8px">Cost: <b>75 ASC</b> — Odds: 50% nothing, 25% purple, 15% blue, 10% RAINBOW (10× click)</div>
+        <button id="gambleBtn" class="btn">Open Gamble Box (75 ASC)</button>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div>
+        <h3 style="margin:0 0 8px 0">Ads</h3>
+        <div class="muted">Click ad — +$50,000 (max 5 times per session)</div>
+        <div style="height:8px"></div>
+        <button id="adButton" class="ad-btn" type="button">Watch Ad (+50k)</button>
+        <div style="height:8px"></div>
+        <div id="adStatus" class="muted"></div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div>
+        <h3 style="margin:0 0 8px 0">Blackjack</h3>
+        <div class="muted">Bet Ascension Coins in Blackjack</div>
+        <button id="openBJ" class="btn">Open Blackjack</button>
+      </div>
+
+    </div>
+
+    <!-- Ascend modal -->
+    <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-hidden="true">
+      <div class="modal" id="modalBox">
+        <h3 id="modalTitle">Modal</h3>
+        <div id="modalBody" class="muted" style="margin-top:8px"></div>
+        <div class="actions" style="margin-top:12px">
+          <button id="modalClose" class="btn secondary">Close</button>
+          <button id="modalConfirm" class="btn" style="display:none">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blackjack modal -->
+    <div class="modal-backdrop" id="bjBackdrop" style="display:none;">
+      <div class="modal" style="max-width:720px;">
+        <h3>Blackjack (ASC coins)</h3>
+        <div id="bjBalance" class="muted" style="margin-bottom:8px"></div>
+        <div id="bjTable" style="min-height:120px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button id="bjClose" class="btn secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="appGuideBtn">How to make an app</button>
+
+    <div id="floatRoot" aria-hidden="true"></div>
   </div>
-</div>
-
-<div id="inventory" class="section">
-  <h2>Inventory</h2>
-  <div id="inventoryContainer"></div>
-</div>
 
 <script>
-// --- GAME STATE ---
-let ascCoins = parseInt(localStorage.getItem('ascCoins')) || 0;
-let skinsOwned = JSON.parse(localStorage.getItem('skinsOwned')) || [];
-let currentSkin = localStorage.getItem('currentSkin') || '';
-let adClicks = parseInt(localStorage.getItem('adClicks')) || 0;
-let autoClickInterval;
-let rainbowInterval;
+/* ============================================================
+   Click a Jude — Full Implementation
+   ============================================================ */
 
-// --- DOM ---
-const judeImage = document.getElementById('judeImage');
-const ascDisplay = document.getElementById('ascCoins');
-const skinsContainer = document.getElementById('skinsContainer');
-const inventoryContainer = document.getElementById('inventoryContainer');
-const shopSection = document.getElementById('shop');
-const inventorySection = document.getElementById('inventory');
-const blackjackMsg = document.getElementById('blackjackMsg');
-const blackjackResult = document.getElementById('blackjackResult');
+/* -------------------------
+   Helpers & formatting
+   ------------------------- */
+function fmt(n){
+  if (n >= 1e15) return (n/1e15).toFixed(2) + "Q";
+  if (n >= 1e12) return (n/1e12).toFixed(2) + "T";
+  if (n >= 1e9) return (n/1e9).toFixed(2) + "B";
+  if (n >= 1e6) return (n/1e6).toFixed(2) + "M";
+  if (n >= 1e3) return (n/1e3).toFixed(1) + "k";
+  return String(Math.floor(n));
+}
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
-// --- SKINS ---
-const skins = [
-  {name:'Jude Pink', price:25, bonus:1, hue: 320},
-  {name:'Jude Blue', price:50, bonus:2, hue: 200},
-  {name:'Jude Green', price:75, bonus:3, hue: 100},
-  {name:'Jude Yellow', price:100, bonus:4, hue: 50},
-  {name:'Jude Red', price:25, bonus:1, hue: 0}
+/* -------------------------
+   Persistent state
+   ------------------------- */
+const SAVE_KEY = "clickajude_full_v2";
+
+let state = {
+  money: 0,
+  perClick: 1,
+  autoPerSec: 0,
+  ascCoins: 0,
+  clickUpgrades: [],   // lengths matched to defs
+  autoUpgrades: [],
+  ascUpgrades: [],
+  skinsOwned: ["classic"], // start owning classic
+  selectedSkin: "classic",
+  jackpotOwned: false, // rainbow won
+  adClicks: 0,
+  gambleHistory: [] // {time, result}
+};
+
+/* -------------------------
+   Definitions: upgrades, skins, gamble
+   ------------------------- */
+const CLICK_DEFS = [
+  ["Fingerling I", 1],
+  ["Trigger Happy", 5],
+  ["Rapid Tap", 10],
+  ["Tapstorm", 25],
+  ["Pixel Punch", 50],
+  ["Click Titan", 100],
+  ["Jude Snap", 250],
+  ["Palm Strike", 500],
+  ["Finger Frenzy", 1000],
+  ["Tap Overload", 2500],
+  ["Jude Buster", 5000],
+  ["Tapocalypse", 10000],
+  ["Finger God", 25000],
+  ["Click Legend", 50000],
+  ["Jude Annihilator", 100000],
+  ["Tapstorm Prime", 250000],
+  ["Finger King", 500000],
+  ["Click Overdrive", 1000000],
+  ["Jude Supreme", 2500000],
+  ["Tap God", 5000000],
+  ["Click Emperor", 10000000],
+  ["Jude Destroyer", 25000000],
+  ["Finger Legend", 50000000],
+  ["Tap Overlord", 100000000],
+  ["Ultimate Jude Finger", 250000000]
 ];
-const rainbowJude = {name:'Rainbow Jude', bonus:10, hue:'rainbow'};
 
-// --- SAVE & UPDATE ---
+const AUTO_DEFS = [
+  ["Helper A", 1],
+  ["Helper B", 5],
+  ["Auto Clicker I", 10],
+  ["Auto Clicker II", 25],
+  ["Robot Fingers", 50],
+  ["Click Drone", 100],
+  ["Auto Titan", 250],
+  ["Finger Machine", 500],
+  ["Jude Bot", 1000],
+  ["Click Golem", 2500],
+  ["Tap Automaton", 5000],
+  ["Fingertron", 10000],
+  ["Auto Lord", 25000],
+  ["Click Sentinel", 50000],
+  ["Jude Drone Army", 100000],
+  ["Rapid Finger Bots", 250000],
+  ["Tap Engine", 500000],
+  ["Click Legion", 1000000],
+  ["Finger Overlord", 2500000],
+  ["Auto God", 5000000],
+  ["Jude Automaton", 10000000],
+  ["Click Supreme", 25000000],
+  ["Finger Emperor", 50000000],
+  ["Auto King", 100000000],
+  ["Ultimate Auto Jude", 250000000]
+];
+
+const ASC_DEFS = [
+  { id:"bonus_start", name:"Bonus Start", desc:"Start with bonus money after Ascend", baseCost:2, effect:100000 },
+  { id:"extra_coins", name:"Extra Coins", desc:"+1 extra asc coin per Ascend", baseCost:4, effect:1 },
+  { id:"click_mult", name:"Click Multiplier", desc:"×2 click power per level", baseCost:6, effect:2 },
+  { id:"auto_mult", name:"Auto Multiplier", desc:"×1.5 auto multiplier per level", baseCost:8, effect:1.5 },
+  { id:"skin_bonus", name:"Skin Bonus", desc:"Increase skin click bonus effectiveness (5% per level)", baseCost:10, effect:0.05 }
+];
+
+/* Skins: id, display name, image filename, asc cost, click bonus (multiplier additive), filter */
+const SKIN_DEFS = [
+  { id:"classic", name:"Classic Jude", img:"IMG_7281.jpeg", ascCost:0, bonus:0, filter:"none" },
+  { id:"s1", name:"Aqua Shade", img:"IMG_7281.jpeg", ascCost:25, bonus:0.25, filter:"hue-rotate(180deg) saturate(1.1)" },
+  { id:"s2", name:"Purple Glow", img:"IMG_7352.jpeg", ascCost:50, bonus:0.5, filter:"hue-rotate(260deg) saturate(1.2) brightness(1.02)" },
+  { id:"s3", name:"Warm Tone", img:"IMG_7279.jpeg", ascCost:75, bonus:0.75, filter:"hue-rotate(15deg) saturate(1.05) brightness(1.03)" },
+  { id:"s4", name:"Soft Blue", img:"IMG_6854.jpeg", ascCost:125, bonus:1.0, filter:"hue-rotate(200deg) saturate(1.15)" },
+  { id:"s5", name:"Violet Prime", img:"IMG_7352.jpeg", ascCost:250, bonus:1.5, filter:"hue-rotate(280deg) saturate(1.25) brightness(1.05)" },
+  /* Rare rainbow skin (not purchasable) */
+  { id:"rainbow", name:"Rainbow Jude", img:"IMG_6817.jpeg", ascCost:0, bonus:10, filter:"rainbow", rare:true }
+];
+
+const GAMBLE_COST = 75; // ASC
+const GAMBLE_ODDS = [
+  { name:"nothing", chance:50, reward:null },
+  { name:"s1", chance:25, reward:"s1" },
+  { name:"s2", chance:15, reward:"s2" },
+  { name:"rainbow", chance:10, reward:"rainbow" }
+];
+
+const AD_REWARD = 50000;
+const AD_LIMIT = 5;
+
+/* -------------------------
+   DOM refs
+   ------------------------- */
+const moneyEl = document.getElementById("moneyDisplay");
+const perClickEl = document.getElementById("perClickDisplay");
+const autoEl = document.getElementById("autoDisplay");
+const ascEl = document.getElementById("ascDisplay");
+const clickImg = document.getElementById("clickImg");
+const clickGrid = document.getElementById("clickGrid");
+const autoGrid = document.getElementById("autoGrid");
+const ascGrid = document.getElementById("ascGrid");
+const skinGrid = document.getElementById("skinGrid");
+const inventoryPanel = document.getElementById("inventoryPanel");
+const gambleButton = document.getElementById("gambleBtn");
+const adButton = document.getElementById("adButton");
+const adStatus = document.getElementById("adStatus");
+const exportBtn = document.getElementById("exportBtn");
+const importBtn = document.getElementById("importBtn");
+const resetBtn = document.getElementById("resetBtn");
+const openSkinBtn = document.getElementById("openSkinBtn");
+const floatRoot = document.getElementById("floatRoot");
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalTitle = document.getElementById("modalTitle");
+const modalBody = document.getElementById("modalBody");
+const modalClose = document.getElementById("modalClose");
+const modalConfirm = document.getElementById("modalConfirm");
+
+const bjBackdrop = document.getElementById("bjBackdrop");
+const bjBalance = document.getElementById("bjBalance");
+const bjTable = document.getElementById("bjTable");
+const bjClose = document.getElementById("bjClose");
+const openBJ = document.getElementById("openBJ");
+
+/* -------------------------
+   Save / Load
+   ------------------------- */
 function save(){
-  localStorage.setItem('ascCoins',ascCoins);
-  localStorage.setItem('skinsOwned',JSON.stringify(skinsOwned));
-  localStorage.setItem('currentSkin',currentSkin);
-  localStorage.setItem('adClicks',adClicks);
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch(e){ console.warn("save failed", e); }
 }
-function updateDisplay(){ ascDisplay.innerText=`ASC Coins: ${ascCoins}`; }
+function load(){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) state = Object.assign(state, JSON.parse(raw));
+  } catch(e){ console.warn("load failed", e); }
+  // ensure arrays exist and lengths match
+  if (!Array.isArray(state.clickUpgrades) || state.clickUpgrades.length !== CLICK_DEFS.length) state.clickUpgrades = new Array(CLICK_DEFS.length).fill(0);
+  if (!Array.isArray(state.autoUpgrades) || state.autoUpgrades.length !== AUTO_DEFS.length) state.autoUpgrades = new Array(AUTO_DEFS.length).fill(0);
+  if (!Array.isArray(state.ascUpgrades) || state.ascUpgrades.length !== ASC_DEFS.length) state.ascUpgrades = new Array(ASC_DEFS.length).fill(0);
+  if (!Array.isArray(state.skinsOwned)) state.skinsOwned = ["classic"];
+  if (!state.selectedSkin) state.selectedSkin = state.skinsOwned[0] || "classic";
+  if (typeof state.adClicks !== "number") state.adClicks = 0;
+  if (!Array.isArray(state.gambleHistory)) state.gambleHistory = [];
+}
 
-// --- CLICK ---
-function clickJude(){
-  let bonus = 1;
-  if(currentSkin){
-    const skin = skins.concat(rainbowJude).find(s=>s.name===currentSkin);
-    if(skin) bonus = skin.bonus;
+/* -------------------------
+   Visuals: floating numbers & sparks
+   ------------------------- */
+function spawnFloat(x,y,text,color="#00e6ff"){
+  const el = document.createElement("div");
+  el.className = "float";
+  el.style.left = (x - 12) + "px";
+  el.style.top = (y - 10) + "px";
+  el.style.color = color;
+  el.textContent = text;
+  floatRoot.appendChild(el);
+  let t = 0;
+  const id = setInterval(()=> {
+    t++;
+    el.style.transform = `translateY(${-t*1.8}px) scale(${1 + t*0.004})`;
+    el.style.opacity = String(1 - t/40);
+    if (t > 40){ clearInterval(id); el.remove(); }
+  }, 16);
+
+  for (let i=0;i<6;i++){
+    const sp = document.createElement("div");
+    sp.className = "spark";
+    sp.style.left = (x + (Math.random()*80-40)) + "px";
+    sp.style.top = (y + (Math.random()*40-20)) + "px";
+    sp.style.background = `hsl(${Math.random()*60+180},80%,60%)`;
+    floatRoot.appendChild(sp);
+    let tt = 0;
+    const id2 = setInterval(()=> {
+      tt++;
+      sp.style.opacity = String(1 - tt/30);
+      sp.style.transform = `translate(${(Math.random()*2-1)*tt*2}px, ${-tt*3 - Math.random()*8}px) scale(${1 - tt/60})`;
+      if (tt > 30){ clearInterval(id2); sp.remove(); }
+    },16);
   }
-  ascCoins += bonus;
-  updateDisplay();
-  save();
 }
 
-// --- AUTO CLICK ---
-judeImage.addEventListener('mousedown',()=>{ autoClickInterval=setInterval(clickJude,100); });
-judeImage.addEventListener('mouseup',()=>clearInterval(autoClickInterval));
-judeImage.addEventListener('mouseleave',()=>clearInterval(autoClickInterval));
-document.addEventListener('keydown',e=>{ if(e.code==='Space'||e.code==='Enter') clickJude(); });
-
-// --- SECTIONS ---
-function toggleSection(id){
-  const sec=id==='shop'?shopSection:inventorySection;
-  sec.style.display=sec.style.display==='none'?'block':'none';
-  if(id==='shop') renderSkins();
-  if(id==='inventory') renderInventory();
+/* -------------------------
+   Update top UI
+   ------------------------- */
+function updateTop(){
+  moneyEl.textContent = "$" + fmt(state.money);
+  perClickEl.textContent = fmt(Math.floor(state.perClick * totalClickMultiplier()));
+  autoEl.textContent = fmt(state.autoPerSec);
+  ascEl.textContent = fmt(state.ascCoins);
+  adStatus.textContent = `Ads used: ${state.adClicks} / ${AD_LIMIT}`;
+  adButton.classList.toggle("disabled", state.adClicks >= AD_LIMIT);
 }
 
-// --- SKIN APPLICATION ---
-function applySkin(skinName){
-  const skin = skins.concat(rainbowJude).find(s=>s.name===skinName);
-  if(!skin) return;
-  stopRainbowAnimation();
-  if(skin.hue==='rainbow'){ startRainbowAnimation(); } 
-  else judeImage.style.filter = `hue-rotate(${skin.hue}deg) saturate(150%)`;
-  currentSkin = skinName;
-  save();
-}
-
-// --- RENDER SKINS ---
-function renderSkins(){
-  skinsContainer.innerHTML='';
-  skins.concat(rainbowJude).forEach(skin=>{
-    const btn=document.createElement('div');
-    btn.className='skin';
-    btn.style.background='#888';
-    btn.title=`${skin.name} - ${skin.price||'Gamble'} ASC Coins`;
-    if(skinsOwned.includes(skin.name)) btn.classList.add('disabled');
-    btn.onclick=()=>{
-      if(skin.name===rainbowJude.name){
-        if(Math.random()<0.05){ skinsOwned.push(rainbowJude.name); applySkin(rainbowJude.name); alert('You won Rainbow Jude!'); }
-        else alert('Try again!');
-      } else if(skinsOwned.includes(skin.name)){ applySkin(skin.name); alert(`${skin.name} equipped!`); }
-      else if(ascCoins>=skin.price){ ascCoins-=skin.price; skinsOwned.push(skin.name); applySkin(skin.name); updateDisplay(); alert(`${skin.name} purchased and equipped!`); renderSkins();}
-      else alert('Not enough ASC Coins');
-      save();
-    };
-    skinsContainer.appendChild(btn);
+/* -------------------------
+   Render upgrades
+   ------------------------- */
+function renderClickGrid(){
+  clickGrid.innerHTML = "";
+  CLICK_DEFS.forEach((d,i) => {
+    const [name, base] = d;
+    const level = state.clickUpgrades[i] || 0;
+    // cost scaling: stronger separation
+    const baseCost = Math.round(12 * Math.pow(4.2, i));
+    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.28, level)));
+    const card = document.createElement("div");
+    card.className = "upgrade";
+    if (state.money >= cost) card.classList.add("glow");
+    card.innerHTML = `<div class="meta"><div class="title">${name} <span style="font-weight:600;color:var(--muted);font-size:12px">Lv.${level}</span></div><div class="desc">${fmt(base)} per click</div></div><div class="cost">$${fmt(cost)}</div>`;
+    card.addEventListener("click", ()=> {
+      if (state.money >= cost){
+        state.money -= cost;
+        state.clickUpgrades[i] = level + 1;
+        state.perClick += base;
+        spawnFloat(window.innerWidth/2, window.innerHeight/2 - 40, `+${fmt(base)}`, "#00ffd6");
+        renderAll();
+        save();
+      } else {
+        card.animate([{transform:"translateX(0)"},{transform:"translateX(-6px)"},{transform:"translateX(6px)"},{transform:"translateX(0)"}],{duration:200});
+      }
+    });
+    clickGrid.appendChild(card);
   });
 }
 
-// --- RENDER INVENTORY ---
-function renderInventory(){ inventoryContainer.innerHTML=''; skinsOwned.forEach(item=>{ const div=document.createElement('div'); div.innerText=item; inventoryContainer.appendChild(div); }); }
-
-// --- AD CLICK ---
-function clickAd(){ if(adClicks>=5) return alert('Max 5 ad clicks!'); adClicks++; ascCoins+=5; updateDisplay(); save(); }
-
-// --- RAINBOW ANIMATION ---
-function startRainbowAnimation(){
-  let hue=0;
-  rainbowInterval=setInterval(()=>{ hue=(hue+5)%360; judeImage.style.filter=`hue-rotate(${hue}deg) saturate(150%)`; },50);
+function renderAutoGrid(){
+  autoGrid.innerHTML = "";
+  AUTO_DEFS.forEach((d,i) => {
+    const [name, base] = d;
+    const level = state.autoUpgrades[i] || 0;
+    const baseCost = Math.round(80 * Math.pow(4.0, i));
+    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.22, level)));
+    const card = document.createElement("div");
+    card.className = "upgrade";
+    if (state.money >= cost) card.classList.add("glow");
+    card.innerHTML = `<div class="meta"><div class="title">${name} <span style="font-weight:600;color:var(--muted);font-size:12px">Lv.${level}</span></div><div class="desc">${fmt(base)} / sec</div></div><div class="cost">$${fmt(cost)}</div>`;
+    card.addEventListener("click", ()=> {
+      if (state.money >= cost){
+        state.money -= cost;
+        state.autoUpgrades[i] = level + 1;
+        state.autoPerSec += base;
+        spawnFloat(window.innerWidth/2 + 30, window.innerHeight/2 - 20, `+${fmt(base)}/s`, "#ffd66e");
+        renderAll();
+        save();
+      } else {
+        card.animate([{transform:"translateY(0)"},{transform:"translateY(-6px)"},{transform:"translateY(6px)"},{transform:"translateY(0)"}],{duration:200});
+      }
+    });
+    autoGrid.appendChild(card);
+  });
 }
-function stopRainbowAnimation(){ clearInterval(rainbowInterval); }
 
-// --- BLACKJACK ---
-let blackjackDeck=[],playerHand=[],dealerHand=[],blackjackBet=0;
-function createDeck(){ const suits=['♠','♥','♦','♣'],values=['2','3','4','5','6','7','8','9','10','J','Q','K','A']; blackjackDeck=[]; suits.forEach(suit=>{ values.forEach(val=>{ blackjackDeck.push({suit,val}); }); }); }
-function drawCard(){ if(blackjackDeck.length===0) createDeck(); const idx=Math.floor(Math.random()*blackjackDeck.length); return blackjackDeck.splice(idx,1)[0]; }
-function cardValue(card){ if(['J','Q','K'].includes(card.val)) return 10; if(card.val==='A') return 11; return parseInt(card.val);}
-function handValue(hand){ let val=hand.reduce((a,c)=>a+cardValue(c),0); let aces=hand.filter(c=>c.val==='A').length; while(val>21&&aces>0){ val-=10; aces--; } return val; }
-function startBlackjack(){
-  blackjackBet=parseInt(document.getElementById('blackjackBet').value);
-  if(isNaN(blackjackBet)||blackjackBet<=0||blackjackBet>ascCoins) return alert('Invalid bet!');
-  createDeck(); playerHand=[drawCard(),drawCard()]; dealerHand=[drawCard(),drawCard()];
-  blackjackMsg.innerText=`Your hand: ${playerHand.map(c=>c.val+c.suit).join(', ')} | Dealer shows: ${dealerHand[0].val+dealerHand[0].suit}`;
-  blackjackResult.innerHTML=`<button onclick="hit()">Hit</button> <button onclick="stand()">Stand</button>`;
+/* -------------------------
+   Render ascension upgrades
+   ------------------------- */
+function renderAscGrid(){
+  ascGrid.innerHTML = "";
+  ASC_DEFS.forEach((d,i) => {
+    const level = state.ascUpgrades[i] || 0;
+    const cost = d.baseCost * Math.pow(2, level);
+    const card = document.createElement("div");
+    card.className = "upgrade";
+    if (state.ascCoins >= cost) card.classList.add("glow");
+    card.innerHTML = `<div class="meta"><div class="title">${d.name} <span style="font-weight:600;color:var(--muted);font-size:12px">Lv.${level}</span></div><div class="desc">${d.desc}</div></div><div class="cost">${fmt(cost)} ASC</div>`;
+    card.addEventListener("click", ()=> {
+      if (state.ascCoins >= cost){
+        state.ascCoins -= cost;
+        state.ascUpgrades[i] = level + 1;
+        applyAscImmediate(i);
+        renderAll();
+        save();
+      } else {
+        card.animate([{transform:"scale(1)"},{transform:"scale(0.98)"},{transform:"scale(1)"}],{duration:160});
+      }
+    });
+    ascGrid.appendChild(card);
+  });
 }
-function hit(){ playerHand.push(drawCard()); const val=handValue(playerHand); blackjackMsg.innerText=`Your hand: ${playerHand.map(c=>c.val+c.suit).join(', ')} (Value: ${val}) | Dealer shows: ${dealerHand[0].val+dealerHand[0].suit}`; if(val>21) endBlackjack('lose');}
-function stand(){ let dealerVal=handValue(dealerHand); while(dealerVal<17){ dealerHand.push(drawCard()); dealerVal=handValue(dealerHand);} const playerVal=handValue(playerHand); if(dealerVal>21||playerVal>dealerVal) endBlackjack('win'); else if(playerVal<dealerVal) endBlackjack('lose'); else endBlackjack('push'); }
-function endBlackjack(result){ if(result==='win'){ ascCoins+=blackjackBet; blackjackMsg.innerText+=' You win!'; } else if(result==='lose'){ ascCoins-=blackjackBet; blackjackMsg.innerText+=' You lose!'; } else blackjackMsg.innerText+=' Push!'; blackjackResult.innerHTML=''; updateDisplay(); save();}
 
-// --- INIT ---
-updateDisplay();
-renderSkins();
-renderInventory();
-if(currentSkin) applySkin(currentSkin);
+/* -------------------------
+   Skin shop & inventory
+   ------------------------- */
+function renderSkinShop(){
+  skinGrid.innerHTML = "";
+  SKIN_DEFS.forEach(s => {
+    // rare skin not sold
+    if (s.rare) return;
+    const card = document.createElement("div");
+    card.className = "skin-card";
+    const img = document.createElement("img");
+    img.className = "skin-preview";
+    img.src = s.img;
+    if (s.filter && s.filter !== "none") img.style.filter = s.filter;
+    card.appendChild(img);
+    const title = document.createElement("div");
+    title.textContent = s.name;
+    title.style.fontWeight = 800;
+    card.appendChild(title);
+    const cost = document.createElement("div");
+    cost.className = "muted";
+    cost.textContent = `${fmt(s.ascCost)} ASC`;
+    card.appendChild(cost);
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = state.skinsOwned.includes(s.id) ? "Owned" : `Buy ${fmt(s.ascCost)} ASC`;
+    btn.disabled = state.skinsOwned.includes(s.id);
+    btn.addEventListener("click", ()=> {
+      if (state.skinsOwned.includes(s.id)) return;
+      if (state.ascCoins < s.ascCost){ alert("Not enough ASC."); return; }
+      state.ascCoins -= s.ascCost;
+      state.skinsOwned.push(s.id);
+      save();
+      spawnFloat(window.innerWidth/2, window.innerHeight/2, `Purchased ${s.name}`, "#7b61ff");
+      renderAll();
+    });
+    card.appendChild(btn);
+    skinGrid.appendChild(card);
+  });
+}
+
+function renderInventory(){
+  inventoryPanel.innerHTML = "";
+  state.skinsOwned.forEach(sid => {
+    const s = SKIN_DEFS.find(x => x.id === sid);
+    if (!s) return;
+    const card = document.createElement("div");
+    card.className = "skin-card";
+    const img = document.createElement("img");
+    img.className = "skin-preview";
+    img.src = s.img;
+    if (s.filter === "rainbow") img.classList.add("rainbow"); else if (s.filter && s.filter !== "none") img.style.filter = s.filter;
+    card.appendChild(img);
+    const title = document.createElement("div");
+    title.textContent = s.name;
+    title.style.fontWeight = 800;
+    card.appendChild(title);
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = (state.selectedSkin === s.id) ? "Equipped" : "Equip";
+    if (state.selectedSkin === s.id) btn.disabled = true;
+    btn.addEventListener("click", ()=> {
+      state.selectedSkin = s.id;
+      applySkin();
+      save();
+      renderInventory();
+      spawnFloat(window.innerWidth/2, window.innerHeight/2, `Equipped ${s.name}`, "#00ffd6");
+    });
+    card.appendChild(btn);
+    inventoryPanel.appendChild(card);
+  });
+}
+
+/* Apply the selected skin visuals */
+function applySkin(){
+  const s = SKIN_DEFS.find(x => x.id === state.selectedSkin);
+  if (!s) return;
+  if (s.filter === "rainbow"){
+    clickImg.classList.add("rainbow");
+    clickImg.style.filter = "";
+  } else {
+    clickImg.classList.remove("rainbow");
+    clickImg.style.filter = s.filter || "";
+  }
+}
+
+/* Returns the click multiplier from skins + asc skin bonus */
+function skinClickBonus(){
+  const s = SKIN_DEFS.find(x => x.id === state.selectedSkin) || {bonus:0};
+  const skinBase = s.bonus || 0;
+  const skinBonusLevel = state.ascUpgrades[4] || 0; // skin_bonus asc upgrade
+  const skinEffectMultiplier = 1 + (skinBonusLevel * ASC_DEFS[4].effect);
+  return 1 + (skinBase * skinEffectMultiplier);
+}
+
+/* -------------------------
+   Gamble box logic
+   ------------------------- */
+function openGamble(){
+  if (state.ascCoins < GAMBLE_COST){ alert("Need 75 ASC to gamble."); return; }
+  state.ascCoins -= GAMBLE_COST;
+  const r = Math.random()*100;
+  let cum = 0;
+  let result = null;
+  for (const o of GAMBLE_ODDS){
+    cum += o.chance;
+    if (r <= cum){
+      result = o.reward;
+      break;
+    }
+  }
+  let msg = "";
+  if (!result){
+    msg = "No reward — better luck next time!";
+  } else {
+    // give skin (if rainbow, special)
+    if (!state.skinsOwned.includes(result)) state.skinsOwned.push(result);
+    if (result === "rainbow"){ state.jackpotOwned = true; }
+    msg = `You won: ${SKIN_DEFS.find(x=>x.id===result).name}!`;
+  }
+  state.gambleHistory.push({ time: Date.now(), result });
+  save();
+  renderAll();
+  spawnFloat(window.innerWidth/2, window.innerHeight/2, msg, "#ffea00");
+  clickImg.animate([{transform:"scale(1)"},{transform:"scale(1.12) rotate(5deg)"},{transform:"scale(1)"}],{duration:420});
+}
+
+/* -------------------------
+   Ads handling (max 5)
+   ------------------------- */
+function watchAd(){
+  if (state.adClicks >= AD_LIMIT){ alert("No more ads this session."); return; }
+  state.adClicks++;
+  state.money += AD_REWARD;
+  save();
+  updateTop();
+  spawnFloat(window.innerWidth/2 + (Math.random()*80-40), window.innerHeight/2 - 20, "+$50k", "#ffea00");
+  // optionally open a link - left commented to avoid popup behavior
+  // window.open(AD_LINKS[state.adClicks % AD_LINKS.length], "_blank", "noopener");
+}
+
+/* -------------------------
+   Click handling (no hold spam)
+   ------------------------- */
+let pressed = false;
+clickImg.addEventListener("click", (ev) => {
+  const multiplier = totalClickMultiplier();
+  const value = Math.floor(state.perClick * multiplier);
+  state.money += value;
+  spawnFloat(ev.clientX, ev.clientY, `+$${fmt(value)}`, "#00e6ff");
+  save();
+  updateTop();
+});
+window.addEventListener("keydown", (e) => {
+  if ((e.code === "Space" || e.key === " " || e.key === "Enter") && !e.repeat && !pressed){
+    e.preventDefault();
+    pressed = true;
+    // dispatch click at center
+    const rect = clickImg.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    clickImg.dispatchEvent(new MouseEvent("click", {clientX: cx, clientY: cy}));
+  }
+});
+window.addEventListener("keyup", (e) => {
+  if (e.code === "Space" || e.key === " " || e.key === "Enter") pressed = false;
+});
+
+/* Total click multiplier (asc + skin) */
+function totalClickMultiplier(){
+  const ascMult = ascClickMultiplier();
+  const skinMult = skinClickBonus();
+  return ascMult * skinMult;
+}
+
+/* Asc click multiplier from asc upgrades */
+function ascClickMultiplier(){
+  const lvl = state.ascUpgrades[2] || 0;
+  if (lvl <= 0) return 1;
+  return Math.pow(ASC_DEFS[2].effect, lvl);
+}
+
+/* Asc auto multiplier */
+function ascAutoMultiplier(){
+  const lvl = state.ascUpgrades[3] || 0;
+  if (lvl <= 0) return 1;
+  return Math.pow(ASC_DEFS[3].effect, lvl);
+}
+
+/* -------------------------
+   Ascension flow
+   ------------------------- */
+function openAscModal(){
+  const coinsFromMoney = Math.floor(state.money / 5000000); // 1 ASC per $5,000,000
+  const extra = (state.ascUpgrades[1] || 0) * ASC_DEFS[1].effect; // extra coins per level
+  const coinsEarned = coinsFromMoney + extra;
+  modalTitle.textContent = "Ascend?";
+  modalBody.innerHTML = `You have <b>$${fmt(state.money)}</b>.<br>Ascending awards <b>${fmt(coinsEarned)}</b> ASC and will reset money and non-asc upgrades. Ascension upgrades (and skins/inventory) persist. Proceed?`;
+  modalConfirm.style.display = "inline-block";
+  modalBackdrop.style.display = "flex";
+  modalConfirm.onclick = () => {
+    state.ascCoins += coinsEarned;
+    const bonus = (state.ascUpgrades[0] || 0) * ASC_DEFS[0].effect;
+    // reset money/upgrades
+    state.money = bonus || 0;
+    state.perClick = 1;
+    state.autoPerSec = 0;
+    state.clickUpgrades = new Array(CLICK_DEFS.length).fill(0);
+    state.autoUpgrades = new Array(AUTO_DEFS.length).fill(0);
+    // ascUpgrades remain
+    save();
+    renderAll();
+    modalBackdrop.style.display = "none";
+    modalConfirm.style.display = "none";
+    spawnFloat(window.innerWidth/2, window.innerHeight/2, `+${fmt(coinsEarned)} ASC`, "#7b61ff");
+    alert(`Ascended! +${fmt(coinsEarned)} ASC`);
+  };
+}
+modalClose.addEventListener("click", ()=> { modalConfirm.style.display = "none"; modalBackdrop.style.display = "none"; });
+
+/* When buying asc upgrade apply immediate effects if necessary */
+function applyAscImmediate(index){
+  // e.g. buying click_mult increases future clickMultiplier calculation automatically
+  // nothing immediate required beyond saving & UI refresh
+  save();
+}
+
+/* -------------------------
+   Auto tick (every second)
+   ------------------------- */
+setInterval(()=> {
+  if (state.autoPerSec > 0){
+    const gain = Math.floor(state.autoPerSec * ascAutoMultiplier());
+    if (gain > 0){
+      state.money += gain;
+      spawnFloat(window.innerWidth/2 + 20, window.innerHeight/2 + 30, `+$${fmt(gain)}`, "#ffd66e");
+      save();
+      updateTop();
+    }
+  }
+}, 1000);
+
+/* -------------------------
+   Export / Import / Reset
+   ------------------------- */
+exportBtn.addEventListener("click", ()=> {
+  const blob = new Blob([JSON.stringify(state)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "clickajude_save.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+importBtn.addEventListener("click", ()=> {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "application/json";
+  input.onchange = (e)=>{
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try {
+        const parsed = JSON.parse(reader.result);
+        // basic validation
+        if (typeof parsed !== "object") throw new Error("Invalid");
+        state = Object.assign(state, parsed);
+        load(); // normalise arrays & defaults
+        rebuildFromLevels();
+        save();
+        renderAll();
+        alert("Imported save.");
+      } catch(err){ alert("Invalid save file."); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
+/* Reset */
+resetBtn.addEventListener("click", ()=> {
+  if (!confirm("Reset all progress? This cannot be undone.")) return;
+  localStorage.removeItem(SAVE_KEY);
+  state = {
+    money:0, perClick:1, autoPerSec:0, ascCoins:0,
+    clickUpgrades: new Array(CLICK_DEFS.length).fill(0),
+    autoUpgrades: new Array(AUTO_DEFS.length).fill(0),
+    ascUpgrades: new Array(ASC_DEFS.length).fill(0),
+    skinsOwned:["classic"], selectedSkin:"classic", jackpotOwned:false, adClicks:0, gambleHistory:[]
+  };
+  save();
+  renderAll();
+});
+
+/* -------------------------
+   Blackjack implementation
+   ------------------------- */
+openBJ.addEventListener("click", openBlackjack);
+bjClose.addEventListener("click", ()=> bjBackdrop.style.display = "none");
+
+function openBlackjack(){
+  bjBackdrop.style.display = "flex";
+  bjBalance.textContent = `ASC Coins: ${fmt(state.ascCoins)}`;
+  bjTable.innerHTML = `<div style="margin:8px 0">Bet (ASC): <input id="bjBet" type="number" min="1" max="${Math.max(1,state.ascCoins)}" value="1" style="width:90px" /></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button id="bjStart" class="btn">Start</button>
+    <button id="bjCancel" class="btn secondary">Cancel</button>
+  </div>`;
+  document.getElementById("bjStart").onclick = startBJ;
+  document.getElementById("bjCancel").onclick = ()=> bjBackdrop.style.display = "none";
+}
+
+function startBJ(){
+  const betInput = document.getElementById("bjBet");
+  const bet = Math.floor(Number(betInput.value) || 0);
+  if (!bet || bet < 1 || bet > state.ascCoins){ alert("Invalid bet."); return; }
+  state.ascCoins -= bet;
+  save();
+  bjBalance.textContent = `ASC Coins: ${fmt(state.ascCoins)}`;
+  // build deck & hands
+  const deck = buildDeck();
+  const player = [draw(deck), draw(deck)];
+  const dealer = [draw(deck), draw(deck)];
+  function value(hand){
+    let tot = 0, aces = 0;
+    for (const c of hand){
+      const r = c.slice(0, -1);
+      if (["J","Q","K"].includes(r)) tot += 10;
+      else if (r === "A"){ tot += 11; aces++; }
+      else tot += Number(r);
+    }
+    while (tot > 21 && aces > 0){ tot -= 10; aces--; }
+    return tot;
+  }
+  function render(){
+    bjTable.innerHTML = `<div>Dealer: ${dealer.join(" ")} (${value(dealer)})</div>
+      <div style="margin-top:6px">Player: ${player.join(" ")} (${value(player)})</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="bjHit" class="btn">Hit</button>
+        <button id="bjStand" class="btn">Stand</button>
+      </div>`;
+    document.getElementById("bjHit").onclick = ()=>{
+      player.push(draw(deck));
+      if (value(player) > 21) end();
+      else render();
+    };
+    document.getElementById("bjStand").onclick = end;
+  }
+  function end(){
+    while (value(dealer) < 17) dealer.push(draw(deck));
+    const p = value(player), d = value(dealer);
+    let result = "";
+    if (p > 21) result = "lose";
+    else if (d > 21) result = "win";
+    else if (p > d) result = "win";
+    else if (p < d) result = "lose";
+    else result = "draw";
+    if (result === "win"){ const win = bet * 2; state.ascCoins += win; bjTable.innerHTML += `<div style="margin-top:8px">You win! +${fmt(win)} ASC</div>`; spawnFloat(window.innerWidth/2, window.innerHeight/2, `+${fmt(win)} ASC`, "#7b61ff"); }
+    else if (result === "draw"){ state.ascCoins += bet; bjTable.innerHTML += `<div style="margin-top:8px">Draw. Bet returned.</div>`; }
+    else bjTable.innerHTML += `<div style="margin-top:8px">You lose.</div>`;
+    bjBalance.textContent = `ASC Coins: ${fmt(state.ascCoins)}`;
+    save();
+    bjTable.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="bjFinish" class="btn">Close</button></div>`;
+    document.getElementById("bjFinish").onclick = ()=> bjBackdrop.style.display = "none";
+  }
+  render();
+}
+
+function buildDeck(){
+  const suits = ["♠","♥","♦","♣"];
+  const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  let deck = [];
+  for (const s of suits) for (const r of ranks) deck.push(r + s);
+  // shuffle
+  for (let i=deck.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+  return deck;
+}
+function draw(deck){ return deck.pop(); }
+
+/* -------------------------
+   Utility: rebuild perClick / autoPerSec from levels (on load/import)
+   ------------------------- */
+function rebuildFromLevels(){
+  state.perClick = 1;
+  state.autoPerSec = 0;
+  for (let i=0;i<CLICK_DEFS.length;i++){
+    const lvl = state.clickUpgrades[i] || 0;
+    state.perClick += CLICK_DEFS[i][1] * lvl;
+  }
+  for (let i=0;i<AUTO_DEFS.length;i++){
+    const lvl = state.autoUpgrades[i] || 0;
+    state.autoPerSec += AUTO_DEFS[i][1] * lvl;
+  }
+}
+
+/* -------------------------
+   Gamble button wiring
+   ------------------------- */
+document.getElementById("gambleBtn").addEventListener("click", ()=> {
+  if (state.ascCoins < GAMBLE_COST){ alert("Need 75 ASC"); return; }
+  openGamble();
+});
+
+/* -------------------------
+   Ad button wiring
+   ------------------------- */
+document.getElementById("adButton").addEventListener("click", ()=> watchAd());
+
+/* -------------------------
+   Skin shop wiring
+   ------------------------- */
+document.getElementById("openSkinBtn").addEventListener("click", ()=> {
+  modalTitle.textContent = "Skin Shop";
+  // build html for shop (exclude rare)
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">`;
+  SKIN_DEFS.forEach(s => {
+    if (s.rare) return;
+    html += `<div style="padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.03);text-align:center;">
+      <img src="${s.img}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;${s.filter && s.filter!=="none" ? `filter:${s.filter}` : ""}"/><div style="font-weight:800;margin-top:6px">${s.name}</div>
+      <div class="muted">${fmt(s.ascCost)} ASC</div>
+      <div style="margin-top:8px"><button class="btn" data-sid="${s.id}">${state.skinsOwned.includes(s.id) ? "Owned" : `Buy ${fmt(s.ascCost)} ASC`}</button></div>
+    </div>`;
+  });
+  html += `</div>`;
+  modalBody.innerHTML = html;
+  modalConfirm.style.display = "none";
+  modalBackdrop.style.display = "flex";
+  modalBody.querySelectorAll("button.btn").forEach(btn => {
+    btn.addEventListener("click", (e)=> {
+      const sid = e.currentTarget.getAttribute("data-sid");
+      const s = SKIN_DEFS.find(x => x.id === sid);
+      if (!s) return;
+      if (state.skinsOwned.includes(sid)){ alert("Already owned"); return; }
+      if (state.ascCoins < s.ascCost){ alert("Not enough ASC"); return; }
+      state.ascCoins -= s.ascCost;
+      state.skinsOwned.push(sid);
+      save();
+      spawnFloat(window.innerWidth/2, window.innerHeight/2, `Purchased ${s.name}`, "#7b61ff");
+      renderAll();
+      modalBackdrop.style.display = "none";
+    });
+  });
+});
+
+/* -------------------------
+   Open/close modal helpers
+   ------------------------- */
+modalClose.addEventListener("click", ()=> { modalBackdrop.style.display = "none"; modalConfirm.style.display = "none"; });
+
+/* -------------------------
+   Click image equip behavior already handled earlier
+   ------------------------- */
+
+/* -------------------------
+   Startup / boot
+   ------------------------- */
+function renderAll(){
+  renderClickGrid();
+  renderAutoGrid();
+  renderAscGrid();
+  renderSkinShop();
+  renderInventory();
+  applySkin();
+  updateTop();
+}
+
+function boot(){
+  load();
+  rebuildFromLevels();
+  renderAll();
+  // periodic save
+  setInterval(()=> save(), 3000);
+  // set ad status
+  adStatus.textContent = `Ads used: ${state.adClicks} / ${AD_LIMIT}`;
+}
+boot();
+
+/* -------------------------
+   Export testing helper (INFINITE MONEY) — DISABLED by default
+   If you want to enable an 'infinite money import' for testing, un-comment the function call below.
+   (I left it commented for safety.)
+   ------------------------- */
+// function testing_infinite_money(){
+//   state.money = 1e15; // huge
+//   save(); renderAll();
+// }
+// testing_infinite_money(); // <- DON'T enable unless testing
+
+/* -------------------------
+   Guide button
+   ------------------------- */
+document.getElementById("appGuideBtn").addEventListener("click", ()=> {
+  alert("iOS Safari: Tap Share → Add to Home Screen → Name it → Done.\nAndroid/Chrome: Menu → Add to Home screen → Done.");
+});
+
+/* -------------------------
+   Prevent buttons from staying focused (improves Space behavior)
+   ------------------------- */
+document.querySelectorAll("button").forEach(b => {
+  b.addEventListener("mousedown", (e)=> e.preventDefault());
+});
+
+/* ============================
+   End of file
+   ============================ */
 </script>
-
 </body>
 </html>
