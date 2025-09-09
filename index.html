@@ -43,6 +43,7 @@ color:#fff;
 text-align:center;
 position:relative;
 box-shadow:0 12px 32px rgba(0,0,0,0.7);
+min-height:220px;
 }
 .board span{
 position:absolute;
@@ -52,7 +53,7 @@ font-weight:500;
 color:var(--muted);
 }
 .enter-btn{
-margin-top:16px;
+margin-top:12px;
 background:var(--accent);
 color:#000;
 font-weight:800;
@@ -62,16 +63,19 @@ border-radius:12px;
 cursor:pointer;
 font-size:18px;
 transition:transform .12s,box-shadow .12s;
+z-index:1;
+position:relative;
 }
 .enter-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,230,255,0.5);}
 .enter-btn:active{transform:translateY(1px);}
-.game-list{display:grid;gap:12px;max-height:420px;overflow:auto;}
 .input-section{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
 input,textarea{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);color:#fff;padding:8px 10px;border-radius:10px;font-size:14px;outline:none;}
 textarea{resize:none;}
 button{cursor:pointer;}
 .submit-btn{background:var(--accent);color:#000;font-weight:700;border:none;padding:10px 16px;border-radius:12px;font-size:16px;transition:transform .12s;}
 .submit-btn:active{transform:translateY(1px);}
+#ideaList{margin-top:8px;padding:8px;background:rgba(0,0,0,0.2);border-radius:10px;max-height:150px;overflow:auto;}
+.idea-item{margin-bottom:6px;padding:6px;border-bottom:1px solid rgba(255,255,255,0.05);}
 .footer{text-align:center;color:var(--muted);margin-top:16px;font-size:12px;}
 </style>
 </head>
@@ -94,21 +98,19 @@ button{cursor:pointer;}
 <div class="board">
 Flappy Jude
 <span>And More Coming Soon...</span>
-<button class="enter-btn" onclick="enterClickGame()">Enter Click a Jude</button>
 </div>
+<button class="enter-btn" onclick="enterClickGame()">Enter Click a Jude</button>
 </div>
 
 <div class="panel">
 <h2>Submit Your Game Ideas</h2>
-<p style="color:var(--muted);font-size:14px;">Have an idea for a new Jude game? Fill in your email and idea below:</p>
+<p style="color:var(--muted);font-size:14px;">Type your idea below and it will appear instantly:</p>
 <div class="input-section">
-<label for="userEmail">Your Email</label>
-<input type="email" id="userEmail" placeholder="you@example.com" required>
 <label for="userIdea">Your Idea</label>
 <textarea id="userIdea" rows="4" placeholder="Type your idea here..." required></textarea>
-<button class="submit-btn" onclick="sendIdea()">Send Idea</button>
+<button class="submit-btn" onclick="addIdea()">Submit Idea</button>
 </div>
-<p id="ideaStatus" style="margin-top:8px;color:var(--accent2);font-weight:700;"></p>
+<div id="ideaList"></div>
 </div>
 
 </div>
@@ -120,18 +122,19 @@ Flappy Jude
 
 <script>
 function enterClickGame(){
-window.location.href="clickajude.html"; // link to your main Click a Jude game page
+window.location.href="clickajude.html";
 }
 
-function sendIdea(){
-const email=document.getElementById("userEmail").value.trim();
-const idea=document.getElementById("userIdea").value.trim();
-if(!email || !idea){
-document.getElementById("ideaStatus").innerText="Please fill in both email and idea!";
-return;
-}
-window.location.href=`mailto:judebrewster1@gmail.com?subject=New Jude Game Idea&body=Email: ${encodeURIComponent(email)}%0A%0AIdea:%0A${encodeURIComponent(idea)}`;
-document.getElementById("ideaStatus").innerText="Opening your email client...";
+function addIdea(){
+const ideaInput=document.getElementById("userIdea");
+const idea=ideaInput.value.trim();
+if(!idea)return;
+const list=document.getElementById("ideaList");
+const item=document.createElement("div");
+item.className="idea-item";
+item.textContent=idea;
+list.prepend(item); // newest first
+ideaInput.value="";
 }
 </script>
 </body>
