@@ -447,7 +447,7 @@ function renderClickGrid(){
     const level = state.clickUpgrades[i] || 0;
     // cost scaling: stronger separation
     const baseCost = Math.round(12 * Math.pow(3.5, i));
-    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.15, level)));
+    const cost = Math.max(1, Math.floor((baseCost * Math.pow(1.15, level)) / 5)); // 5x Cheaper
     const card = document.createElement("div");
     card.className = "upgrade";
     if (state.money >= cost) card.classList.add("glow");
