@@ -104,6 +104,7 @@ button.btn.disabled{ opacity:.45; pointer-events:none; }
           <button class="btn secondary" id="exportBtn" type="button">Export Save</button>
           <button class="btn secondary" id="importBtn" type="button">Import Save</button>
           <button class="btn" id="resetBtn" type="button">Reset</button>
+          <button class="btn" id="ascendBtn" type="button">Ascend</button>
           <button class="btn" id="openSkinBtn" type="button">Open Skin Shop</button>
         </div>
       </div>
@@ -350,6 +351,7 @@ const adStatus = document.getElementById("adStatus");
 const exportBtn = document.getElementById("exportBtn");
 const importBtn = document.getElementById("importBtn");
 const resetBtn = document.getElementById("resetBtn");
+const ascendBtn = document.getElementById("ascendBtn");
 const openSkinBtn = document.getElementById("openSkinBtn");
 const floatRoot = document.getElementById("floatRoot");
 const modalBackdrop = document.getElementById("modalBackdrop");
@@ -444,8 +446,8 @@ function renderClickGrid(){
     const [name, base] = d;
     const level = state.clickUpgrades[i] || 0;
     // cost scaling: stronger separation
-    const baseCost = Math.round(12 * Math.pow(4.2, i));
-    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.28, level)));
+    const baseCost = Math.round(12 * Math.pow(3.5, i));
+    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.15, level)));
     const card = document.createElement("div");
     card.className = "upgrade";
     if (state.money >= cost) card.classList.add("glow");
@@ -471,8 +473,8 @@ function renderAutoGrid(){
   AUTO_DEFS.forEach((d,i) => {
     const [name, base] = d;
     const level = state.autoUpgrades[i] || 0;
-    const baseCost = Math.round(80 * Math.pow(4.0, i));
-    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.22, level)));
+    const baseCost = Math.round(80 * Math.pow(3.2, i));
+    const cost = Math.max(1, Math.floor(baseCost * Math.pow(1.12, level)));
     const card = document.createElement("div");
     card.className = "upgrade";
     if (state.money >= cost) card.classList.add("glow");
@@ -712,8 +714,10 @@ function ascAutoMultiplier(){
 /* -------------------------
    Ascension flow
    ------------------------- */
+ascendBtn.addEventListener("click", openAscModal); // <-- FIX: ADDED THIS EVENT LISTENER
+
 function openAscModal(){
-  const coinsFromMoney = Math.floor(state.money / 5000000); // 1 ASC per $5,000,000
+  const coinsFromMoney = Math.floor(state.money / 1000000); // 1 ASC per $1,000,000
   const extra = (state.ascUpgrades[1] || 0) * ASC_DEFS[1].effect; // extra coins per level
   const coinsEarned = coinsFromMoney + extra;
   modalTitle.textContent = "Ascend?";
