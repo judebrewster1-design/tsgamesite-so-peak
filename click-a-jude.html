@@ -255,22 +255,22 @@ const CLICK_DEFS = [
   ["Jude Snap", 250],
   ["Palm Strike", 500],
   ["Finger Frenzy", 1000],
-  ["Tap Overload", 2500],
-  ["Jude Buster", 5000],
-  ["Tapocalypse", 10000],
-  ["Finger God", 25000],
-  ["Click Legend", 50000],
-  ["Jude Annihilator", 100000],
-  ["Tapstorm Prime", 250000],
-  ["Finger King", 500000],
-  ["Click Overdrive", 1000000],
-  ["Jude Supreme", 2500000],
-  ["Tap God", 5000000],
-  ["Click Emperor", 10000000],
-  ["Jude Destroyer", 25000000],
-  ["Finger Legend", 50000000],
-  ["Tap Overlord", 100000000],
-  ["Ultimate Jude Finger", 250000000]
+  ["Tap Overload", 12500], // 5x Buff
+  ["Jude Buster", 25000], // 5x Buff
+  ["Tapocalypse", 50000], // 5x Buff
+  ["Finger God", 125000], // 5x Buff
+  ["Click Legend", 250000], // 5x Buff
+  ["Jude Annihilator", 500000], // 5x Buff
+  ["Tapstorm Prime", 1250000], // 5x Buff
+  ["Finger King", 2500000], // 5x Buff
+  ["Click Overdrive", 5000000], // 5x Buff
+  ["Jude Supreme", 12500000], // 5x Buff
+  ["Tap God", 25000000], // 5x Buff
+  ["Click Emperor", 50000000], // 5x Buff
+  ["Jude Destroyer", 125000000], // 5x Buff
+  ["Finger Legend", 250000000], // 5x Buff
+  ["Tap Overlord", 500000000], // 5x Buff
+  ["Ultimate Jude Finger", 1250000000] // 5x Buff
 ];
 
 const AUTO_DEFS = [
@@ -283,22 +283,22 @@ const AUTO_DEFS = [
   ["Auto Titan", 250],
   ["Finger Machine", 500],
   ["Jude Bot", 1000],
-  ["Click Golem", 2500],
-  ["Tap Automaton", 5000],
-  ["Fingertron", 10000],
-  ["Auto Lord", 25000],
-  ["Click Sentinel", 50000],
-  ["Jude Drone Army", 100000],
-  ["Rapid Finger Bots", 250000],
-  ["Tap Engine", 500000],
-  ["Click Legion", 1000000],
-  ["Finger Overlord", 2500000],
-  ["Auto God", 5000000],
-  ["Jude Automaton", 10000000],
-  ["Click Supreme", 25000000],
-  ["Finger Emperor", 50000000],
-  ["Auto King", 100000000],
-  ["Ultimate Auto Jude", 250000000]
+  ["Click Golem", 12500], // 5x Buff
+  ["Tap Automaton", 25000], // 5x Buff
+  ["Fingertron", 50000], // 5x Buff
+  ["Auto Lord", 125000], // 5x Buff
+  ["Click Sentinel", 250000], // 5x Buff
+  ["Jude Drone Army", 500000], // 5x Buff
+  ["Rapid Finger Bots", 1250000], // 5x Buff
+  ["Tap Engine", 2500000], // 5x Buff
+  ["Click Legion", 5000000], // 5x Buff
+  ["Finger Overlord", 12500000], // 5x Buff
+  ["Auto God", 25000000], // 5x Buff
+  ["Jude Automaton", 50000000], // 5x Buff
+  ["Click Supreme", 125000000], // 5x Buff
+  ["Finger Emperor", 250000000], // 5x Buff
+  ["Auto King", 500000000], // 5x Buff
+  ["Ultimate Auto Jude", 1250000000] // 5x Buff
 ];
 
 const ASC_DEFS = [
@@ -714,7 +714,7 @@ function ascAutoMultiplier(){
 /* -------------------------
    Ascension flow
    ------------------------- */
-ascendBtn.addEventListener("click", openAscModal); // <-- FIX: ADDED THIS EVENT LISTENER
+ascendBtn.addEventListener("click", openAscModal);
 
 function openAscModal(){
   const coinsFromMoney = Math.floor(state.money / 1000000); // 1 ASC per $1,000,000
