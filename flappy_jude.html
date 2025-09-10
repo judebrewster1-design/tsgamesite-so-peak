@@ -5,31 +5,45 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flappy Jude</title>
 <style>
-  body { margin: 0; overflow: hidden; background: #70c5ce; }
-  canvas { display: block; margin: auto; background: #70c5ce; }
+  body { margin: 0; overflow: hidden; background: #4ec0ca; }
+  canvas { display: block; margin: auto; background: #4ec0ca; }
 </style>
 </head>
 <body>
 <canvas id="gameCanvas" width="288" height="512"></canvas>
 <script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const GRAVITY = 0.25;        // Original Flappy Bird gravity
-const FLAP = -4.5;           // Flap velocity
+const GRAVITY = 0.25;
+const FLAP = -4.5;
+const PIPE_SPEED = 2; 
 const PIPE_WIDTH = 52;
 const PIPE_GAP = 100;
 const BIRD_WIDTH = 34;
 const BIRD_HEIGHT = 24;
+
 let frame = 0;
 let score = 0;
 let gameOver = false;
+
+// Load images
+const bg = new Image();
+bg.src = "https://i.imgur.com/6bK3k3t.png"; // Flappy Bird BG
+
+const ground = new Image();
+ground.src = "https://i.imgur.com/nrVPrmO.png"; // Flappy Bird ground
+
+const pipeTop = new Image();
+pipeTop.src = "https://i.imgur.com/aqx4f2W.png"; 
+
+const pipeBottom = new Image();
+pipeBottom.src = "https://i.imgur.com/hw4aGx5.png";
 
 const playerImg = new Image();
 playerImg.src = "https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/YOUR_FACE_IMAGE_URL.png";
 
 const player = { x: 50, y: 256, width: BIRD_WIDTH, height: BIRD_HEIGHT, velocity: 0 };
-
 const pipes = [];
 
 function resetGame() {
@@ -41,15 +55,22 @@ function resetGame() {
   gameOver = false;
 }
 
+function drawBackground() {
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+}
+
+function drawGround() {
+  ctx.drawImage(ground, 0, canvas.height - 112, canvas.width, 112);
+}
+
 function drawPlayer() {
   ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
 }
 
 function drawPipes() {
-  ctx.fillStyle = "#00FF00";
   for (let pipe of pipes) {
-    ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.top);
-    ctx.fillRect(pipe.x, canvas.height - pipe.bottom, PIPE_WIDTH, pipe.bottom);
+    ctx.drawImage(pipeTop, pipe.x, pipe.yTop, PIPE_WIDTH, pipe.heightTop);
+    ctx.drawImage(pipeBottom, pipe.x, pipe.yBottom, PIPE_WIDTH, pipe.heightBottom);
   }
 }
 
@@ -66,22 +87,28 @@ function update() {
   player.velocity += GRAVITY;
   player.y += player.velocity;
 
-  if (player.y + player.height >= canvas.height || player.y <= 0) {
+  if (player.y + player.height >= canvas.height - 112 || player.y <= 0) {
     gameOver = true;
   }
 
   if (frame % 90 === 0) {
-    let topHeight = Math.random() * (canvas.height - PIPE_GAP - 50) + 25;
-    pipes.push({ x: canvas.width, top: topHeight, bottom: canvas.height - topHeight - PIPE_GAP });
+    let topHeight = Math.floor(Math.random() * (canvas.height - PIPE_GAP - 112 - 50)) + 25;
+    pipes.push({
+      x: canvas.width,
+      yTop: 0,
+      heightTop: topHeight,
+      yBottom: topHeight + PIPE_GAP,
+      heightBottom: canvas.height - 112 - (topHeight + PIPE_GAP)
+    });
   }
 
   for (let i = pipes.length - 1; i >= 0; i--) {
-    pipes[i].x -= 2; // Original pipe speed
+    pipes[i].x -= PIPE_SPEED;
 
     // Collision
     if (player.x < pipes[i].x + PIPE_WIDTH &&
         player.x + player.width > pipes[i].x &&
-        (player.y < pipes[i].top || player.y + player.height > canvas.height - pipes[i].bottom)) {
+        (player.y < pipes[i].yTop + pipes[i].heightTop || player.y + player.height > pipes[i].yBottom)) {
       gameOver = true;
     }
 
@@ -93,9 +120,10 @@ function update() {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawPlayer();
+  drawBackground();
   drawPipes();
+  drawGround();
+  drawPlayer();
   drawScore();
 
   if (gameOver) {
@@ -115,11 +143,8 @@ function gameLoop() {
 
 document.addEventListener("keydown", e => {
   if (e.code === "Space") {
-    if (gameOver) {
-      resetGame();
-    } else {
-      player.velocity = FLAP;
-    }
+    if (gameOver) resetGame();
+    else player.velocity = FLAP;
   }
 });
 
