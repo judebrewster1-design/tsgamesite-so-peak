@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Judeceno — Jude's Fake Money Casino</title>
+<style>
+/* ===========================
+   Judeceno — Styles
+   Purpose: make the UI dark, slick,
+   casino-like, high contrast, readable.
+   Replace fonts or colors if desired.
+   =========================== */
+
+:root{
+  --bg:#060606;
+  --panel:#0d0d0d;
+  --muted:#9aa0a6;
+  --accent:#19d18f;
+  --danger:#ff4d4f;
+  --glass: rgba(255,255,255,0.03);
+  --glass-2: rgba(255,255,255,0.02);
+  --card:#111;
+}
+
+/* reset */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:linear-gradient(180deg,#020202,#0a0a0a);color:#e6e6e6;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif}
+a{color:inherit}
+.app{max-width:1300px;margin:18px auto;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{font-weight:800;font-size:22px;letter-spacing:0.6px}
+.subbrand{font-size:12px;color:var(--muted)}
+.controls{display:flex;align-items:center;gap:10px}
+.balance{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-weight:700}
+.btn{background:linear-gradient(180deg,#111,#0b0b0b);border:1px solid rgba(255,255,255,0.03);padding:8px 12px;border-radius:10px;cursor:pointer;color:inherit;font-weight:600}
+.btn:active{transform:translateY(1px)}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:18px;margin-top:18px}
+.panel{background:linear-gradient(180deg,#070707,#0d0d0d);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.game-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.game-item{padding:10px;border-radius:8px;background:linear-gradient(180deg,#0f0f0f,#0c0c0c);cursor:pointer;border:1px solid rgba(255,255,255,0.02);font-weight:700}
+.game-item:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+.canvas-wrap{background:linear-gradient(180deg,#050505,#081018);padding:12px;border-radius:10px;min-height:420px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.02)}
+.small{font-size:13px;color:var(--muted)}
+.small-muted{font-size:12px;color:var(--muted)}
+.footer{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* game pieces */
+.card{width:92px;height:128px;border-radius:10px;background:var(--card);border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+.cards{display:flex;gap:10px;align-items:flex-end;margin-top:8px}
+.roulette-wheel{width:100%;height:300px;border-radius:50%;background:radial-gradient(circle at 30% 20%, #3b3b3b, #111);display:flex;align-items:center;justify-content:center;font-weight:800}
+.mines-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.mine-cell{background:linear-gradient(180deg,#0d0d0d,#0a0a0a);height:72px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+.plinko-board{position:relative;height:340px;background:linear-gradient(180deg,#081018,#04050a);overflow:hidden;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+.puck{position:absolute;width:34px;height:34px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;font-size:12px}
+.poker-hand{display:flex;gap:8px;align-items:center}
+
+/* popup win */
+.win-popup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:50;display:none;pointer-events:none}
+.win-popup img{max-width:280px;filter:drop-shadow(0 0 20px rgba(25,209,143,0.8));animation:pop 700ms ease-out}
+@keyframes pop{0%{transform:scale(0.4)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+/* overlay glass for realism */
+.glass-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);pointer-events:none;border-radius:10px}
+
+/* logs */
+.log-list{height:420px;overflow:auto;padding:8px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:8px}
+
+/* responsive */
+@media (max-width:1000px){
+  .grid{grid-template-columns:1fr}
+  .canvas-wrap{min-height:520px}
+}
+
+</style>
+</head>
+<body>
+<div class="app" id="judeceno-app">
+  <div class="header">
+    <div>
+      <div class="brand">Judeceno</div>
+      <div class="subbrand">Jude's Fake Money Casino — Judeceno</div>
+    </div>
+    <div class="controls">
+      <div class="balance">Jude Balance: <span id="balance">10000</span> ⸩</div>
+      <button class="btn" id="resetBtn">Reset Jude</button>
+      <button class="btn" id="muteBtn">Sound: On</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Left: game and canvas -->
+    <div>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="small">Select a Jude Game</div>
+            <h2 id="gameTitle" style="margin-top:6px">Jude Blackjack</h2>
+          </div>
+          <div class="small-muted">Judeceno — local only. Fake coins. No real gambling.</div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+          <input id="bet" type="number" value="100" style="width:140px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-weight:700" />
+          <div style="flex:1">
+            <div class="game-list" id="gameList">
+              <div class="game-item" data-game="blackjack">Jude Blackjack</div>
+              <div class="game-item" data-game="roulette">Jude Roulette</div>
+              <div class="game-item" data-game="mines">Jude Mines</div>
+              <div class="game-item" data-game="plinko">Jude Plinko</div>
+              <div class="game-item" data-game="poker">Jude Poker (5-card)</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="gameArea" class="canvas-wrap" style="margin-top:14px">
+          <!-- dynamic game content rendered here -->
+          <div class="win-popup" id="winPopup"><img src="money.png" alt="You win! Jude money" id="winImg" /></div>
+          <div class="glass-overlay"></div>
+        </div>
+
+        <div class="footer small-muted">Judeceno — place `king.png`, `queen.png`, `jack.png`, `minor.png`, `plink.png`, and `money.png` in same folder for custom imagery. Replace `jude_face.png` if you want Jude avatar in games.</div>
+      </div>
+    </div>
+
+    <!-- Right: controls & logs -->
+    <div>
+      <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="small">Jude Custom Images</div>
+            <div class="small-muted">Optional</div>
+          </div>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+            <label class="small-muted">Card face (jack/queen/king) file<input id="cardFaceUpload" type="file" accept="image/*" /></label>
+            <label class="small-muted">Mine image (minor.png) <input id="mineUpload" type="file" accept="image/*" /></label>
+            <label class="small-muted">Plinko ball (plink.png) <input id="plinkoUpload" type="file" accept="image/*" /></label>
+            <label class="small-muted">Jude avatar (jude_face.png) <input id="faceUpload" type="file" accept="image/*" /></label>
+            <label class="small-muted">Win image (money.png) <input id="moneyUpload" type="file" accept="image/*" /></label>
+          </div>
+        </div>
+
+        <div>
+          <div class="small">Jude Controls</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn" id="exportBtn">Export Save</button>
+            <button class="btn" id="importBtn">Import Save</button>
+            <button class="btn" id="resetGameBtn">Reset Game</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="small">Jude Logs</div>
+          <div class="log-list" id="log"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Judeceno — game engine
+   Single file with everything inlined.
+   Supports:
+     - Blackjack (accurate rules: Aces counted high/low)
+     - Roulette (numbers 0-36, red/black/green)
+     - Mines (grid, open, cashout payout scaling)
+     - Plinko (ball drop, simple physics)
+     - Poker (5-card draw simplified evaluator)
+   Features:
+     - Jude-branded logs and messages
+     - money.png popup on wins
+     - support for custom images via file inputs
+     - save/export/import JSON for balance and settings
+     - audio toggle (sounds optional)
+*/
+
+/* =========================================================
+   State and assets
+   ========================================================= */
+const state = {
+  balance: 10000,
+  currentGame: 'blackjack',
+  assets: {
+    cardFace: null, // dataURL or null
+    mine: null,
+    plinko: null,
+    face: null,
+    money: 'money.png' // default filename
+  },
+  settings: {
+    soundOn: true
+  },
+  // per-game substate containers
+  bj: null,
+  poker: null,
+  mines: null
+}
+
+const EL = {} // element cache
+
+// init on load
+window.addEventListener('DOMContentLoaded', () => {
+  cacheEls()
+  attachHandlers()
+  updateBalanceUI()
+  switchGame('blackjack')
+  logJude('Welcome to Judeceno — Jude rules apply.')
+})
+
+/* =========================================================
+   Small Helpers and Utilities
+   ========================================================= */
+
+function cacheEls(){
+  EL.balance = document.getElementById('balance')
+  EL.gameArea = document.getElementById('gameArea')
+  EL.log = document.getElementById('log')
+  EL.bet = document.getElementById('bet')
+  EL.gameTitle = document.getElementById('gameTitle')
+  EL.winPopup = document.getElementById('winPopup')
+  EL.winImg = document.getElementById('winImg')
+  EL.resetBtn = document.getElementById('resetBtn')
+  EL.muteBtn = document.getElementById('muteBtn')
+  EL.cardFaceUpload = document.getElementById('cardFaceUpload')
+  EL.mineUpload = document.getElementById('mineUpload')
+  EL.plinkoUpload = document.getElementById('plinkoUpload')
+  EL.faceUpload = document.getElementById('faceUpload')
+  EL.moneyUpload = document.getElementById('moneyUpload')
+  EL.exportBtn = document.getElementById('exportBtn')
+  EL.importBtn = document.getElementById('importBtn')
+  EL.resetGameBtn = document.getElementById('resetGameBtn')
+  // populate game items
+  document.querySelectorAll('.game-item').forEach(it=>{
+    it.addEventListener('click', (e)=>{
+      const g = it.getAttribute('data-game')
+      switchGame(g)
+    })
+  })
+}
+
+function attachHandlers(){
+  EL.resetBtn.addEventListener('click', ()=>{ state.balance = 10000; updateBalanceUI(); logJude('Jude reset balance to 10000') })
+  EL.muteBtn.addEventListener('click', toggleSound)
+  // uploads
+  EL.cardFaceUpload.addEventListener('change', e=>fileToDataURL(e.target.files[0]).then(d=>{ state.assets.cardFace = d; logJude('Jude set custom card face') }))
+  EL.mineUpload.addEventListener('change', e=>fileToDataURL(e.target.files[0]).then(d=>{ state.assets.mine = d; logJude('Jude set custom mine image') }))
+  EL.plinkoUpload.addEventListener('change', e=>fileToDataURL(e.target.files[0]).then(d=>{ state.assets.plinko = d; logJude('Jude set custom plinko image') }))
+  EL.faceUpload.addEventListener('change', e=>fileToDataURL(e.target.files[0]).then(d=>{ state.assets.face = d; logJude('Jude set custom avatar') }))
+  EL.moneyUpload.addEventListener('change', e=>fileToDataURL(e.target.files[0]).then(d=>{ state.assets.money = d; EL.winImg.src = d; logJude('Jude set custom money image') }))
+  // export/import
+  EL.exportBtn.addEventListener('click', exportSave)
+  EL.importBtn.addEventListener('click', importSave)
+  EL.resetGameBtn.addEventListener('click', ()=>{ location.reload() })
+}
+
+// helper: file to data URL
+function fileToDataURL(file){
+  return new Promise(res=>{
+    if(!file) return res(null)
+    const reader = new FileReader()
+    reader.onload = ()=>res(reader.result)
+    reader.readAsDataURL(file)
+  })
+}
+
+function logJude(txt){
+  const d = document.createElement('div')
+  d.textContent = `${new Date().toLocaleTimeString()} — Jude: ${txt}`
+  EL.log.prepend(d)
+}
+
+// update balance UI
+function updateBalanceUI(){
+  EL.balance.textContent = state.balance
+}
+
+// show win popup (money)
+function showWinPopup(){
+  // if custom money set, ensure popup uses it
+  if(state.assets.money) EL.winImg.src = state.assets.money
+  EL.winPopup.style.display = 'block'
+  setTimeout(()=>{ EL.winPopup.style.display = 'none' }, 1400)
+}
+
+// play simple sound if available
+function playSound(name){
+  if(!state.settings.soundOn) return
+  // tiny generated tones using WebAudio for basic effects to avoid bundling audio files
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.connect(g); g.connect(ctx.destination)
+    if(name === 'win'){ o.frequency.value = 880; g.gain.value = 0.02 }
+    else if(name === 'click'){ o.frequency.value = 440; g.gain.value = 0.02 }
+    else if(name === 'lose'){ o.frequency.value = 200; g.gain.value = 0.02 }
+    o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12); setTimeout(()=>{ o.stop(); ctx.close() }, 150)
+  }catch(e){ /* ignore audio errors on older browsers */ }
+}
+
+function toggleSound(){
+  state.settings.soundOn = !state.settings.soundOn
+  EL.muteBtn.textContent = `Sound: ${state.settings.soundOn ? 'On' : 'Off'}`
+  logJude(`Jude toggled sound ${state.settings.soundOn ? 'On' : 'Off'}`)
+}
+
+function exportSave(){
+  const payload = {
+    balance: state.balance,
+    assets: { money: state.assets.money ? 'embedded' : null },
+    settings: state.settings
+  }
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload))
+  const a = document.createElement('a'); a.href = dataStr; a.download = 'judeceno_save.json'; a.click()
+  logJude('Jude exported save file')
+}
+
+function importSave(){
+  const input = document.createElement('input'); input.type='file'; input.accept='application/json'
+  input.addEventListener('change', async (e)=>{
+    const f = e.target.files[0]
+    if(!f) return
+    const text = await f.text()
+    try{
+      const p = JSON.parse(text)
+      if(p.balance) state.balance = p.balance
+      if(p.settings) state.settings = p.settings
+      updateBalanceUI()
+      logJude('Jude imported save file')
+    }catch(err){
+      logJude('Import failed: invalid file')
+    }
+  })
+  input.click()
+}
+
+/* =========================================================
+   Game switching
+   ========================================================= */
+
+function switchGame(name){
+  state.currentGame = name
+  EL.gameTitle.textContent = `Jude ${capitalize(name)}`
+  EL.bet.value = EL.bet.value || 100
+  renderGame(name)
+  logJude(`Switched to Jude ${capitalize(name)}`)
+  playSound('click')
+}
+
+/* main render */
+function renderGame(name){
+  // clear current area
+  EL.gameArea.innerHTML = ''
+  // reappend win popup & overlay so it exist
+  const win = document.createElement('div'); win.id = 'winPopup'; win.className = 'win-popup'
+  const wimg = document.createElement('img'); wimg.id='winImg'; wimg.src = state.assets.money || 'money.png'; win.appendChild(wimg)
+  EL.gameArea.appendChild(win)
+  const overlay = document.createElement('div'); overlay.className = 'glass-overlay'; EL.gameArea.appendChild(overlay)
+  // call specific renderer
+  if(name === 'blackjack') renderBlackjack()
+  else if(name === 'roulette') renderRoulette()
+  else if(name === 'mines') renderMines()
+  else if(name === 'plinko') renderPlinko()
+  else if(name === 'poker') renderPoker()
+}
+
+/* =========================================================
+   Blackjack — accurate enough for play
+   ========================================================= */
+
+function renderBlackjack(){
+  // create layout
+  const root = document.createElement('div'); root.className='blackjack'
+  const dealerLabel = document.createElement('div'); dealerLabel.className='small-muted'; dealerLabel.textContent='Jude Dealer'
+  const dealerCards = document.createElement('div'); dealerCards.className='cards'; dealerCards.id='dealerCards'
+  const playerLabel = document.createElement('div'); playerLabel.className='small-muted'; playerLabel.textContent='Jude You'
+  const playerCards = document.createElement('div'); playerCards.className='cards'; playerCards.id='playerCards'
+  const controls = document.createElement('div'); controls.style.marginTop = '12px'
+  const dealBtn = document.createElement('button'); dealBtn.className='btn'; dealBtn.textContent='Deal Jude'; dealBtn.onclick = startBJ
+  const hitBtn = document.createElement('button'); hitBtn.className='btn'; hitBtn.textContent='Hit Jude'; hitBtn.onclick = hitBJ
+  const standBtn = document.createElement('button'); standBtn.className='btn'; standBtn.textContent='Stand Jude'; standBtn.onclick=standBJ
+  controls.appendChild(dealBtn); controls.appendChild(hitBtn); controls.appendChild(standBtn)
+  root.appendChild(dealerLabel); root.appendChild(dealerCards); root.appendChild(playerLabel); root.appendChild(playerCards); root.appendChild(controls)
+  EL.gameArea.appendChild(root)
+
+  // initialize state
+  state.bj = { deck:createDeck(), dealer:[], player:[], inPlay:false }
+  // initial render blank
+  renderBJ()
+}
+
+function startBJ(){
+  if(!checkBet()) return
+  state.bj.deck = createDeck(); state.bj.dealer=[]; state.bj.player=[]; state.bj.inPlay = true
+  state.bj.player.push(draw(state.bj.deck)); state.bj.player.push(draw(state.bj.deck))
+  state.bj.dealer.push(draw(state.bj.deck)); state.bj.dealer.push(draw(state.bj.deck))
+  renderBJ()
+  logJude('Jude dealt blackjack')
+  playSound('click')
+}
+
+function hitBJ(){
+  if(!state.bj || !state.bj.inPlay) return
+  state.bj.player.push(draw(state.bj.deck))
+  renderBJ()
+  if(scoreHand(state.bj.player) > 21){
+    endBJ(false)
+  }
+  playSound('click')
+}
+
+function standBJ(){
+  if(!state.bj || !state.bj.inPlay) return
+  // dealer draws until 17 or higher
+  while(scoreHand(state.bj.dealer) < 17){
+    state.bj.dealer.push(draw(state.bj.deck))
+  }
+  const p = scoreHand(state.bj.player), d = scoreHand(state.bj.dealer)
+  const win = (d > 21) || (p <= 21 && p > d)
+  endBJ(win)
+  playSound('click')
+}
+
+function endBJ(win){
+  state.bj.inPlay = false
+  const bet = Number(EL.bet.value) || 0
+  if(win){
+    state.balance += bet
+    updateBalanceUI()
+    logJude(`Jude Blackjack win +${bet}`)
+    showWinPopup()
+    playSound('win')
+  } else {
+    state.balance -= bet
+    updateBalanceUI()
+    logJude(`Jude Blackjack lose -${bet}`)
+    playSound('lose')
+  }
+  renderBJ(true)
+}
+
+function renderBJ(final=false){
+  const dc = document.getElementById('dealerCards')
+  const pc = document.getElementById('playerCards')
+  if(!dc || !pc) return
+  dc.innerHTML = ''; pc.innerHTML = ''
+  (state.bj.dealer || []).forEach((c, i)=>{
+    dc.appendChild(renderCard(c, (i===0 && state.bj.inPlay) ? true : false))
+  })
+  (state.bj.player || []).forEach(c=>pc.appendChild(renderCard(c)))
+  if(final){
+    const dd = document.createElement('div'); dd.className='small-muted'; dd.textContent = `Jude Dealer: ${scoreHand(state.bj.dealer)}`
+    const pd = document.createElement('div'); pd.className='small-muted'; pd.textContent = `Jude You: ${scoreHand(state.bj.player)}`
+    dc.appendChild(dd); pc.appendChild(pd)
+  }
+}
+
+// score, considering aces
+function scoreHand(hand){
+  let total = 0; let aces = 0
+  for(const c of hand){
+    let v = c.val
+    if(v === 'J' || v === 'Q' || v === 'K') total += 10
+    else if(v === 'A'){ total += 11; aces++ }
+    else total += Number(v)
+  }
+  while(total > 21 && aces > 0){ total -= 10; aces-- }
+  return total
+}
+
+/* =========================================================
+   Roulette
+   ========================================================= */
+
+function renderRoulette(){
+  const root = document.createElement('div')
+  const wheel = document.createElement('div'); wheel.className = 'roulette-wheel'; wheel.id='rouletteWheel'; wheel.textContent = 'Jude Wheel'
+  const controls = document.createElement('div'); controls.style.marginTop = '12px'
+  const betInput = document.createElement('input'); betInput.type='text'; betInput.placeholder = 'Type "red", "black", "green", or number 0-36'; betInput.id='rouletteBet'; betInput.style.padding='8px'; betInput.style.borderRadius='8px'; betInput.style.background='transparent'; betInput.style.border='1px solid rgba(255,255,255,0.03)'
+  const spinBtn = document.createElement('button'); spinBtn.className='btn'; spinBtn.textContent='Spin Jude'; spinBtn.onclick = spinRoulette
+  controls.appendChild(betInput); controls.appendChild(spinBtn)
+  root.appendChild(wheel); root.appendChild(controls)
+  EL.gameArea.appendChild(root)
+}
+
+function spinRoulette(){
+  const betText = (document.getElementById('rouletteBet').value || '').trim().toLowerCase()
+  const bet = Number(EL.bet.value) || 0
+  if(!bet || !betText){ logJude('Set Jude bet and choice for roulette'); return }
+  // spin animation simulate
+  const n = Math.floor(Math.random()*37) // 0..36
+  const color = (n===0) ? 'green' : (rouletteIsRed(n) ? 'red' : 'black')
+  let win = false
+  if(betText === 'green' && n === 0) win = true
+  else if(betText === 'red' && color === 'red') win = true
+  else if(betText === 'black' && color === 'black') win = true
+  else if(!isNaN(Number(betText)) && Number(betText) === n) win = true
+
+  if(win){
+    state.balance += bet
+    updateBalanceUI()
+    logJude(`Jude Roulette hit ${n} ${color} +${bet}`)
+    showWinPopup()
+    playSound('win')
+  } else {
+    state.balance -= bet
+    updateBalanceUI()
+    logJude(`Jude Roulette miss ${n} ${color} -${bet}`)
+    playSound('lose')
+  }
+
+  // update wheel display quickly
+  const wheel = document.getElementById('rouletteWheel')
+  if(wheel){ wheel.textContent = `Result: ${n} ${color}` }
+}
+
+function rouletteIsRed(n){
+  const reds = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]
+  return reds.includes(n)
+}
+
+/* =========================================================
+   Mines game
+   grid of clickable cells; if click mine -> lose
+   otherwise payout increases with safe picks
+   ========================================================= */
+
+function renderMines(){
+  const root = document.createElement('div')
+  const info = document.createElement('div'); info.style.display='flex'; info.style.gap='8px'; info.style.marginBottom='8px'
+  const newBtn = document.createElement('button'); newBtn.className='btn'; newBtn.textContent='New Jude Mines'; newBtn.onclick = newMines
+  const cashBtn = document.createElement('button'); cashBtn.className='btn'; cashBtn.textContent='Cashout Jude'; cashBtn.onclick = cashoutMines
+  info.appendChild(newBtn); info.appendChild(cashBtn)
+  const grid = document.createElement('div'); grid.className='mines-grid'; grid.id='minesGrid'
+  root.appendChild(info); root.appendChild(grid)
+  EL.gameArea.appendChild(root)
+  newMines()
+}
+
+function newMines(){
+  const bet = Number(EL.bet.value) || 0
+  if(!bet){ logJude('Set Jude bet for mines'); return }
+  const cols = 6, rows = 6, minesCount = 6
+  const total = cols*rows
+  const arr = Array(total).fill(0)
+  let placed = 0
+  while(placed < minesCount){
+    const i = Math.floor(Math.random()*total)
+    if(arr[i] === 0){ arr[i] = 1; placed++ }
+  }
+  state.mines = { map: arr, opened: 0, blown: false, openedCells: [], bet: bet }
+  renderMinesGrid()
+  logJude('Jude created new mines game')
+}
+
+function renderMinesGrid(){
+  const g = document.getElementById('minesGrid'); if(!g) return
+  g.innerHTML = ''
+  state.mines.map.forEach((m, idx)=>{
+    const cell = document.createElement('div'); cell.className='mine-cell'; cell.dataset.idx = idx
+    cell.onclick = ()=>openMine(idx)
+    cell.textContent = state.mines.openedCells.includes(idx) ? '' : '?'
+    // show image if opened and not mine
+    if(state.mines.openedCells.includes(idx)){
+      if(m === 1){
+        const img = document.createElement('img'); img.style.maxWidth='100%'; img.style.maxHeight='100%'; img.src = state.assets.mine || 'minor.png'; cell.appendChild(img)
+      } else {
+        const s = document.createElement('div'); s.textContent='✓'; s.style.fontWeight='900'; s.style.fontSize='18px'; cell.appendChild(s)
+      }
+    }
+    g.appendChild(cell)
+  })
+}
+
+function openMine(i){
+  if(state.mines.blown) return
+  if(state.mines.openedCells.includes(i)) return
+  state.mines.openedCells.push(i)
+  if(state.mines.map[i] === 1){
+    // hit mine
+    state.mines.blown = true
+    state.balance -= state.mines.bet
+    updateBalanceUI()
+    logJude(`Jude Mines — boom! hit mine -${state.mines.bet}`)
+    revealAllMines()
+    playSound('lose')
+  } else {
+    state.mines.opened++
+    const payout = Math.floor(state.mines.bet * (1 + state.mines.opened * 0.28))
+    logJude(`Jude safe. Opened ${state.mines.opened}. Cashout now for ${payout}`)
+    renderMinesGrid()
+    playSound('click')
+  }
+}
+
+function revealAllMines(){
+  const g = document.getElementById('minesGrid'); if(!g) return
+  g.querySelectorAll('.mine-cell').forEach((cell, idx)=>{
+    cell.innerHTML = ''
+    const img = document.createElement('img'); img.style.maxWidth='100%'; img.style.maxHeight='100%'
+    img.src = state.mines.map[idx] === 1 ? (state.assets.mine || 'minor.png') : (state.assets.face || 'jude_face.png')
+    cell.appendChild(img)
+  })
+}
+
+function cashoutMines(){
+  if(!state.mines || state.mines.blown) return
+  const payout = Math.floor(state.mines.bet * (1 + state.mines.opened * 0.28))
+  state.balance += payout
+  updateBalanceUI()
+  logJude(`Jude cashed out mines +${payout}`)
+  showWinPopup()
+  state.mines.blown = true
+  renderMinesGrid()
+  playSound('win')
+}
+
+/* =========================================================
+   Plinko — simple physics-ish drop with buckets.
+   ========================================================= */
+
+function renderPlinko(){
+  const root = document.createElement('div')
+  const board = document.createElement('div'); board.className='plinko-board'; board.id='plinkoBoard'
+  const control = document.createElement('div'); control.style.marginTop='12px'
+  const dropBtn = document.createElement('button'); dropBtn.className='btn'; dropBtn.textContent='Drop Jude'; dropBtn.onclick = dropPlinko
+  control.appendChild(dropBtn)
+  root.appendChild(board); root.appendChild(control)
+  EL.gameArea.appendChild(root)
+}
+
+function dropPlinko(){
+  const bet = Number(EL.bet.value) || 0
+  if(!bet){ logJude('Set Jude bet for Plinko'); return }
+  const board = document.getElementById('plinkoBoard')
+  const puck = document.createElement('div'); puck.className='puck'
+  // show plinko image if set
+  if(state.assets.plinko){
+    const img = document.createElement('img'); img.src = state.assets.plinko; img.style.width='34px'; img.style.height='34px'; img.style.borderRadius='50%'; puck.appendChild(img)
+  } else {
+    puck.textContent = '●'
+  }
+  board.appendChild(puck)
+  // simple drop simulation
+  let x = Math.random() * (board.clientWidth - 34)
+  let y = -40
+  puck.style.left = `${x}px`; puck.style.top = `${y}px`
+  const ticks = 100
+  let i = 0
+  const iv = setInterval(()=>{
+    i++; y += 5; x += (Math.random() - 0.5) * 30
+    if(x < 0) x = 0
+    if(x > board.clientWidth - 34) x = board.clientWidth - 34
+    puck.style.top = `${y}px`; puck.style.left = `${x}px`
+    if(i > ticks){
+      clearInterval(iv)
+      // decide bucket (5 buckets)
+      const bucket = Math.floor(x / (board.clientWidth / 5))
+      const payout = bet * (bucket + 1)
+      state.balance += payout - bet
+      updateBalanceUI()
+      logJude(`Jude Plinko landed bucket ${bucket}. Payout +${payout - bet}`)
+      showWinPopup()
+      puck.remove()
+      playSound('win')
+    }
+  }, 28)
+}
+
+/* =========================================================
+   Poker — simplified 5-card draw evaluator
+   ========================================================= */
+
+function renderPoker(){
+  const root = document.createElement('div')
+  const handWrap = document.createElement('div'); handWrap.className='poker-hand'; handWrap.id='pokerHand'
+  const controls = document.createElement('div'); controls.style.marginTop='12px'
+  const dealBtn = document.createElement('button'); dealBtn.className='btn'; dealBtn.textContent='Deal Jude'; dealBtn.onclick = startPoker
+  const finishBtn = document.createElement('button'); finishBtn.className='btn'; finishBtn.textContent='Finish Jude'; finishBtn.onclick = finishPoker
+  controls.appendChild(dealBtn); controls.appendChild(finishBtn)
+  root.appendChild(handWrap); root.appendChild(controls)
+  EL.gameArea.appendChild(root)
+}
+
+function startPoker(){
+  const bet = Number(EL.bet.value) || 0
+  if(!bet){ logJude('Set Jude bet for Poker'); return }
+  state.poker = { deck:createDeck(), hand:[] }
+  for(let i=0;i<5;i++) state.poker.hand.push(draw(state.poker.deck))
+  renderPokerHand()
+  logJude('Jude dealt poker hand')
+}
+
+function finishPoker(){
+  if(!state.poker){ logJude('No Jude poker hand in play'); return }
+  const rank = evaluatePoker(state.poker.hand)
+  const bet = Number(EL.bet.value) || 0
+  let mult = 0
+  if(rank === 'straight' || rank === 'flush') mult = 5
+  else if(rank === 'pair') mult = 1.5
+  else if(rank === 'two pair') mult = 2.5
+  else if(rank === 'three') mult = 3
+  else if(rank === 'four') mult = 10
+  if(mult > 0){
+    const win = Math.floor(bet * mult)
+    state.balance += win
+    updateBalanceUI()
+    logJude(`Jude Poker ${rank} payout +${win}`)
+    showWinPopup()
+    playSound('win')
+  } else {
+    state.balance -= bet
+    updateBalanceUI()
+    logJude(`Jude Poker no win -${bet}`)
+    playSound('lose')
+  }
+  renderPokerHand()
+}
+
+function renderPokerHand(){
+  const ph = document.getElementById('pokerHand'); if(!ph) return
+  ph.innerHTML = ''
+  (state.poker.hand || []).forEach(c=>{
+    const card = renderCard(c)
+    ph.appendChild(card)
+  })
+}
+
+// very basic evaluator — fairly randomized but returns classic ranks sometimes
+function evaluatePoker(hand){
+  // Map ranks and suits
+  const ranks = hand.map(h => (h.val === 'J' ? 11 : h.val === 'Q' ? 12 : h.val === 'K' ? 13 : h.val === 'A' ? 14 : Number(h.val)))
+  const suits = hand.map(h => h.suit)
+  // frequency map
+  const freq = {}
+  ranks.forEach(r => freq[r] = (freq[r] || 0)+1)
+  const counts = Object.values(freq).sort((a,b)=>b-a)
+  const isFlush = suits.every(s => s === suits[0])
+  const sorted = ranks.slice().sort((a,b)=>a-b)
+  let isStraight = true
+  for(let i=1;i<sorted.length;i++){ if(sorted[i] !== sorted[i-1] + 1){ isStraight = false; break } }
+  if(isStraight && isFlush) return 'straight flush' // jackpot
+  if(counts[0] === 4) return 'four'
+  if(counts[0] === 3 && counts[1] === 2) return 'full house'
+  if(isFlush) return 'flush'
+  if(isStraight) return 'straight'
+  if(counts[0] === 3) return 'three'
+  if(counts[0] === 2 && counts[1] === 2) return 'two pair'
+  if(counts[0] === 2) return 'pair'
+  return 'nothing'
+}
+
+/* =========================================================
+   Deck helpers, rendering cards, and misc utilities
+   ========================================================= */
+
+function createDeck(){
+  const suits = ['♠','♥','♦','♣']
+  const vals = [2,3,4,5,6,7,8,9,10,'J','Q','K','A']
+  const deck = []
+  suits.forEach(s=>{
+    vals.forEach(v=>{
+      deck.push({suit:s,val:v})
+    })
+  })
+  return shuffle(deck)
+}
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1))
+    const t = a[i]; a[i] = a[j]; a[j] = t
+  }
+  return a
+}
+
+function draw(deck){ return deck.pop() }
+
+function renderCard(c, hidden=false){
+  const el = document.createElement('div'); el.className='card'
+  if(hidden){
+    el.textContent = '🂠'
+    el.style.opacity = '0.85'
+    return el
+  }
+  // if face J Q K and custom card face exists, show that
+  if(['J','Q','K'].includes(String(c.val)) && state.assets.cardFace){
+    const img = document.createElement('img'); img.src = state.assets.cardFace; img.style.maxWidth='86px'; img.style.maxHeight='120px'; img.style.borderRadius='8px'
+    el.appendChild(img); return el
+  }
+  // else normal text
+  el.textContent = `${c.val}${c.suit}`
+  return el
+}
+
+/* =========================================================
+   Generic utilities
+   ========================================================= */
+
+function checkBet(){
+  const bet = Number(EL.bet.value) || 0
+  if(bet <= 0 || bet > state.balance){ logJude('Invalid Jude bet'); return false }
+  return true
+}
+
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1) }
+
+/* =========================================================
+   Initial assets: set default money image if file exists
+   Note: EL.winImg will be set when rendering game area
+   ========================================================= */
+
+/* =========================================================
+   End of main code
+   ========================================================= */
+
+/* Small note:
+   This single-file app is designed to run locally.
+   Add the following files alongside this HTML to customize:
+     - money.png (win popup)
+     - minor.png (mine icon)
+     - plink.png (plinko ball)
+     - king.png / queen.png / jack.png (card faces)
+     - jude_face.png (avatar)
+   Enjoy Judeceno — Jude's Fake Money Casino.
+*/
+
+</script>
+</body>
+</html>
