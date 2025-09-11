@@ -60,7 +60,7 @@ currentSkin=ownedSkins[0];
 // ===== Bird =====
 const birdImg=new Image();
 birdImg.src='https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/YOUR_FACE_IMAGE_URL.png';
-const bird={x:90,y:h/2,r:22,vy:0,gravity:0.55,jump:-10,angle:0};
+const bird={x:90,y:h/2,r:22,vy:0,gravity:0.45,jump:-10,angle:0}; // easier gravity
 
 // ===== Input =====
 document.getElementById('start').onclick=startGame;
@@ -69,7 +69,11 @@ window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault();
 function flap(){ if(!running){ startGame(); return; } bird.vy=bird.jump; bird.angle=-0.6; }
 
 // ===== Pipes =====
-function spawnPipe(){ const gap=140; const topH=80+Math.random()*(h-300); pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); }
+function spawnPipe(){ 
+    const gap=200; // bigger gap = easier
+    const topH=80+Math.random()*(h-300); 
+    pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); 
+}
 
 // ===== Reset/start =====
 function reset(){ bird.x=90; bird.y=h/2; bird.vy=0; bird.angle=0; frames=0; pipes=[]; score=0; document.getElementById('score').textContent=score; }
@@ -82,8 +86,14 @@ function update(){
   if(frames%100===0) spawnPipe();
   bird.vy+=bird.gravity; bird.y+=bird.vy; bird.angle+=(0-bird.angle)*0.06;
   for(let p of pipes){
-    p.x-=2.6+Math.min(3,Math.floor(frames/1000));
-    if(!p.passed && p.x+p.w<bird.x){ p.passed=true; score++; money++; document.getElementById('score').textContent=score; document.getElementById('money').textContent=money; }
+    p.x-=(2.0+Math.min(2,Math.floor(frames/1000))); // slower = easier
+    if(!p.passed && p.x+p.w<bird.x){ 
+        p.passed=true; 
+        score++; 
+        money++; 
+        document.getElementById('score').textContent=score; 
+        document.getElementById('money').textContent=money; 
+    }
   }
   pipes=pipes.filter(p=>p.x+p.w>-50);
   if(bird.y+bird.r>h){ bird.y=h-bird.r; gameOver(); }
