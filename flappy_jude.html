@@ -1,8 +1,199 @@
 <!doctype html>
-<html> 
+<html>
 <head>
-  <meta charset="utf-8" />
-<title>flappyjude</title>
+<meta charset="utf-8">
+<title>Flappy Jude + Skins + Inventory + Blackjack</title>
 <style>
-html body  {screen height:100%
-  
+body, html { margin:0; height:100%; font-family:sans-serif; background:#70c5ce; display:flex; flex-direction:column; align-items:center; }
+canvas { border:4px solid #2b6b73; border-radius:6px; background:linear-gradient(#70c5ce,#87d6e6); }
+#banner { position:fixed; top:0; width:100%; background:#ffcc00; color:#000; text-align:center; padding:10px; font-weight:bold; font-size:16px; z-index:100; transition: opacity 1s; }
+#ui { margin:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+button { padding:6px 10px; cursor:pointer; }
+#score,#money { font-weight:bold; font-size:16px; }
+.skin-box { display:inline-block; padding:4px 6px; border:1px solid #333; margin:2px; cursor:pointer; border-radius:4px; }
+#inventory { margin-top:6px; font-size:14px; }
+</style>
+</head>
+<body>
+
+<div id="banner">Huge update! Stayed up till 2 coding this as I haven't been updating recently. Hope y'all enjoy!</div>
+
+<div id="ui">
+  <button id="start">Start Flappy Jude</button>
+  <span>Score: <span id="score">0</span></span>
+  <span>Money: $<span id="money">0</span></span>
+  <button id="loot30">Loot Box $30</button>
+  <button id="blackjackBtn">Play Blackjack</button>
+</div>
+
+<div id="skins"></div>
+<div id="inventory">Owned Skins: <span id="ownedSkins"></span></div>
+<canvas id="c" width="480" height="640"></canvas>
+
+<script>
+/* ===== Banner ===== */
+window.addEventListener('load',()=>{
+  setTimeout(()=>{ document.getElementById('banner').style.opacity=0; setTimeout(()=>document.getElementById('banner').remove(),1000); },5000);
+});
+
+/* ===== Game variables ===== */
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+const w=canvas.width,h=canvas.height;
+let running=false,frames=0,pipes=[],score=0,money=0;
+let currentSkin=0;
+let skins=[
+  {name:'Blue Jude', hue:200, price:15, anim:false},
+  {name:'Emerald Jude', hue:120, price:30, anim:false},
+  {name:'Shadow Jude', hue:0, price:50, anim:false, dark:true},
+  {name:'Gold Jude', hue:50, price:100, anim:false},
+  {name:'Rainbow Jude', hue:0, price:0, anim:true, lootOnly:true} // loot only
+];
+
+/* ===== Load localStorage ===== */
+money=parseInt(localStorage.getItem('money')||0);
+document.getElementById('money').textContent=money;
+let ownedSkins=JSON.parse(localStorage.getItem('ownedSkins')||'[0]'); // always own Blue by default
+currentSkin=ownedSkins[0];
+
+/* ===== Bird image from GitHub ===== */
+const birdImg=new Image();
+birdImg.src='https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/YOUR_FACE_IMAGE_URL.png';
+birdImg.onload=()=>console.log('Flappy Jude image loaded!');
+
+/* ===== Bird ===== */
+const bird={x:90,y:h/2,r:22,vy:0,gravity:0.55,jump:-10,angle:0};
+
+/* ===== Input ===== */
+document.getElementById('start').onclick=startGame;
+canvas.addEventListener('click',flap);
+window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
+function flap(){ if(!running){ startGame(); return; } bird.vy=bird.jump; bird.angle=-0.6; }
+
+/* ===== Pipes ===== */
+function spawnPipe(){ const gap=140; const topH=80+Math.random()*(h-300); pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); }
+
+/* ===== Reset/start ===== */
+function reset(){ bird.x=90; bird.y=h/2; bird.vy=0; bird.angle=0; frames=0; pipes=[]; score=0; document.getElementById('score').textContent=score; }
+function startGame(){ reset(); running=true; loop(); }
+function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Game Over',w/2,h/2-10); ctx.font='18px Arial'; ctx.fillText('Click or Space to retry', w/2,h/2+20); saveData(); }
+
+/* ===== Update ===== */
+function update(){
+  frames++;
+  if(frames%100===0) spawnPipe();
+  bird.vy+=bird.gravity; bird.y+=bird.vy; bird.angle+=(0-bird.angle)*0.06;
+  for(let p of pipes){
+    p.x-=2.6+Math.min(3,Math.floor(frames/1000));
+    if(!p.passed && p.x+p.w<bird.x){ p.passed=true; score++; money++; document.getElementById('score').textContent=score; document.getElementById('money').textContent=money; }
+  }
+  pipes=pipes.filter(p=>p.x+p.w>-50);
+  if(bird.y+bird.r>h){ bird.y=h-bird.r; gameOver(); return; }
+  if(bird.y-bird.r<0){ bird.y=bird.r; bird.vy=0; }
+  for(let p of pipes){ if((bird.x+bird.r>p.x && bird.x-bird.r<p.x+p.w) && (bird.y-bird.r<p.top || bird.y+bird.r>p.bottom)){ gameOver(); return; } }
+}
+
+/* ===== Draw ===== */
+function draw(){
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#6cc08a'; ctx.fillRect(0,h-80,w,80);
+  for(let p of pipes){ ctx.fillStyle='#2b8a52'; ctx.fillRect(p.x,0,p.w,p.top); ctx.fillRect(p.x,p.bottom,p.w,h-p.bottom-80); ctx.fillStyle='#1f6b3f'; ctx.fillRect(p.x-4,p.top-12,p.w+8,12); ctx.fillRect(p.x-4,p.bottom,p.w+8,12); }
+
+  if(birdImg.complete){
+    ctx.save(); ctx.translate(bird.x,bird.y); ctx.rotate(bird.angle);
+    let s=skins[currentSkin];
+    ctx.filter=(s.dark)?'brightness(0.3)':`hue-rotate(${s.hue}deg)`;
+    const size=bird.r*2*1.1;
+    ctx.drawImage(birdImg,-size/2,-size/2,size,size);
+    ctx.restore();
+  } else { ctx.beginPath(); ctx.fillStyle='#ffdd99'; ctx.arc(bird.x,bird.y,bird.r,0,Math.PI*2); ctx.fill(); }
+
+  ctx.fillStyle='#fff'; ctx.font='36px Arial'; ctx.textAlign='left'; ctx.fillText(score,20,48);
+}
+
+/* ===== Loop ===== */
+function loop(){ if(!running) return; update(); draw(); requestAnimationFrame(loop); }
+
+/* ===== Save ===== */
+function saveData(){ 
+  localStorage.setItem('money',money); 
+  localStorage.setItem('ownedSkins',JSON.stringify(ownedSkins));
+}
+
+/* ===== Loot Box (cost $30) ===== */
+document.getElementById('loot30').onclick=()=>openLootBox();
+
+function openLootBox(){
+  if(money<30){ alert('Not enough money for loot box'); return; }
+  money-=30;
+  const roll=Math.random()*100;
+  let skinIndex;
+  if(roll<50) skinIndex=0; // 50% $15
+  else if(roll<75) skinIndex=1; //25% $30
+  else if(roll<90) skinIndex=2; //15% $50
+  else skinIndex=4; //10% Rainbow
+  if(!ownedSkins.includes(skinIndex)) ownedSkins.push(skinIndex);
+  currentSkin=skinIndex;
+  alert('You got: '+skins[skinIndex].name);
+  document.getElementById('money').textContent=money;
+  updateInventory();
+  saveData();
+}
+
+/* ===== Skins UI ===== */
+function updateSkinUI(){
+  const container=document.getElementById('skins'); container.innerHTML='';
+  skins.forEach((s,i)=>{
+    const b=document.createElement('span'); b.textContent=s.name; b.className='skin-box';
+    b.onclick=()=>{
+      if(!ownedSkins.includes(i)){ // purchase if not owned
+        if(s.lootOnly){ alert('This skin can only be obtained via loot boxes!'); return; }
+        if(money<s.price){ alert('Not enough money'); return; }
+        money-=s.price; ownedSkins.push(i); document.getElementById('money').textContent=money; updateInventory(); saveData(); 
+      }
+      currentSkin=i;
+    }
+    b.style.color=(s.dark)?'#222':`hsl(${s.hue},80%,50%)`;
+    container.appendChild(b);
+  });
+}
+updateSkinUI();
+
+/* ===== Inventory UI ===== */
+function updateInventory(){
+  document.getElementById('ownedSkins').textContent=ownedSkins.map(i=>skins[i].name).join(', ');
+}
+updateInventory();
+
+/* ===== Rainbow animation ===== */
+setInterval(()=>{ if(skins[currentSkin].anim) skins[currentSkin].hue=(skins[currentSkin].hue+3)%360; },50);
+
+/* ===== Blackjack ===== */
+document.getElementById('blackjackBtn').onclick=()=>playBlackjack();
+function playBlackjack(){
+  let playerMoney=money;
+  let bet=parseInt(prompt(`Your money: $${playerMoney}\nEnter bet:`));
+  if(isNaN(bet)||bet>playerMoney||bet<=0){ alert('Invalid bet'); return; }
+  const deck=shuffle([...Array(52).keys()]);
+  function cardValue(c){ const v=(c%13)+1; return v>10?10:v; }
+  let player=[deck.pop(),deck.pop()],dealer=[deck.pop(),deck.pop()];
+  function handValue(h){ let val=h.reduce((a,c)=>a+cardValue(c),0); let aces=h.filter(x=>cardValue(x)===1).length; while(val+10<=21 && aces>0){ val+=10; aces--; } return val; }
+  let ph=handValue(player), dh=handValue([dealer[0]]);
+  while(confirm(`Dealer shows ${dealer[0]%13+1}\nYour hand: ${player.map(x=>x%13+1).join(',')} = ${ph}\nHit?`)){ player.push(deck.pop()); ph=handValue(player); if(ph>21) break; }
+  let dh2=handValue(dealer); while(dh2<17){ dealer.push(deck.pop()); dh2=handValue(dealer); }
+  let result='';
+  if(ph>21) result='Lose';
+  else if(dh2>21||ph>dh2) result='Win';
+  else if(ph===dh2) result='Push';
+  else result='Lose';
+  if(result==='Win') money+=bet;
+  if(result==='Lose') money-=bet;
+  document.getElementById('money').textContent=money;
+  alert(`Dealer: ${dealer.map(x=>x%13+1).join(',')} = ${dh2}\nYour hand: ${player.map(x=>x%13+1).join(',')} = ${ph}\nResult: ${result}`);
+  saveData();
+}
+function shuffle(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+</script>
+</body>
+</html>
