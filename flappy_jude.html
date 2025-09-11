@@ -65,7 +65,8 @@ const bird={x:90,y:h/2,r:22,vy:0,gravity:0.45,jump:-10,angle:0}; // easier gravi
 // ===== Input =====
 document.getElementById('start').onclick=startGame;
 canvas.addEventListener('click',flap);
-window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
+// Flap on ANY key
+window.addEventListener('keydown',e=>{ e.preventDefault(); flap(); });
 function flap(){ if(!running){ startGame(); return; } bird.vy=bird.jump; bird.angle=-0.6; }
 
 // ===== Pipes =====
@@ -78,7 +79,7 @@ function spawnPipe(){
 // ===== Reset/start =====
 function reset(){ bird.x=90; bird.y=h/2; bird.vy=0; bird.angle=0; frames=0; pipes=[]; score=0; document.getElementById('score').textContent=score; }
 function startGame(){ reset(); running=true; requestAnimationFrame(loop); }
-function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Game Over',w/2,h/2-10); ctx.font='18px Arial'; ctx.fillText('Click or Space to retry', w/2,h/2+20); saveData(); }
+function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Game Over',w/2,h/2-10); ctx.font='18px Arial'; ctx.fillText('Click or any key to retry', w/2,h/2+20); saveData(); }
 
 // ===== Update =====
 function update(){
@@ -170,30 +171,42 @@ updateInventory();
 // ===== Rainbow animation =====
 setInterval(()=>{ if(skins[currentSkin].anim) skins[currentSkin].hue=(skins[currentSkin].hue+3)%360; },50);
 
-// ===== Blackjack =====
+// ===== Improved Blackjack =====
 document.getElementById('blackjackBtn').onclick=()=>playBlackjack();
 function playBlackjack(){
-  let playerMoney=money;
-  let bet=parseInt(prompt(`Your money: $${playerMoney}\nEnter bet:`));
-  if(isNaN(bet)||bet>playerMoney||bet<=0){ alert('Invalid bet'); return; }
+  if(money<=0){ alert('You have no money!'); return; }
+  let bet=parseInt(prompt(`Your money: $${money}\nEnter bet:`));
+  if(isNaN(bet)||bet>money||bet<=0){ alert('Invalid bet'); return; }
+  
   const deck=shuffle([...Array(52).keys()]);
-  function cardValue(c){ const v=(c%13)+1; return v>10?10:v; }
-  let player=[deck.pop(),deck.pop()],dealer=[deck.pop(),deck.pop()];
-  function handValue(h){ let val=h.reduce((a,c)=>a+cardValue(c),0); let aces=h.filter(x=>cardValue(x)===1).length; while(val+10<=21 && aces>0){ val+=10; aces--; } return val; }
+  const cardValue=c=>{ const v=(c%13)+1; return v>10?10:v; }
+  
+  let player=[deck.pop(),deck.pop()], dealer=[deck.pop(),deck.pop()];
+  const handValue=h=>{ let val=h.reduce((a,c)=>a+cardValue(c),0); let aces=h.filter(x=>cardValue(x)===1).length; while(val+10<=21 && aces>0){ val+=10; aces--; } return val; }
+  
   let ph=handValue(player), dh=handValue([dealer[0]]);
-  while(confirm(`Dealer shows ${dealer[0]%13+1}\nYour hand: ${player.map(x=>x%13+1).join(',')} = ${ph}\nHit?`)){ player.push(deck.pop()); ph=handValue(player); if(ph>21) break; }
-  let dh2=handValue(dealer); while(dh2<17){ dealer.push(deck.pop()); dh2=handValue(dealer); }
+  
+  while(confirm(`Dealer shows ${dealer[0]%13+1}\nYour hand: ${player.map(x=>x%13+1).join(',')} = ${ph}\nHit?`)){
+    player.push(deck.pop()); ph=handValue(player); 
+    if(ph>21) break; 
+  }
+  
+  let dh2=handValue(dealer);
+  while(dh2<17){ dealer.push(deck.pop()); dh2=handValue(dealer); }
+  
   let result='';
   if(ph>21) result='Lose';
   else if(dh2>21||ph>dh2) result='Win';
   else if(ph===dh2) result='Push';
   else result='Lose';
+  
   if(result==='Win') money+=bet;
   if(result==='Lose') money-=bet;
   document.getElementById('money').textContent=money;
   alert(`Dealer: ${dealer.map(x=>x%13+1).join(',')} = ${dh2}\nYour hand: ${player.map(x=>x%13+1).join(',')} = ${ph}\nResult: ${result}`);
   saveData();
 }
+
 function shuffle(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 </script>
 </body>
