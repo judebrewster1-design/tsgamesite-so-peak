@@ -1,58 +1,78 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jude Games Hub</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jude Games</title>
 <style>
-  body {
-    background: #080908;
-    color: #fff;
-    font-family: sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-  }
-  h1 { margin-bottom: 40px; }
+  body { font-family: Arial, sans-serif; text-align: center; background: #121212; color: #fff; }
+  h1 { margin-top: 20px; }
   ul { list-style: none; padding: 0; }
   li { margin: 20px 0; }
-  button {
-    padding: 20px 60px;
-    font-size: 24px;
-    cursor: pointer;
-    border: none;
-    border-radius: 12px;
-    background: #1e1e2f;
-    color: #fff;
-    transition: transform 0.1s, background 0.2s;
-  }
-  button:hover { background: #2e2e4f; transform: scale(1.05); }
-  .coming-soon {
-    margin-top: 60px;
-    padding: 20px;
-    background: #1e1e2f;
-    border-radius: 12px;
-    text-align: center;
-    width: 80%;
-    font-size: 20px;
-  }
+  button { padding: 15px 30px; font-size: 18px; cursor: pointer; }
+  #coming-soon { margin: 30px; font-size: 20px; font-weight: bold; color: #ffcc00; }
+  #poll { margin-top: 40px; background: #222; padding: 20px; border-radius: 10px; display: inline-block; }
+  .vote-count { margin-top: 10px; font-size: 16px; }
 </style>
 </head>
 <body>
 
-<h1>Jude Games Hub</h1>
+<h1>Jude Games</h1>
 
 <ul>
-  <li><button onclick="window.location.href='click-a-jude.html'">Click a Jude</button></li>
+  <li><button onclick="window.location.href='click_a_jude.html'">Click-A-Jude</button></li>
   <li><button onclick="window.location.href='flappy_jude.html'">Flappy Jude</button></li>
 </ul>
 
-<div class="coming-soon">
-  JUDEOMITRY DASH COMING SOON...
+<div id="coming-soon">Judeomtry Dash Coming Soon…</div>
+
+<div id="poll">
+  <h2>Community Poll</h2>
+  <form id="pollForm">
+    <label>
+      <input type="radio" name="vote" value="judeomtry"> Judeomtry Dash
+    </label><br><br>
+    <label>
+      <input type="radio" name="vote" value="judescasino"> Jude's Casino
+    </label><br><br>
+    <button type="submit">Vote</button>
+  </form>
+  <div class="vote-count" id="voteCounts">
+    Loading votes...
+  </div>
 </div>
+
+<script>
+async function fetchVotes() {
+  try {
+    const res = await fetch('http://localhost:5000/poll');
+    const data = await res.json();
+    document.getElementById('voteCounts').innerText =
+      `Judeomtry Dash: ${data.judeomtry} votes\nJude's Casino: ${data.judescasino} votes`;
+  } catch (err) {
+    document.getElementById('voteCounts').innerText = 'Failed to load votes.';
+  }
+}
+
+document.getElementById('pollForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const vote = document.querySelector('input[name="vote"]:checked');
+  if (!vote) return alert('Select an option!');
+  try {
+    await fetch('http://localhost:5000/poll', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vote: vote.value })
+    });
+    fetchVotes();
+  } catch (err) {
+    alert('Vote failed.');
+  }
+});
+
+fetchVotes();
+setInterval(fetchVotes, 5000); // refresh every 5 seconds
+</script>
 
 </body>
 </html>
