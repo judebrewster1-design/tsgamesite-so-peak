@@ -44,10 +44,10 @@ let running=false,frames=0,pipes=[],score=0,money=0;
 let currentSkin=0;
 
 const skins=[
-  {name:'Blue Jude', code:'BLUE15', price:15, anim:false},
-  {name:'Emerald Jude', code:'EM30', price:30, anim:false},
+  {name:'Blue Jude', code:'BLUE15', price:15, anim:false, hue:200},
+  {name:'Emerald Jude', code:'EM30', price:30, anim:false, hue:140},
   {name:'Shadow Jude', code:'SHA50', price:50, anim:false, dark:true},
-  {name:'Gold Jude', code:'GOLD100', price:100, anim:false},
+  {name:'Gold Jude', code:'GOLD100', price:100, anim:false, hue:50},
   {name:'Rainbow Jude', code:'RAINBOW', price:0, anim:true, lootOnly:true} 
 ];
 
@@ -60,19 +60,18 @@ currentSkin=ownedSkins[0];
 // ===== Bird =====
 const birdImg=new Image();
 birdImg.src='https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/YOUR_FACE_IMAGE_URL.png';
-const bird={x:90,y:h/2,r:22,vy:0,gravity:0.45,jump:-10,angle:0}; // easier gravity
+const bird={x:90,y:h/2,r:22,vy:0,gravity:0.35,jump:-10,angle:0}; // easier gravity
 
 // ===== Input =====
 document.getElementById('start').onclick=startGame;
 canvas.addEventListener('click',flap);
-// Flap on ANY key
 window.addEventListener('keydown',e=>{ e.preventDefault(); flap(); });
 function flap(){ if(!running){ startGame(); return; } bird.vy=bird.jump; bird.angle=-0.6; }
 
 // ===== Pipes =====
 function spawnPipe(){ 
-    const gap=200; // bigger gap = easier
-    const topH=80+Math.random()*(h-300); 
+    const gap=250; // bigger gap = easier
+    const topH=50+Math.random()*(h-300); 
     pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); 
 }
 
@@ -85,28 +84,45 @@ function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRe
 function update(){
   frames++;
   if(frames%100===0) spawnPipe();
-  bird.vy+=bird.gravity; bird.y+=bird.vy; bird.angle+=(0-bird.angle)*0.06;
+  
+  bird.vy += bird.gravity;
+  bird.y += bird.vy; 
+  bird.angle += (0 - bird.angle) * 0.06;
+
   for(let p of pipes){
-    p.x-=(2.0+Math.min(2,Math.floor(frames/1000))); // slower = easier
-    if(!p.passed && p.x+p.w<bird.x){ 
-        p.passed=true; 
+    p.x -= 1.5; // slower pipes
+    if(!p.passed && p.x+p.w < bird.x){ 
+        p.passed = true; 
         score++; 
         money++; 
-        document.getElementById('score').textContent=score; 
-        document.getElementById('money').textContent=money; 
+        document.getElementById('score').textContent = score; 
+        document.getElementById('money').textContent = money; 
     }
   }
-  pipes=pipes.filter(p=>p.x+p.w>-50);
-  if(bird.y+bird.r>h){ bird.y=h-bird.r; gameOver(); }
-  if(bird.y-bird.r<0){ bird.y=bird.r; bird.vy=0; }
-  for(let p of pipes){ if((bird.x+bird.r>p.x && bird.x-bird.r<p.x+p.w) && (bird.y-bird.r<p.top || bird.y+bird.r>p.bottom)){ gameOver(); } }
+
+  pipes = pipes.filter(p => p.x + p.w > -50);
+
+  if(bird.y + bird.r > h){ bird.y = h - bird.r; gameOver(); }
+  if(bird.y - bird.r < 0){ bird.y = bird.r; bird.vy = 0; }
+
+  for(let p of pipes){ 
+    if((bird.x + bird.r > p.x && bird.x - bird.r < p.x + p.w) &&
+       (bird.y - bird.r < p.top || bird.y + bird.r > p.bottom)){ 
+      gameOver(); 
+    } 
+  }
 }
 
 // ===== Draw =====
 function draw(){
   ctx.clearRect(0,0,w,h);
   ctx.fillStyle='#6cc08a'; ctx.fillRect(0,h-80,w,80);
-  for(let p of pipes){ ctx.fillStyle='#2b8a52'; ctx.fillRect(p.x,0,p.w,p.top); ctx.fillRect(p.x,p.bottom,p.w,h-p.bottom-80); ctx.fillStyle='#1f6b3f'; ctx.fillRect(p.x-4,p.top-12,p.w+8,12); ctx.fillRect(p.x-4,p.bottom,p.w+8,12); }
+  for(let p of pipes){ 
+    ctx.fillStyle='#2b8a52'; ctx.fillRect(p.x,0,p.w,p.top); 
+    ctx.fillRect(p.x,p.bottom,p.w,h-p.bottom-80); 
+    ctx.fillStyle='#1f6b3f'; ctx.fillRect(p.x-4,p.top-12,p.w+8,12); 
+    ctx.fillRect(p.x-4,p.bottom,p.w+8,12); 
+  }
   if(birdImg.complete){
     ctx.save(); ctx.translate(bird.x,bird.y); ctx.rotate(bird.angle);
     let s=skins[currentSkin];
@@ -171,7 +187,7 @@ updateInventory();
 // ===== Rainbow animation =====
 setInterval(()=>{ if(skins[currentSkin].anim) skins[currentSkin].hue=(skins[currentSkin].hue+3)%360; },50);
 
-// ===== Improved Blackjack =====
+// ===== Blackjack =====
 document.getElementById('blackjackBtn').onclick=()=>playBlackjack();
 function playBlackjack(){
   if(money<=0){ alert('You have no money!'); return; }
