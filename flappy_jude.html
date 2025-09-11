@@ -1,34 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>Flappy Jude + Skins + Blackjack</title>
 <style>
-body,html { margin:0; padding:0; font-family:sans-serif; display:flex; flex-direction:column; align-items:center; background:#70c5ce; }
-canvas { border:4px solid #2b6b73; border-radius:6px; background:linear-gradient(#70c5ce,#87d6e6); }
-#banner { position:fixed; top:0; width:100%; background:#ffcc00; color:#000; text-align:center; padding:10px; font-weight:bold; z-index:100; transition:opacity 1s; }
-#ui { margin:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-button { padding:6px 10px; cursor:pointer; }
-#score,#money { font-weight:bold; font-size:16px; }
-.skin-box { display:inline-block; padding:4px 6px; border:1px solid #333; margin:2px; cursor:pointer; border-radius:4px; }
-#inventory { margin-top:6px; font-size:14px; }
+body, html { margin:0; padding:0; height:100%; font-family:sans-serif; background:#70c5ce; display:flex; flex-direction:column; align-items:center; }
+canvas { border-radius:10px; background:linear-gradient(#70c5ce,#87d6e6); box-shadow:0 4px 12px rgba(0,0,0,0.4); margin-top:20px; }
+
+#banner {
+  position:fixed; top:0; width:100%; background:#ffcc00; color:#000; text-align:center;
+  padding:12px 0; font-weight:bold; font-size:16px; z-index:100; transition: opacity 1s;
+}
+
+#topPanel {
+  display:flex; justify-content:space-between; width:480px; max-width:95%;
+  margin-top:10px; padding:6px 12px; background:rgba(255,255,255,0.85); border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.2); font-weight:bold; font-size:18px;
+}
+
+#topPanel span { display:flex; align-items:center; gap:6px; }
+
+#controls { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; justify-content:center; }
+button { padding:10px 16px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; transition:all 0.2s; }
+button:hover { transform:scale(1.05); }
+
+#loot15 { background:#4aa3df; color:#fff; }
+#loot30 { background:#1e90ff; color:#fff; }
+#loot50 { background:#0c70c2; color:#fff; }
+#loot100 { background:#083e77; color:#fff; }
+#blackjackBtn { background:#ff5c5c; color:#fff; }
+
+#skins { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+.skin-box {
+  padding:6px 10px; border-radius:6px; border:2px solid #333; cursor:pointer;
+  font-weight:bold; transition:all 0.2s; text-align:center;
+}
+.skin-box:hover { transform:scale(1.1); box-shadow:0 0 8px rgba(0,0,0,0.3); }
+
+#start {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  padding:16px 24px; font-size:20px; background:#ffd700; color:#000; border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4); cursor:pointer; z-index:10;
+}
+#start:hover { transform:translate(-50%,-50%) scale(1.05); }
+
+@media(max-width:500px){
+  canvas { width:95%; height:auto; }
+  #topPanel { width:95%; font-size:16px; }
+  button { padding:8px 12px; font-size:13px; }
+}
 </style>
 </head>
 <body>
 
 <div id="banner">Huge update! Stayed up till 2 coding this as I haven't been updating recently. Hope y'all enjoy!</div>
 
-<div id="ui">
-  <button id="start">Start Flappy Jude</button>
+<div id="topPanel">
   <span>Score: <span id="score">0</span></span>
   <span>Money: $<span id="money">0</span></span>
-  <button id="lootBtn">Open Loot Box</button>
+</div>
+
+<div id="controls">
+  <button id="loot15">Loot $15</button>
+  <button id="loot30">Loot $30</button>
+  <button id="loot50">Loot $50</button>
+  <button id="loot100">Loot $100</button>
   <button id="blackjackBtn">Play Blackjack</button>
 </div>
 
 <div id="skins"></div>
-<div id="inventory">Owned Skins: <span id="ownedSkins"></span></div>
+
 <canvas id="c" width="480" height="640"></canvas>
+<button id="start">Start Flappy Jude</button>
 
 <script>
 // ===== Banner =====
@@ -36,134 +79,141 @@ window.addEventListener('load',()=>{
   setTimeout(()=>{ document.getElementById('banner').style.opacity=0; setTimeout(()=>document.getElementById('banner').remove(),1000); },5000);
 });
 
-// ===== Game & Variables =====
+// ===== Game variables =====
 const canvas=document.getElementById('c');
 const ctx=canvas.getContext('2d');
 const w=canvas.width,h=canvas.height;
+let birdImg=new Image();
+birdImg.src='https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/face.png'; // replace with your GitHub raw URL
 let running=false,frames=0,pipes=[],score=0,money=0;
 let currentSkin=0;
-
-const skins=[
-  {name:'Blue Jude', code:'BLUE15', price:15, anim:false},
-  {name:'Emerald Jude', code:'EM30', price:30, anim:false},
-  {name:'Shadow Jude', code:'SHA50', price:50, anim:false, dark:true},
-  {name:'Gold Jude', code:'GOLD100', price:100, anim:false},
-  {name:'Rainbow Jude', code:'RAINBOW', price:0, anim:true, lootOnly:true} // loot-only
+let skins=[
+  {name:'Base Jude', hue:0, anim:false},
+  {name:'Blue Jude', hue:200, anim:false},
+  {name:'Emerald Jude', hue:120, anim:false},
+  {name:'Shadow Jude', hue:0, anim:false, dark:true},
+  {name:'Gold Jude', hue:50, anim:false},
+  {name:'Rainbow Jude', hue:0, anim:true}
 ];
+currentSkin=0;
+updateSkinUI();
 
-// Load localStorage
+// Load money
 money=parseInt(localStorage.getItem('money')||0);
 document.getElementById('money').textContent=money;
-let ownedSkins=JSON.parse(localStorage.getItem('ownedSkins')||'[0]'); // always own first skin
-currentSkin=ownedSkins[0];
 
-// ===== Bird Image =====
-const birdImg=new Image();
-birdImg.src='https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/YOUR_FACE_IMAGE_URL.png';
-
-// ===== Bird =====
-const bird={x:90,y:h/2,r:22,vy:0,gravity:0.55,jump:-10,angle:0};
+// ===== Bird physics =====
+const bird={x:90,y:h/2,r:28,vy:0,gravity:0.2,jump:-8,angle:0};
 
 // ===== Input =====
 document.getElementById('start').onclick=startGame;
-canvas.addEventListener('click',flap);
-window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); flap(); } });
-function flap(){ if(!running){ startGame(); return; } bird.vy=bird.jump; bird.angle=-0.6; }
+canvas.addEventListener('click', flap);
+
+// ANY KEY flaps
+window.addEventListener('keydown', e => {
+    if(!running){ startGame(); return; }
+    bird.vy = bird.jump;
+    bird.angle = 0;
+});
 
 // ===== Pipes =====
-function spawnPipe(){ const gap=140; const topH=80+Math.random()*(h-300); pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); }
+function spawnPipe(){ const gap=180; const topH=60+Math.random()*(h-300); pipes.push({x:w+20,top:topH,bottom:topH+gap,w:60,passed:false}); }
 
-// ===== Reset/Start =====
+// ===== Reset/start =====
 function reset(){ bird.x=90; bird.y=h/2; bird.vy=0; bird.angle=0; frames=0; pipes=[]; score=0; document.getElementById('score').textContent=score; }
-function startGame(){ reset(); running=true; loop(); }
-function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Game Over',w/2,h/2-10); ctx.font='18px Arial'; ctx.fillText('Click or Space to retry', w/2,h/2+20); saveData(); }
+function startGame(){ reset(); running=true; loop(); document.getElementById('start').style.display='none'; }
+function gameOver(){ running=false; ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,w,h); ctx.fillStyle='#fff'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Game Over',w/2,h/2-10); ctx.font='18px Arial'; ctx.fillText('Click or Any Key to retry', w/2,h/2+20); document.getElementById('start').style.display='block'; saveData(); }
 
 // ===== Update =====
 function update(){
   frames++;
   if(frames%100===0) spawnPipe();
   bird.vy+=bird.gravity; bird.y+=bird.vy; bird.angle+=(0-bird.angle)*0.06;
-  for(let p of pipes){
-    p.x-=2.6+Math.min(3,Math.floor(frames/1000));
-    if(!p.passed && p.x+p.w<bird.x){ p.passed=true; score++; money++; document.getElementById('score').textContent=score; document.getElementById('money').textContent=money; }
+  for(let p of pipes){ 
+      p.x-=2+Math.min(2,Math.floor(frames/1000)); // slower speed
+      if(!p.passed && p.x+p.w<bird.x){ 
+          p.passed=true; score++; money++; 
+          document.getElementById('score').textContent=score; 
+          document.getElementById('money').textContent=money; 
+      } 
   }
   pipes=pipes.filter(p=>p.x+p.w>-50);
   if(bird.y+bird.r>h){ bird.y=h-bird.r; gameOver(); return; }
   if(bird.y-bird.r<0){ bird.y=bird.r; bird.vy=0; }
-  for(let p of pipes){ if((bird.x+bird.r>p.x && bird.x-bird.r<p.x+p.w) && (bird.y-bird.r<p.top || bird.y+bird.r>p.bottom)){ gameOver(); return; } }
+  for(let p of pipes){ 
+      if((bird.x+bird.r>p.x && bird.x-bird.r<p.x+p.w) && (bird.y-bird.r<p.top || bird.y+bird.r>p.bottom)){ 
+          gameOver(); return; 
+      } 
+  }
 }
 
 // ===== Draw =====
 function draw(){
   ctx.clearRect(0,0,w,h);
-  ctx.fillStyle='#6cc08a'; ctx.fillRect(0,h-80,w,80);
-  for(let p of pipes){ ctx.fillStyle='#2b8a52'; ctx.fillRect(p.x,0,p.w,p.top); ctx.fillRect(p.x,p.bottom,p.w,h-p.bottom-80); ctx.fillStyle='#1f6b3f'; ctx.fillRect(p.x-4,p.top-12,p.w+8,12); ctx.fillRect(p.x-4,p.bottom,p.w+8,12); }
-
+  // Ground
+  ctx.fillStyle='#6cc08a'; 
+  ctx.fillRect(0,h-80,w,80);
+  // Pipes
+  for(let p of pipes){
+    ctx.fillStyle='#2b8a52'; 
+    ctx.fillRect(p.x,0,p.w,p.top);
+    ctx.fillRect(p.x,p.bottom,p.w,h-p.bottom-80);
+    ctx.fillStyle='#1f6b3f'; 
+    ctx.fillRect(p.x-4,p.top-12,p.w+8,12);
+    ctx.fillRect(p.x-4,p.bottom,p.w+8,12);
+  }
+  // Bird / Jude
   if(birdImg.complete){
-    ctx.save(); ctx.translate(bird.x,bird.y); ctx.rotate(bird.angle);
-    let s=skins[currentSkin];
-    ctx.filter=(s.dark)?'brightness(0.3)':`hue-rotate(${s.hue||0}deg)`;
-    const size=bird.r*2*1.1;
+    ctx.save();
+    ctx.translate(bird.x,bird.y);
+    ctx.rotate(0); // no tilt
+    let s = skins[currentSkin];
+    ctx.filter=(s.name==='Base Jude')?'none':(s.dark)?'brightness(0.3)':`hue-rotate(${s.hue}deg)`;
+    const size=bird.r*2*1.6;
+    ctx.shadowColor='rgba(255,255,255,0.8)';
+    ctx.shadowBlur=10;
     ctx.drawImage(birdImg,-size/2,-size/2,size,size);
     ctx.restore();
   } else { ctx.beginPath(); ctx.fillStyle='#ffdd99'; ctx.arc(bird.x,bird.y,bird.r,0,Math.PI*2); ctx.fill(); }
-
-  ctx.fillStyle='#fff'; ctx.font='36px Arial'; ctx.textAlign='left'; ctx.fillText(score,20,48);
+  // Score
+  ctx.fillStyle='#fff'; 
+  ctx.font='36px Arial'; 
+  ctx.textAlign='left'; 
+  ctx.fillText(score,20,48);
 }
 
 // ===== Loop =====
 function loop(){ if(!running) return; update(); draw(); requestAnimationFrame(loop); }
 
 // ===== Save =====
-function saveData(){ 
-  localStorage.setItem('money',money); 
-  localStorage.setItem('ownedSkins',JSON.stringify(ownedSkins));
-}
+function saveData(){ localStorage.setItem('money',money); localStorage.setItem('skins',JSON.stringify(skins)); }
 
-// ===== Loot Box =====
-document.getElementById('lootBtn').onclick=()=>openLootBox();
-function openLootBox(){
-  if(money<30){ alert('Not enough money'); return; }
-  money-=30;
-  const roll=Math.random()*100;
-  let skinIndex;
-  if(roll<50) skinIndex=0;
-  else if(roll<75) skinIndex=1;
-  else if(roll<90) skinIndex=2;
-  else skinIndex=4; // Rainbow
-  if(!ownedSkins.includes(skinIndex)) ownedSkins.push(skinIndex);
-  currentSkin=skinIndex;
-  alert('You received: '+skins[skinIndex].name+' ('+skins[skinIndex].code+')');
-  document.getElementById('money').textContent=money;
-  updateInventory();
+// ===== Loot boxes =====
+function addLoot(price){
+  if(money<price){ alert('Not enough money'); return; }
+  money-=price; document.getElementById('money').textContent=money;
+  const possibleSkins=[1,2,3,4,5];
+  const chosen=possibleSkins[Math.floor(Math.random()*possibleSkins.length)];
+  currentSkin=chosen;
+  alert('You got: '+skins[chosen].name);
   saveData();
 }
+document.getElementById('loot15').onclick=()=>addLoot(15);
+document.getElementById('loot30').onclick=()=>addLoot(30);
+document.getElementById('loot50').onclick=()=>addLoot(50);
+document.getElementById('loot100').onclick=()=>addLoot(100);
 
 // ===== Skins UI =====
 function updateSkinUI(){
   const container=document.getElementById('skins'); container.innerHTML='';
   skins.forEach((s,i)=>{
-    const b=document.createElement('span'); 
-    b.textContent=s.name+' ('+s.code+')'; 
-    b.className='skin-box';
-    b.onclick=()=>{
-      if(!ownedSkins.includes(i)){
-        if(s.lootOnly){ alert('This skin can only be obtained via loot boxes!'); return; }
-        if(money<s.price){ alert('Not enough money'); return; }
-        money-=s.price; ownedSkins.push(i); document.getElementById('money').textContent=money;
-        updateInventory(); saveData();
-      }
-      currentSkin=i;
-    }
-    b.style.color=(s.dark)?'#222':`hsl(${s.hue||0},80%,50%)`;
+    const b=document.createElement('span'); b.textContent=s.name; b.className='skin-box';
+    b.onclick=()=>currentSkin=i;
+    b.style.color=(s.dark)?'#222':`hsl(${s.hue},80%,50%)`;
     container.appendChild(b);
   });
 }
 updateSkinUI();
-
-// ===== Inventory UI =====
-function updateInventory(){ document.getElementById('ownedSkins').textContent=ownedSkins.map(i=>skins[i].name+' ('+skins[i].code+')').join(', '); }
-updateInventory();
 
 // ===== Rainbow animation =====
 setInterval(()=>{ if(skins[currentSkin].anim) skins[currentSkin].hue=(skins[currentSkin].hue+3)%360; },50);
@@ -193,6 +243,10 @@ function playBlackjack(){
   saveData();
 }
 function shuffle(array){ let a=array.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// ===== Flap function =====
+function flap(){ bird.vy=bird.jump; bird.angle=0; }
+
 </script>
 </body>
 </html>
