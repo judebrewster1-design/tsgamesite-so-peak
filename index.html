@@ -5,57 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jude Game Hub</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+
     body {
-      background-color: #0a0a0a;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at top, #0d1b2a, #000);
+      font-family: 'Orbitron', sans-serif;
+      color: white;
+      overflow: hidden;
     }
-    h1 {
-      margin-bottom: 40px;
+
+    .container {
       text-align: center;
-      font-size: 2.5rem;
+      animation: fadeIn 1s ease-in-out;
     }
-    main {
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 50px;
+      color: #00f7ff;
+      text-shadow: 0 0 20px #00f7ff, 0 0 40px #00f7ff;
+    }
+
+    .menu {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 25px;
+      align-items: center;
     }
+
     .menu-button {
-      background: #1e1e1e;
-      color: #fff;
-      border: 2px solid #fff;
-      padding: 15px 25px;
-      font-size: 1.2rem;
+      background: transparent;
+      border: 2px solid #00f7ff;
+      padding: 15px 40px;
+      font-size: 1.5rem;
+      color: #00f7ff;
       cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.2s ease;
+      border-radius: 12px;
+      text-transform: uppercase;
+      transition: 0.3s ease;
+      width: 280px;
+      text-shadow: 0 0 10px #00f7ff;
+      box-shadow: 0 0 10px #00f7ff inset;
     }
+
     .menu-button:hover {
-      background: #fff;
+      background: #00f7ff;
       color: #000;
+      box-shadow: 0 0 25px #00f7ff, 0 0 50px #00f7ff;
+      transform: scale(1.05);
     }
+
     footer {
-      margin-top: 50px;
+      margin-top: 60px;
       font-size: 1rem;
       color: #888;
+      text-shadow: 0 0 5px #000;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>Jude Game Hub</h1>
-  <main>
-    <button class="menu-button" onclick="window.location.href='click-a-jude.html'">Click a Jude</button>
-    <button class="menu-button" onclick="window.location.href='flappy_jude.html'">Flappy Jude</button>
-    <button class="menu-button" onclick="window.location.href='judeceno.html'">JudeCeno</button>
-    <button class="menu-button">?</button>
-    <button class="menu-button" onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSfbLtLrw6eExjHcf_JozV0nlTJ2q5OM8TIFBEfvXn5QDZmKyg/viewform?usp=dialog','_blank')">Go vote for next game</button>
-  </main>
-  <footer>Coming Soon: Judeomity Dash...</footer>
+  <div class="container">
+    <h1>🎮 Jude Game Hub 🎮</h1>
+    <div class="menu">
+      <button class="menu-button" onclick="window.location.href='click-a-jude.html'">Click a Jude</button>
+      <button class="menu-button" onclick="window.location.href='flappy_jude.html'">Flappy Jude</button>
+    </div>
+    <footer>⚡ More Games Coming Soon ⚡</footer>
+  </div>
 </body>
 </html>
