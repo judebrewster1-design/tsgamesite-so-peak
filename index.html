@@ -3,102 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Judeceno Main Menu</title>
+<title>Judeceno Games Menu</title>
 <style>
-  /* Reset */
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Arial', sans-serif; background:#111; color:#fff; }
-  a { text-decoration:none; color:inherit; }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #0d0d1a, #1a1a33);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
 
-  /* Header */
-  header { text-align:center; padding:30px 0; background:#1a1a1a; border-bottom:2px solid #00f0ff; }
-  header img { width:180px; }
-  nav ul { display:flex; justify-content:center; list-style:none; margin-top:15px; gap:30px; }
-  nav li a { font-weight:bold; color:#00f0ff; transition:0.3s; }
-  nav li a:hover { color:#ff00ff; }
+  header {
+    margin-top: 60px;
+    text-align: center;
+  }
 
-  /* Main Menu Grid */
-  main { padding:40px 20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:30px; justify-items:center; }
-  .game-card { background:#1f1f1f; border-radius:12px; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.5); width:100%; max-width:300px; text-align:center; transition:0.3s; }
-  .game-card:hover { transform:scale(1.05); box-shadow:0 8px 20px rgba(0,255,255,0.5); }
-  .game-card img { width:100%; height:200px; object-fit:cover; }
-  .game-card h2 { color:#00f0ff; margin:15px 0; }
-  .game-card p { margin:10px 20px; font-size:0.95rem; color:#ccc; }
-  .play-button { display:inline-block; margin:15px 0 20px; padding:10px 25px; background:#00f0ff; color:#111; font-weight:bold; border-radius:6px; transition:0.3s; }
-  .play-button:hover { background:#ff00ff; color:#fff; }
+  header h1 {
+    font-size: 3em;
+    letter-spacing: 2px;
+    color: #4dd0e1;
+    margin-bottom: 5px;
+  }
 
-  /* Footer */
-  footer { text-align:center; padding:20px; background:#1a1a1a; border-top:2px solid #00f0ff; margin-top:40px; font-size:0.9rem; color:#888; }
+  header p {
+    font-size: 1.2em;
+    color: #bbb;
+  }
+
+  .menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 60px;
+    gap: 25px;
+    width: 100%;
+  }
+
+  .game-link {
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 2em;
+    background: rgba(77, 208, 225, 0.1);
+    padding: 20px 60px;
+    border-radius: 15px;
+    border: 2px solid #4dd0e1;
+    transition: all 0.3s ease;
+    width: 250px;
+    text-align: center;
+  }
+
+  .game-link:hover {
+    background: #4dd0e1;
+    color: #0d0d1a;
+    border-color: #00acc1;
+    transform: scale(1.05);
+  }
+
+  .coming-soon {
+    margin-top: 80px;
+    background: rgba(255,255,255,0.05);
+    border: 2px dashed #4dd0e1;
+    padding: 30px 50px;
+    border-radius: 20px;
+    text-align: center;
+    font-size: 1.8em;
+    color: #bbb;
+    width: 350px;
+    animation: glow 2s infinite alternate;
+  }
+
+  @keyframes glow {
+    0% { box-shadow: 0 0 5px #4dd0e1; }
+    100% { box-shadow: 0 0 20px #4dd0e1; }
+  }
+
+  .footer {
+    margin-top: auto;
+    padding: 20px;
+    text-align: center;
+    font-size: 0.9em;
+    color: #777;
+  }
+
+  @media (max-width: 600px) {
+    .game-link {
+      font-size: 1.5em;
+      padding: 15px 40px;
+      width: 200px;
+    }
+    .coming-soon {
+      font-size: 1.5em;
+      width: 250px;
+      padding: 20px 30px;
+    }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <img src="YOUR_FACE_IMAGE_URL.png" alt="Judeceno Logo">
-  <nav>
-    <ul>
-      <li><a href="index.html">Main Menu</a></li>
-      <li><a href="click-a-jude.html">Click a Jude</a></li>
-      <li><a href="flappy_jude.html">Flappy Jude</a></li>
-      <li><a href="judeceno.html">Judeceno Game</a></li>
-    </ul>
-  </nav>
+  <h1>Judeceno Games</h1>
+  <p>Pick a game and have fun!</p>
 </header>
 
-<main>
-  <div class="game-card">
-    <img src="click.png" alt="Click a Jude">
-    <h2>Click a Jude</h2>
-    <p>Tap on the Judes to score points and see who reigns supreme!</p>
-    <a class="play-button" href="click-a-jude.html">Play Now</a>
-  </div>
+<div class="menu">
+  <a href="click-a-jude.html" class="game-link">Click a Jude</a>
+  <a href="flappy_jude.html" class="game-link">Flappy Jude</a>
+  <a href="judeceno.html" class="game-link">Jude Ceno</a>
+</div>
 
-  <div class="game-card">
-    <img src="flappy.png" alt="Flappy Jude">
-    <h2>Flappy Jude</h2>
-    <p>Help Jude navigate through challenging obstacles and beat your high score.</p>
-    <a class="play-button" href="flappy_jude.html">Play Now</a>
-  </div>
+<div class="coming-soon">
+  Coming Soon: Slither Judeio
+</div>
 
-  <div class="game-card">
-    <img src="judeceno.png" alt="Judeceno Game">
-    <h2>Judeceno</h2>
-    <p>The ultimate Judeceno experience with mini-games and fun challenges.</p>
-    <a class="play-button" href="judeceno.html">Play Now</a>
-  </div>
-
-  <div class="game-card">
-    <img src="jack.png" alt="Jack Card">
-    <h2>Jack Card</h2>
-    <p>Test your luck with Judeceno card games featuring Jack, Queen, and King.</p>
-    <a class="play-button" href="cards.html">Play Cards</a>
-  </div>
-
-  <div class="game-card">
-    <img src="minor.png" alt="Gems">
-    <h2>Mines/Gems</h2>
-    <p>Dive into Judeceno mines to collect gems and avoid obstacles. Challenge your strategy!</p>
-    <a class="play-button" href="mines.html">Play Mines</a>
-  </div>
-
-  <div class="game-card">
-    <img src="plink.png" alt="Plinko">
-    <h2>Plinko</h2>
-    <p>Drop your Plinko balls and see if luck favors you with big wins!</p>
-    <a class="play-button" href="plinko.html">Play Plinko</a>
-  </div>
-
-  <div class="game-card">
-    <img src="money.png" alt="Money Rewards">
-    <h2>Rewards</h2>
-    <p>Earn Judeceno points and multiply your scores with mini-games and challenges.</p>
-    <a class="play-button" href="rewards.html">Check Rewards</a>
-  </div>
-</main>
-
-<footer>
-  &copy; 2025 Judeceno | All Rights Reserved
-</footer>
+<div class="footer">
+  &copy; 2025 Judeceno Games. All rights reserved.
+</div>
 
 </body>
 </html>
