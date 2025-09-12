@@ -1,86 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jude Game Hub</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judeceno Main Menu</title>
+<style>
+  /* Reset */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Arial', sans-serif; background:#111; color:#fff; }
+  a { text-decoration:none; color:inherit; }
 
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: radial-gradient(circle at top, #0d1b2a, #000);
-      font-family: 'Orbitron', sans-serif;
-      color: white;
-      overflow: hidden;
-    }
+  /* Header */
+  header { text-align:center; padding:30px 0; background:#1a1a1a; border-bottom:2px solid #00f0ff; }
+  header img { width:180px; }
+  nav ul { display:flex; justify-content:center; list-style:none; margin-top:15px; gap:30px; }
+  nav li a { font-weight:bold; color:#00f0ff; transition:0.3s; }
+  nav li a:hover { color:#ff00ff; }
 
-    .container {
-      text-align: center;
-      animation: fadeIn 1s ease-in-out;
-    }
+  /* Main Menu Grid */
+  main { padding:40px 20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:30px; justify-items:center; }
+  .game-card { background:#1f1f1f; border-radius:12px; overflow:hidden; box-shadow:0 5px 15px rgba(0,0,0,0.5); width:100%; max-width:300px; text-align:center; transition:0.3s; }
+  .game-card:hover { transform:scale(1.05); box-shadow:0 8px 20px rgba(0,255,255,0.5); }
+  .game-card img { width:100%; height:200px; object-fit:cover; }
+  .game-card h2 { color:#00f0ff; margin:15px 0; }
+  .game-card p { margin:10px 20px; font-size:0.95rem; color:#ccc; }
+  .play-button { display:inline-block; margin:15px 0 20px; padding:10px 25px; background:#00f0ff; color:#111; font-weight:bold; border-radius:6px; transition:0.3s; }
+  .play-button:hover { background:#ff00ff; color:#fff; }
 
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 50px;
-      color: #00f7ff;
-      text-shadow: 0 0 20px #00f7ff, 0 0 40px #00f7ff;
-    }
-
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      align-items: center;
-    }
-
-    .menu-button {
-      background: transparent;
-      border: 2px solid #00f7ff;
-      padding: 15px 40px;
-      font-size: 1.5rem;
-      color: #00f7ff;
-      cursor: pointer;
-      border-radius: 12px;
-      text-transform: uppercase;
-      transition: 0.3s ease;
-      width: 280px;
-      text-shadow: 0 0 10px #00f7ff;
-      box-shadow: 0 0 10px #00f7ff inset;
-    }
-
-    .menu-button:hover {
-      background: #00f7ff;
-      color: #000;
-      box-shadow: 0 0 25px #00f7ff, 0 0 50px #00f7ff;
-      transform: scale(1.05);
-    }
-
-    footer {
-      margin-top: 60px;
-      font-size: 1rem;
-      color: #888;
-      text-shadow: 0 0 5px #000;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+  /* Footer */
+  footer { text-align:center; padding:20px; background:#1a1a1a; border-top:2px solid #00f0ff; margin-top:40px; font-size:0.9rem; color:#888; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎮 Jude Game Hub 🎮</h1>
-    <div class="menu">
-      <button class="menu-button" onclick="window.location.href='click-a-jude.html'">Click a Jude</button>
-      <button class="menu-button" onclick="window.location.href='flappy_jude.html'">Flappy Jude</button>
-    </div>
-    <footer>⚡ More Games Coming Soon ⚡</footer>
+
+<header>
+  <img src="YOUR_FACE_IMAGE_URL.png" alt="Judeceno Logo">
+  <nav>
+    <ul>
+      <li><a href="index.html">Main Menu</a></li>
+      <li><a href="click-a-jude.html">Click a Jude</a></li>
+      <li><a href="flappy_jude.html">Flappy Jude</a></li>
+      <li><a href="judeceno.html">Judeceno Game</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <div class="game-card">
+    <img src="click.png" alt="Click a Jude">
+    <h2>Click a Jude</h2>
+    <p>Tap on the Judes to score points and see who reigns supreme!</p>
+    <a class="play-button" href="click-a-jude.html">Play Now</a>
   </div>
+
+  <div class="game-card">
+    <img src="flappy.png" alt="Flappy Jude">
+    <h2>Flappy Jude</h2>
+    <p>Help Jude navigate through challenging obstacles and beat your high score.</p>
+    <a class="play-button" href="flappy_jude.html">Play Now</a>
+  </div>
+
+  <div class="game-card">
+    <img src="judeceno.png" alt="Judeceno Game">
+    <h2>Judeceno</h2>
+    <p>The ultimate Judeceno experience with mini-games and fun challenges.</p>
+    <a class="play-button" href="judeceno.html">Play Now</a>
+  </div>
+
+  <div class="game-card">
+    <img src="jack.png" alt="Jack Card">
+    <h2>Jack Card</h2>
+    <p>Test your luck with Judeceno card games featuring Jack, Queen, and King.</p>
+    <a class="play-button" href="cards.html">Play Cards</a>
+  </div>
+
+  <div class="game-card">
+    <img src="minor.png" alt="Gems">
+    <h2>Mines/Gems</h2>
+    <p>Dive into Judeceno mines to collect gems and avoid obstacles. Challenge your strategy!</p>
+    <a class="play-button" href="mines.html">Play Mines</a>
+  </div>
+
+  <div class="game-card">
+    <img src="plink.png" alt="Plinko">
+    <h2>Plinko</h2>
+    <p>Drop your Plinko balls and see if luck favors you with big wins!</p>
+    <a class="play-button" href="plinko.html">Play Plinko</a>
+  </div>
+
+  <div class="game-card">
+    <img src="money.png" alt="Money Rewards">
+    <h2>Rewards</h2>
+    <p>Earn Judeceno points and multiply your scores with mini-games and challenges.</p>
+    <a class="play-button" href="rewards.html">Check Rewards</a>
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 Judeceno | All Rights Reserved
+</footer>
+
 </body>
 </html>
