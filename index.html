@@ -8,108 +8,105 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(120deg, #89f7fe, #66a6ff);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
     }
+
     header {
+      padding: 30px 20px;
       text-align: center;
-      padding: 2rem 1rem;
-      background-color: rgba(0,0,0,0.1);
+      background-color: rgba(0,0,0,0.6);
       border-bottom: 2px solid #fff;
     }
+
     header h1 {
-      font-size: 2.5rem;
-      color: #fff;
+      font-size: 2.5em;
       margin: 0;
       letter-spacing: 2px;
     }
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 2rem;
-      padding: 2rem;
+
+    .game-menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
+
     .game-card {
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 2rem;
-      width: 220px;
-      height: 150px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 20px;
       text-align: center;
+      transition: transform 0.3s, background 0.3s;
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.2);
     }
+
     .game-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(255,255,255,0.6);
+      transform: translateY(-10px);
+      background: rgba(255,255,255,0.1);
+      border-color: #fff;
     }
+
     .game-card h2 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: #fff;
+      margin: 15px 0;
+      font-size: 1.5em;
     }
+
+    .coming-soon {
+      font-size: 0.9em;
+      color: #ccc;
+      margin-top: 10px;
+    }
+
     footer {
       text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      color: #fff;
-      background-color: rgba(0,0,0,0.1);
+      padding: 20px;
+      background: rgba(0,0,0,0.7);
       border-top: 2px solid #fff;
-    }
-    /* Coming soon board style */
-    .coming-soon {
-      background: rgba(255,255,255,0.2);
-      border: 2px dashed rgba(255,255,255,0.5);
-      border-radius: 12px;
-      padding: 1rem;
-      text-align: center;
-      color: #fff;
-      font-weight: bold;
-      font-size: 1rem;
-      width: 220px;
-      height: 150px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      font-size: 0.9em;
+      color: #fffa;
     }
   </style>
 </head>
 <body>
+
   <header>
     <h1>Judeceno Games</h1>
   </header>
 
-  <main>
-    <div class="game-card" onclick="window.location.href='click-a-jude.html'">
+  <section class="game-menu">
+    <!-- Games in root -->
+    <div class="game-card" onclick="location.href='click-a-jude.html'">
       <h2>Click a Jude</h2>
     </div>
 
-    <div class="game-card" onclick="window.location.href='flappy_jude.html'">
+    <div class="game-card" onclick="location.href='flappy_jude.html'">
       <h2>Flappy Jude</h2>
     </div>
 
-    <div class="game-card" onclick="window.location.href='judecenogamesandmainmenu/judeceno main menu'">
-      <h2>JudeCeno</h2>
+    <!-- Judeceno main menu -->
+    <div class="game-card" onclick="location.href='judecenomenu/judeceno%20main%20menu.html'">
+      <h2>Judeceno Main Menu</h2>
     </div>
 
-    <div class="coming-soon">
-      Slither Jude.io (Coming Soon)
+    <!-- Coming soon games -->
+    <div class="game-card">
+      <h2>JudeCeno Game</h2>
+      <div class="coming-soon">Coming Soon</div>
     </div>
-  </main>
+
+    <div class="game-card">
+      <h2>Slither Judeio</h2>
+      <div class="coming-soon">Coming Soon</div>
+    </div>
+  </section>
 
   <footer>
     Thanks David for the fries
   </footer>
+
 </body>
 </html>
