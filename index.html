@@ -7,106 +7,77 @@
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
       color: #fff;
     }
-
     header {
-      padding: 30px 20px;
       text-align: center;
-      background-color: rgba(0,0,0,0.6);
-      border-bottom: 2px solid #fff;
-    }
-
-    header h1 {
-      font-size: 2.5em;
-      margin: 0;
+      padding: 2rem 1rem;
+      font-size: 2.5rem;
+      font-weight: bold;
       letter-spacing: 2px;
     }
-
-    .game-menu {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 30px;
-      padding: 40px 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
     }
-
-    .game-card {
-      background: rgba(255,255,255,0.05);
-      border-radius: 15px;
-      padding: 20px;
-      text-align: center;
-      transition: transform 0.3s, background 0.3s;
-      cursor: pointer;
-      border: 2px solid rgba(255,255,255,0.2);
-    }
-
-    .game-card:hover {
-      transform: translateY(-10px);
+    nav a {
+      display: block;
+      text-decoration: none;
       background: rgba(255,255,255,0.1);
-      border-color: #fff;
+      padding: 1.5rem 3rem;
+      border-radius: 15px;
+      font-size: 1.25rem;
+      color: #fff;
+      transition: 0.3s ease;
     }
-
-    .game-card h2 {
-      margin: 15px 0;
-      font-size: 1.5em;
+    nav a:hover {
+      background: rgba(255,255,255,0.25);
+      transform: scale(1.05);
     }
-
-    .coming-soon {
-      font-size: 0.9em;
-      color: #ccc;
-      margin-top: 10px;
+    .coming-soon-board {
+      margin: 3rem auto;
+      padding: 2rem;
+      width: 80%;
+      max-width: 800px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+      color: #ffd700;
+      box-shadow: 0 0 20px rgba(255,255,0,0.5);
     }
-
     footer {
       text-align: center;
-      padding: 20px;
-      background: rgba(0,0,0,0.7);
-      border-top: 2px solid #fff;
-      font-size: 0.9em;
-      color: #fffa;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #ccc;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Judeceno Games</h1>
-  </header>
+<header>Judeceno Games</header>
 
-  <section class="game-menu">
-    <!-- Games in root -->
-    <div class="game-card" onclick="location.href='click-a-jude.html'">
-      <h2>Click a Jude</h2>
-    </div>
+<nav>
+  <!-- Games menu -->
+  <a href="click-a-jude.html">Click a Jude</a>
+  <a href="flappy_jude.html">Flappy Jude</a>
+  <a href="tsgamesite-so-peak/judecenogamesandmainmenu/judecenomenu.html">Judeceno Menu</a>
+  <!-- Add other games if needed -->
+</nav>
 
-    <div class="game-card" onclick="location.href='flappy_jude.html'">
-      <h2>Flappy Jude</h2>
-    </div>
+<div class="coming-soon-board">
+  Coming Soon: Slither Judeio
+</div>
 
-    <!-- Judeceno main menu -->
-    <div class="game-card" onclick="location.href='judecenomenu/judeceno%20main%20menu.html'">
-      <h2>Judeceno Main Menu</h2>
-    </div>
-
-    <!-- Coming soon games -->
-    <div class="game-card">
-      <h2>JudeCeno Game</h2>
-      <div class="coming-soon">Coming Soon</div>
-    </div>
-
-    <div class="game-card">
-      <h2>Slither Judeio</h2>
-      <div class="coming-soon">Coming Soon</div>
-    </div>
-  </section>
-
-  <footer>
-    Thanks David for the fries
-  </footer>
+<footer>
+  thanks david for the fries
+</footer>
 
 </body>
 </html>
