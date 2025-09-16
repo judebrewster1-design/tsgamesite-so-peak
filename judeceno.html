@@ -1064,7 +1064,7 @@ function revealMine(index){
     // hit mine -> reveal all
     cell.classList.add('mine');
     cell.textContent = '';
-    cell.style.backgroundImage = `url("${https://github.com/judebrewster1-design/tsgamesite-so-peak/blob/main/minor.png?raw=true}")`; // use minor.png for bombs/gems visuals (user asked to use minor.png)
+    cell.style.backgroundImage = `url("${IMGS.minor.png}")`; // use minor.png for bombs/gems visuals (user asked to use minor.png)
     // reveal all mines
     state.mines.mines.forEach(m=>{
       const other = document.querySelectorAll('.mine-cell')[m];
