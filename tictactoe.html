@@ -1,132 +1,114 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic-Tac-Toe JudeVerse</title>
+<title>Tic Tac Toe</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(120deg, #ff9a9e, #fad0c4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    margin: 0;
-    padding: 20px;
-  }
-  h1 { color: #333; }
-  #board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-gap: 5px;
-    margin: 20px 0;
-  }
-  .cell {
-    width: 100px;
-    height: 100px;
-    background: white;
-    border: 2px solid #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5em;
-    cursor: pointer;
-    user-select: none;
-  }
-  #chat {
-    width: 320px;
-    margin-top: 20px;
-  }
-  #messages {
-    border: 1px solid #333;
-    height: 150px;
-    overflow-y: auto;
-    background: #fff;
-    padding: 5px;
-    margin-bottom: 5px;
-  }
-  input, button {
-    padding: 5px;
-    font-size: 1em;
-  }
+  body { font-family: Arial; text-align: center; background: #f0f0f0; }
+  h1 { margin-top: 20px; }
+  #status { margin: 10px; font-weight: bold; }
+  #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; margin: 20px auto; }
+  .cell { width: 100px; height: 100px; background: white; display: flex; justify-content: center; align-items: center; font-size: 2rem; cursor: pointer; border: 2px solid #333; }
+  .cell.taken { cursor: default; }
 </style>
 </head>
 <body>
-<h1>Tic-Tac-Toe JudeVerse</h1>
-<div>
-    <label>Game ID: <input id="gameId" value="room1"></label>
-    <label>Player: <input id="playerId" value="X"></label>
-    <button id="connectBtn">Connect</button>
-</div>
-<div id="board">
-  <div class="cell" data-index="0"></div>
-  <div class="cell" data-index="1"></div>
-  <div class="cell" data-index="2"></div>
-  <div class="cell" data-index="3"></div>
-  <div class="cell" data-index="4"></div>
-  <div class="cell" data-index="5"></div>
-  <div class="cell" data-index="6"></div>
-  <div class="cell" data-index="7"></div>
-  <div class="cell" data-index="8"></div>
-</div>
-<div id="chat">
-    <div id="messages"></div>
-    <input id="chatInput" placeholder="Type message...">
-    <button id="sendBtn">Send</button>
-</div>
+
+<h1>Tic Tac Toe</h1>
+<div id="status">Connecting...</div>
+<div id="board"></div>
+<button id="restart" style="display:none;">Restart Game</button>
 
 <script>
-let ws;
-const cells = document.querySelectorAll('.cell');
-const messages = document.getElementById('messages');
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+const restartBtn = document.getElementById("restart");
 
-document.getElementById('connectBtn').onclick = () => {
-    const gameId = document.getElementById('gameId').value;
-    const playerId = document.getElementById('playerId').value;
-    
-    // Replace this with your current LocalTunnel URL
-    const url = `https://rotten-houses-post.loca.lt/ws/${gameId}/${playerId}`;
-    ws = new WebSocket(url);
+// Replace with your FastAPI server URL (ngrok or local)
+const ws = new WebSocket("wss://YOUR_NGROK_URL/ws");
 
-    ws.onopen = () => {
-        messages.innerHTML += '<div><em>Connected to server</em></div>';
-    };
+let playerSymbol = "";
+let myTurn = false;
+let gameBoard = ["","","","","","","","",""];
 
-    ws.onmessage = (event) => {
-        const data = event.data;
-        if (data.startsWith("Message blocked")) {
-            messages.innerHTML += `<div style="color:red">${data}</div>`;
-            return;
-        }
-        const boardData = data.split(",");
-        boardData.forEach((val, i) => {
-            cells[i].textContent = val;
-        });
-    };
-
-    ws.onclose = () => {
-        messages.innerHTML += '<div><em>Disconnected from server</em></div>';
-    };
+ws.onopen = () => {
+  statusEl.textContent = "Connected! Waiting for a game...";
 };
 
-cells.forEach(cell => {
-    cell.addEventListener('click', () => {
-        if (!ws) return alert("Connect first");
-        const player = document.getElementById('playerId').value;
-        ws.send(`${cell.dataset.index}:${player}`);
-    });
-});
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
 
-document.getElementById('sendBtn').onclick = () => {
-    if (!ws) return alert("Connect first");
-    const msg = document.getElementById('chatInput').value.trim();
-    if(msg) {
-        ws.send(msg);
-        document.getElementById('chatInput').value = "";
+  if(data.type === "player_id") {
+    console.log("Your ID:", data.id);
+  }
+  if(data.type === "status") {
+    statusEl.textContent = data.message;
+  }
+  if(data.type === "start") {
+    playerSymbol = data.symbol;
+    myTurn = (playerSymbol === "X");
+    statusEl.textContent = myTurn ? "Your turn!" : "Opponent's turn";
+    createBoard();
+  }
+  if(data.type === "board") {
+    gameBoard = data.board;
+    updateBoard();
+    const winner = checkWinner();
+    if(winner) {
+      statusEl.textContent = winner === playerSymbol ? "You win!" : "You lose!";
+      myTurn = false;
+      restartBtn.style.display = "inline";
+    } else {
+      myTurn = (data.board.filter(c => c==="").length % 2 === (playerSymbol==="X" ? 0 : 1));
+      statusEl.textContent = myTurn ? "Your turn!" : "Opponent's turn";
     }
+  }
 };
+
+// Create clickable cells
+function createBoard() {
+  boardEl.innerHTML = "";
+  gameBoard.forEach((val,i)=>{
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.dataset.index = i;
+    cell.textContent = val;
+    cell.onclick = () => makeMove(i);
+    boardEl.appendChild(cell);
+  });
+}
+
+function updateBoard() {
+  document.querySelectorAll(".cell").forEach((cell,i)=>{
+    cell.textContent = gameBoard[i];
+    if(gameBoard[i] !== "") cell.classList.add("taken");
+  });
+}
+
+function makeMove(index) {
+  if(!myTurn || gameBoard[index] !== "") return;
+  ws.send(JSON.stringify({action:"move", pos:index}));
+}
+
+function checkWinner() {
+  const combos = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  for(let c of combos){
+    if(gameBoard[c[0]] && gameBoard[c[0]]===gameBoard[c[1]] && gameBoard[c[1]]===gameBoard[c[2]]){
+      return gameBoard[c[0]];
+    }
+  }
+  if(!gameBoard.includes("")) return "draw";
+  return null;
+}
+
+restartBtn.onclick = () => location.reload();
+
 </script>
 </body>
 </html>
