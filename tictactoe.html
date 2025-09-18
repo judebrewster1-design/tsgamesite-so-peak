@@ -1,244 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Tic Tac Toe - Jude's Game Hub</title>
-<style>
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-  color: #fff;
-}
+  <meta charset="UTF-8">
+  <title>Multiplayer Tic Tac Toe</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+    }
 
-header {
-  padding: 30px;
-  font-size: 36px;
-  font-weight: bold;
-  text-shadow: 0 3px 8px rgba(0,0,0,0.6);
-}
+    h1 {
+      margin-bottom: 10px;
+      font-size: 36px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    }
 
-#loginBox {
-  margin-top: 20px;
-  background: rgba(0,0,0,0.5);
-  padding: 25px;
-  border-radius: 15px;
-  text-align: center;
-}
+    #login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
 
-#loginBox input {
-  padding: 10px;
-  margin: 5px;
-  border-radius: 8px;
-  border: none;
-  font-size: 16px;
-}
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
 
-#loginBox button {
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  background: #ffdd59;
-  color: #111;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-}
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: background 0.2s;
+      user-select: none;
+    }
 
-#gameBoard {
-  display: grid;
-  grid-template-columns: repeat(3, 120px);
-  grid-template-rows: repeat(3, 120px);
-  gap: 10px;
-  margin-top: 30px;
-  display: none;
-}
+    .cell:hover {
+      background: rgba(255,255,255,0.2);
+    }
 
-.cell {
-  background: rgba(255,255,255,0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 3rem;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 12px;
-  transition: 0.2s;
-}
+    #players {
+      margin-bottom: 20px;
+    }
 
-.cell:hover {
-  background: rgba(255,255,255,0.4);
-}
+    #status {
+      margin-top: 10px;
+      font-size: 18px;
+      height: 22px;
+    }
 
-#status {
-  margin-top: 20px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-}
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: #ff4b2b;
+      color: #fff;
+      transition: transform 0.2s;
+    }
 
-.player-names {
-  margin-top: 20px;
-  font-size: 18px;
-}
-</style>
+    button:hover {
+      transform: scale(1.05);
+    }
+  </style>
 </head>
 <body>
-<header>Tic Tac Toe</header>
+  <h1>Multiplayer Tic Tac Toe</h1>
 
-<div id="loginBox">
-  <input type="text" id="player1" placeholder="Player 1 Name">
-  <input type="text" id="player2" placeholder="Player 2 Name">
-  <br>
-  <button onclick="login()">Start Game</button>
-  <p id="loginMsg"></p>
-</div>
+  <div id="login">
+    <input id="nameInput" placeholder="Enter your name" maxlength="20" />
+    <button onclick="joinGame()">Join Game</button>
+    <div id="loginError"></div>
+  </div>
 
-<div class="player-names" id="playerNames"></div>
-<div id="gameBoard"></div>
-<p id="status"></p>
+  <div id="players"></div>
+  <div id="board"></div>
+  <div id="status"></div>
 
-<script>
-const bannedWords = [
-"a55","a55hole","aeolus","ahole","anal","analprobe","anilingus","anus","areola","areole","arian","aryan","ass",
-"assbang","assbanged","assbangs","asses","assfuck","assfucker","assh0le","asshat","assho1e","ass hole","assholes",
-"assmaster","assmunch","asswipe","asswipes","azazel","azz","b1tch","babe","babes","ballsack","bang","banger","barf",
-"bastard","bastards","bawdy","beaner","beardedclam","beastiality","beatch","beater","beaver","beer","beeyotch",
-"beotch","biatch","bigtits","big tits","bimbo","bitch","bitched","bitches","bitchy","blow job","blow","blowjob",
-"blowjobs","bod","bodily","boink","bollock","bollocks","bollok","bone","boned","boner","boners","bong","boob",
-"boobies","boobs","booby","booger","bookie","bootee","bootie","booty","booze","boozer","boozy","bosom","bosomy",
-"bowel","bowels","bra","brassiere","breast","breasts","bugger","bukkake","bullshit","bull shit","bullshits",
-"bullshitted","bullturds","bung","busty","butt","butt fuck","buttfuck","buttfucker","buttplug","c.0.c.k","c.o.c.k.",
-"c.u.n.t","c0ck","c-0-c-k","caca","cahone","cameltoe","carpetmuncher","cawk","cervix","chinc","chincs","chink",
-"chode","chodes","cl1t","climax","clit","clitoris","clitorus","clits","clitty","cocain","cocaine","cock","c-o-c-k",
-"cockblock","cockholster","cockknocker","cocks","cocksmoker","cocksucker","cock sucker","coital","commie","condom",
-"coon","coons","corksucker","crabs","crack","cracker","crackwhore","crap","crappy","cum","cummin","cumming","cumshot",
-"cumshots","cumslut","cumstain","cunilingus","cunnilingus","cunny","cunt","c-u-n-t","cuntface","cunthunter","cuntlick",
-"cuntlicker","cunts","d0ng","d0uch3","d0uche","d1ck","d1ld0","d1ldo","dago","dagos","dammit","damn","damned","damnit",
-"dawgie-style","dick","dickbag","dickdipper","dickface","dickflipper","dickhead","dickheads","dickish","dick-ish",
-"dickripper","dicksipper","dickweed","dickwhipper","dickzipper","diddle","dike","dildo","dildos","diligaf","dillweed",
-"dimwit","dingle","dipship","doggie-style","doggy-style","dong","doofus","doosh","dopey","douch3","douche","douchebag",
-"douchebags","douchey","drunk","dumass","dumbass","dumbasses","dummy","dyke","dykes","ejaculate","enlargement","erect",
-"erection","erotic","essohbee","extacy","extasy","f.u.c.k","fack","fag","fagg","fagged","faggit","faggot","fagot",
-"fags","faig","faigt","fannybandit","fart","fartknocker","fat","felch","felcher","felching","fellate","fellatio","feltch",
-"feltcher","fisted","fisting","fisty","floozy","foad","fondle","foobar","foreskin","freex","frigg","frigga","fubar",
-"fuck","f-u-c-k","fuckass","fucked","fucker","fuckface","fuckin","fucking","fucknugget","fucknut","fuckoff","fucks",
-"fucktard","fuck-tard","fuckup","fuckwad","fuckwit","fudgepacker","fuk","fvck","fxck","gae","gai","ganja","gay","gays",
-"gey","ghay","ghey","gigolo","glans","goatse","godamn","godamnit","goddam","goddammit","goddamn","goldenshower","gonad",
-"gonads","gook","gooks","gringo","gspot","g-spot","gtfo","guido","h0m0","h0mo","handjob","hard on","he11","hebe","heeb",
-"hell","hemp","heroin","herp","herpes","herpy","hitler","hiv","hobag","hom0","homey","homo","homoey","honky","hooch",
-"hookah","hooker","hoor","hootch","hooter","hooters","horny","hump","humped","humping","hussy","hymen","inbred","incest",
-"injun","j3rk0ff","jackass","jackhole","jackoff","jap","japs","jerk","jerk0ff","jerked","jerkoff","jism","jiz","jizm",
-"jizz","jizzed","junkie","junky","kike","kikes","kill","kinky","kkk","klan","knobend","kooch","kooches","kootch","kraut",
-"kyke","labia","lech","leper","lesbians","lesbo","lesbos","lez","lezbian","lezbians","lezbo","lezbos","lezzie","lezzies",
-"lezzy","lmao","lmfao","loin","loins","lube","lusty","mams","massa","masterbate","masterbating","masterbation","masturbate",
-"masturbating","masturbation","maxi","menses","menstruate","menstruation","meth","m-fucking","mofo","molest","moolie",
-"moron","motherfucka","motherfucker","motherfucking","mtherfucker","mthrfucker","mthrfucking","muff","muffdiver","murder",
-"muthafuckaz","muthafucker","mutherfucker","mutherfucking","muthrfucking","nad","nads","naked","napalm","nappy","nazi",
-"nazism","negro","nigga","niggah","niggas","niggaz","nigger","niggers","niggle","niglet","nimrod","ninny","nipple","nooky",
-"nympho","opiate","opium","oral","orally","organ","orgasm","orgasmic","orgies","orgy","ovary","ovum","ovums","p.u.s.s.y.",
-"paddy","paki","pantie","panties","panty","pastie","pasty","pcp","pecker","pedo","pedophile","pedophilia","pedophiliac","pee",
-"peepee","penetrate","penetration","penial","penile","penis","perversion","peyote","phalli","phallic","phuck","pillowbiter",
-"pimp","pinko","piss","pissed","pissoff","piss-off","pms","polack","pollock","poon","poontang","porn","porno","pornography",
-"pot","potty","prick","prig","prostitute","prude","pube","pubic","pubis","punkass","punky","puss","pussies","pussy",
-"pussypounder","puto","queaf","queef","queer","queero","queers","quicky","quim","racy","rape","raped","raper","rapist",
-"raunch","rectal","rectum","rectus","reefer","reetard","reich","retard","retarded","revue","rimjob","ritard","rtard",
-"r-tard","rum","rump","rumprammer","ruski","s.h.i.t.","s.o.b.","s0b","sadism","sadist","scag","scantily","schizo","schlong",
-"screw","screwed","scrog","scrot","scrote","scrotum","scrud","scum","seaman","semen","seduce","semen","sex","sexual",
-"sh1t","s-h-1-t","shamedame","shit","s-h-i-t","shite","shiteater","shitface","shithead","shithole","shithouse","shits",
-"shitt","shitted","shitter","shitty","shiz","sissy","skag","skank","slave","sleaze","sleazy","slut","slutdumper","slutkiss",
-"sluts","smegma","smut","smutty","snatch","sniper","snuff","s-o-b","sodom","souse","soused","sperm","spic","spick","spik",
-"spiks","spooge","spunk","steamy","stfu","stiffy","stoned","strip","stroke","stupid","suck","sucked","sucking",
-"sumofabiatch","t1t","tampon","tard","tawdry","teabagging","teat","terd","teste","testee","testes","testicle","testis",
-"thrust","thug","tinkle","tit","titfuck","titi","tits","tittiefucker","titties","titty","tittyfuck","tittyfucker","toke",
-"toots","tramp","transsexual","trashy","tubgirl","turd","tush","twat","twats","twink","twinkie","twinkies","twinky","twerp",
-"twohole","vag","vagina","vaginal","vajayjay","viagra","virgin","vomit","vulva","wad","wang","wank","wanker","wetback",
-"wh0re","wh0reface","whore","whoreface","womb","wop","x-rated","xxx","yaoi","yiffy","zoophile"
-];
+  <script>
+    let ws;
+    let playerName;
+    let myTurn = false;
+    let boardState = Array(9).fill("");
 
-let player1 = "";
-let player2 = "";
-let turn = "X";
-const board = ["","","","","","","","",""];
-const cells = [];
+    const boardDiv = document.getElementById("board");
+    const playersDiv = document.getElementById("players");
+    const statusDiv = document.getElementById("status");
+    const loginDiv = document.getElementById("login");
+    const loginErrorDiv = document.getElementById("loginError");
 
-function login() {
-  player1 = document.getElementById("player1").value.trim();
-  player2 = document.getElementById("player2").value.trim();
-
-  if (!player1 || !player2) {
-    document.getElementById("loginMsg").innerText = "Enter names for both players.";
-    return;
-  }
-
-  const lower1 = player1.toLowerCase();
-  const lower2 = player2.toLowerCase();
-
-  for (const word of bannedWords) {
-    if (lower1.includes(word) || lower2.includes(word)) {
-      document.getElementById("loginMsg").innerText = "Nice try fella! You are banned!";
-      return;
+    // Create board cells
+    for (let i = 0; i < 9; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.dataset.index = i;
+      cell.addEventListener("click", () => makeMove(i));
+      boardDiv.appendChild(cell);
     }
-  }
 
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("gameBoard").style.display = "grid";
-  document.getElementById("playerNames").innerText = `${player1} (X) vs ${player2} (O)`;
-  startGame();
-}
+    function joinGame() {
+      playerName = document.getElementById("nameInput").value.trim();
+      if (!playerName) return;
 
-function startGame() {
-  const boardDiv = document.getElementById("gameBoard");
-  boardDiv.innerHTML = "";
-  for (let i=0;i<9;i++) {
-    const cell = document.createElement("div");
-    cell.classList.add("cell");
-    cell.dataset.index = i;
-    cell.addEventListener("click", makeMove);
-    boardDiv.appendChild(cell);
-    cells.push(cell);
-  }
-  document.getElementById("status").innerText = `${player1}'s turn (X)`;
-}
+      ws = new WebSocket(`ws://localhost:8000/ws/${encodeURIComponent(playerName)}`);
 
-function makeMove(e) {
-  const idx = e.target.dataset.index;
-  if (board[idx]) return;
-  board[idx] = turn;
-  e.target.innerText = turn;
-  if (checkWin()) {
-    const winner = turn === "X" ? player1 : player2;
-    document.getElementById("status").innerText = `${winner} wins!`;
-    endGame();
-    return;
-  }
-  if (board.every(cell=>cell)) {
-    document.getElementById("status").innerText = "Draw!";
-    endGame();
-    return;
-  }
-  turn = turn === "X" ? "O" : "X";
-  document.getElementById("status").innerText = turn === "X" ? `${player1}'s turn (X)` : `${player2}'s turn (O)`;
-}
+      ws.onopen = () => {
+        loginDiv.style.display = "none";
+        statusDiv.innerText = "Connected! Waiting for your turn...";
+      };
 
-function checkWin() {
-  const wins = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  return wins.some(c=>c.every(i=>board[i]===turn));
-}
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.error) {
+          loginErrorDiv.innerText = data.error;
+          ws.close();
+          return;
+        }
 
-function endGame() {
-  cells.forEach(c=>c.removeEventListener("click", makeMove));
-}
-</script>
+        if (data.info) {
+          updatePlayersList(data.info);
+        }
+
+        if (data.move !== undefined) {
+          boardState[data.index] = data.move;
+          renderBoard();
+          myTurn = data.next === playerName;
+          updateStatus();
+        }
+      };
+
+      ws.onclose = () => {
+        statusDiv.innerText = "Disconnected from server.";
+      };
+    }
+
+    function updatePlayersList(info) {
+      playersDiv.innerText = info;
+    }
+
+    function renderBoard() {
+      boardDiv.childNodes.forEach((cell, idx) => {
+        cell.textContent = boardState[idx];
+      });
+    }
+
+    function updateStatus() {
+      statusDiv.innerText = myTurn ? "Your turn!" : "Waiting for opponent...";
+    }
+
+    function makeMove(index) {
+      if (!myTurn || boardState[index] !== "") return;
+      boardState[index] = "X";
+      ws.send(JSON.stringify({ index: index, move: "X", next: "opponent" }));
+      myTurn = false;
+      updateStatus();
+      renderBoard();
+    }
+  </script>
 </body>
 </html>
