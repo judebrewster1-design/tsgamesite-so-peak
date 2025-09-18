@@ -87,7 +87,7 @@ document.getElementById('connectBtn').onclick = () => {
     const playerId = document.getElementById('playerId').value;
     
     // Replace this with your current LocalTunnel URL
-    const url = `wss://funny-turkeys-unite.loca.lt/ws/${gameId}/${playerId}`;
+    const url = `https://rotten-houses-post.loca.lt/ws/${gameId}/${playerId}`;
     ws = new WebSocket(url);
 
     ws.onopen = () => {
