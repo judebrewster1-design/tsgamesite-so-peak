@@ -1,114 +1,136 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic Tac Toe</title>
+<title>Tic-Tac-Toe Online</title>
 <style>
-  body { font-family: Arial; text-align: center; background: #f0f0f0; }
-  h1 { margin-top: 20px; }
-  #status { margin: 10px; font-weight: bold; }
-  #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; margin: 20px auto; }
-  .cell { width: 100px; height: 100px; background: white; display: flex; justify-content: center; align-items: center; font-size: 2rem; cursor: pointer; border: 2px solid #333; }
-  .cell.taken { cursor: default; }
+  /* Reset */
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: #1a1a1a; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; min-height:100vh; }
+  h1 { margin:20px; font-size:2.5em; color:#00d4ff; text-shadow: 2px 2px #000; }
+  
+  #game { display:grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap:10px; margin-top:30px; }
+  .cell { background:#222; display:flex; align-items:center; justify-content:center; font-size:3em; cursor:pointer; border-radius:10px; transition: all 0.2s; }
+  .cell:hover { background:#00d4ff; color:#000; transform:scale(1.05); }
+  
+  #status { margin-top:20px; font-size:1.2em; }
+  #chat { margin-top:30px; width:320px; display:flex; flex-direction:column; }
+  #messages { height:150px; overflow-y:auto; background:#111; padding:10px; border-radius:10px; margin-bottom:10px; }
+  #messages p { margin:5px 0; }
+  #chat-input { display:flex; }
+  #chat-input input { flex:1; padding:10px; border-radius:5px 0 0 5px; border:none; outline:none; }
+  #chat-input button { padding:10px 15px; border:none; border-radius:0 5px 5px 0; background:#00d4ff; color:#000; cursor:pointer; font-weight:bold; transition: all 0.2s; }
+  #chat-input button:hover { background:#00bcd4; }
 </style>
 </head>
 <body>
+<h1>⚡ Tic-Tac-Toe Online</h1>
+<div id="game"></div>
+<div id="status">Waiting for opponent...</div>
 
-<h1>Tic Tac Toe</h1>
-<div id="status">Connecting...</div>
-<div id="board"></div>
-<button id="restart" style="display:none;">Restart Game</button>
+<div id="chat">
+  <div id="messages"></div>
+  <div id="chat-input">
+    <input type="text" id="message" placeholder="Type a message..." />
+    <button id="send">Send</button>
+  </div>
+</div>
 
 <script>
-const boardEl = document.getElementById("board");
-const statusEl = document.getElementById("status");
-const restartBtn = document.getElementById("restart");
+const LOCALTUNNEL_URL = "https://cruel-lizards-wave.loca.lt"; // your server
 
-// Replace with your FastAPI server URL (ngrok or local)
-const ws = new WebSocket("wss://YOUR_NGROK_URL/ws");
+// Banned words list
+const bannedWords = ["badword1","badword2","curse1","curse2","curse3","curse4","curse5","curse6"]; // add full list
 
-let playerSymbol = "";
-let myTurn = false;
-let gameBoard = ["","","","","","","","",""];
+function filterMessage(msg) {
+  let filtered = msg;
+  bannedWords.forEach(word => {
+    const regex = new RegExp(word, 'gi');
+    filtered = filtered.replace(regex, '****');
+  });
+  return filtered;
+}
 
-ws.onopen = () => {
-  statusEl.textContent = "Connected! Waiting for a game...";
-};
+// Tic-Tac-Toe logic
+const game = document.getElementById('game');
+const status = document.getElementById('status');
+let board = ["","","","","","","","",""];
+let myTurn = true; // will be synced with server later
+let socket;
 
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+// Initialize board
+for(let i=0;i<9;i++){
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.dataset.index = i;
+  cell.addEventListener('click', () => makeMove(i));
+  game.appendChild(cell);
+}
 
-  if(data.type === "player_id") {
-    console.log("Your ID:", data.id);
-  }
-  if(data.type === "status") {
-    statusEl.textContent = data.message;
-  }
-  if(data.type === "start") {
-    playerSymbol = data.symbol;
-    myTurn = (playerSymbol === "X");
-    statusEl.textContent = myTurn ? "Your turn!" : "Opponent's turn";
-    createBoard();
-  }
-  if(data.type === "board") {
-    gameBoard = data.board;
-    updateBoard();
-    const winner = checkWinner();
-    if(winner) {
-      statusEl.textContent = winner === playerSymbol ? "You win!" : "You lose!";
-      myTurn = false;
-      restartBtn.style.display = "inline";
-    } else {
-      myTurn = (data.board.filter(c => c==="").length % 2 === (playerSymbol==="X" ? 0 : 1));
-      statusEl.textContent = myTurn ? "Your turn!" : "Opponent's turn";
-    }
-  }
-};
+function makeMove(i){
+  if(board[i]!=="" || !myTurn) return;
+  board[i] = "X";
+  updateBoard();
+  sendMove(i);
+  myTurn=false;
+  status.textContent = "Opponent's turn...";
+}
 
-// Create clickable cells
-function createBoard() {
-  boardEl.innerHTML = "";
-  gameBoard.forEach((val,i)=>{
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.dataset.index = i;
-    cell.textContent = val;
-    cell.onclick = () => makeMove(i);
-    boardEl.appendChild(cell);
+function updateBoard(){
+  document.querySelectorAll('.cell').forEach((cell,i)=>{
+    cell.textContent = board[i];
   });
 }
 
-function updateBoard() {
-  document.querySelectorAll(".cell").forEach((cell,i)=>{
-    cell.textContent = gameBoard[i];
-    if(gameBoard[i] !== "") cell.classList.add("taken");
-  });
-}
-
-function makeMove(index) {
-  if(!myTurn || gameBoard[index] !== "") return;
-  ws.send(JSON.stringify({action:"move", pos:index}));
-}
-
-function checkWinner() {
-  const combos = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  for(let c of combos){
-    if(gameBoard[c[0]] && gameBoard[c[0]]===gameBoard[c[1]] && gameBoard[c[1]]===gameBoard[c[2]]){
-      return gameBoard[c[0]];
+// Connect to WebSocket
+function connectWS(){
+  socket = new WebSocket(`${LOCALTUNNEL_URL.replace(/^http/,'ws')}/ws/game/1`);
+  socket.onopen = ()=>{ status.textContent = "Connected. Waiting for opponent..."; };
+  socket.onmessage = (e)=>{
+    const data = JSON.parse(e.data);
+    if(data.type==="move"){
+      board[data.index] = "O";
+      updateBoard();
+      myTurn=true;
+      status.textContent = "Your turn";
     }
-  }
-  if(!gameBoard.includes("")) return "draw";
-  return null;
+    if(data.type==="chat"){
+      const filtered = filterMessage(data.message);
+      addMessage(`Opponent: ${filtered}`);
+    }
+  };
+  socket.onclose = ()=>{ status.textContent = "Disconnected. Refresh to reconnect."; };
 }
 
-restartBtn.onclick = () => location.reload();
+// Send move
+function sendMove(i){
+  if(socket && socket.readyState===1){
+    socket.send(JSON.stringify({type:"move", index:i}));
+  }
+}
 
+// Chat
+const messagesDiv = document.getElementById('messages');
+function addMessage(msg){
+  const p = document.createElement('p');
+  p.textContent = msg;
+  messagesDiv.appendChild(p);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+document.getElementById('send').addEventListener('click', ()=>{
+  const input = document.getElementById('message');
+  if(input.value.trim()==="") return;
+  const filtered = filterMessage(input.value);
+  addMessage(`You: ${filtered}`);
+  if(socket && socket.readyState===1){
+    socket.send(JSON.stringify({type:"chat", message:input.value}));
+  }
+  input.value="";
+});
+
+connectWS();
 </script>
 </body>
 </html>
