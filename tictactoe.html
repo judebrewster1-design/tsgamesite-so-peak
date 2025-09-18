@@ -2,210 +2,184 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic Tac Toe</title>
+<title>Online Tic Tac Toe</title>
 <style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(to right, #74ebd5, #ACB6E5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-  #game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-  #username-section, #board-section, #winner-section {
-    background: #fff;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0px 10px 20px rgba(0,0,0,0.2);
-    text-align: center;
-  }
-  #board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 5px;
-  }
-  .cell {
-    background: #f1f1f1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 3rem;
-    cursor: pointer;
-    border-radius: 10px;
-    transition: background 0.3s;
-  }
-  .cell:hover {
-    background: #d1d1d1;
-  }
-  button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 10px;
-    border: none;
-    background-color: #6C63FF;
-    color: white;
-    transition: background 0.3s;
-  }
-  button:hover {
-    background-color: #5750c8;
-  }
+body{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background:#f0f4f8;
+  text-align:center;
+  margin:0;
+  padding:0;
+}
+header{
+  background:#1a73e8;
+  color:white;
+  padding:20px;
+  font-size:24px;
+}
+#login, #game{
+  margin-top:30px;
+}
+#login input, #login button{
+  padding:10px;
+  font-size:16px;
+  margin:5px;
+}
+#error{
+  color:red;
+  font-weight:bold;
+}
+#warning{
+  color:#b71c1c;
+  font-size:14px;
+  margin-top:10px;
+}
+#board{
+  display:grid;
+  grid-template-columns:repeat(3,100px);
+  gap:5px;
+  margin:20px auto;
+}
+.cell{
+  width:100px;height:100px;
+  font-size:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #1a73e8;
+  background:white;
+  cursor:pointer;
+  transition:0.2s;
+}
+.cell:hover{
+  background:#e3f2fd;
+}
+#chat-container{
+  width:320px;
+  margin:20px auto;
+  text-align:left;
+}
+#chat{
+  border:1px solid #333;
+  width:100%;
+  height:200px;
+  overflow-y:auto;
+  padding:5px;
+  background:white;
+}
+#message{
+  width:240px;
+  padding:5px;
+}
+#send-msg{
+  padding:6px 12px;
+}
 </style>
 </head>
 <body>
-<div id="game-container">
 
-  <!-- Username input -->
-  <div id="username-section">
-    <h2>Enter Your Username</h2>
-    <input type="text" id="username-input" placeholder="Username">
-    <button id="start-btn">Start Game</button>
-    <p id="username-error" style="color:red"></p>
+<header>Online Tic Tac Toe</header>
+
+<div id="login">
+  <h2>Create Username</h2>
+  <input type="text" id="username-input" placeholder="Enter your username">
+  <button id="login-btn">Join Game</button>
+  <p id="error"></p>
+  <p id="warning">⚠️ Users can be banned for inappropriate usernames. Please use respectful names.</p>
+</div>
+
+<div id="game" style="display:none;">
+  <h2 id="welcome"></h2>
+  <div id="board"></div>
+  <div id="chat-container">
+    <h3>Chat</h3>
+    <div id="chat"></div>
+    <input type="text" id="message" placeholder="Type message">
+    <button id="send-msg">Send</button>
   </div>
-
-  <!-- Game board -->
-  <div id="board-section" style="display:none">
-    <h2 id="turn-text"></h2>
-    <div id="board">
-      <div class="cell" data-index="0"></div>
-      <div class="cell" data-index="1"></div>
-      <div class="cell" data-index="2"></div>
-      <div class="cell" data-index="3"></div>
-      <div class="cell" data-index="4"></div>
-      <div class="cell" data-index="5"></div>
-      <div class="cell" data-index="6"></div>
-      <div class="cell" data-index="7"></div>
-      <div class="cell" data-index="8"></div>
-    </div>
-    <button id="reset-btn">Reset Game</button>
-  </div>
-
-  <!-- Winner -->
-  <div id="winner-section" style="display:none">
-    <h2 id="winner-text"></h2>
-    <button id="play-again-btn">Play Again</button>
-  </div>
-
 </div>
 
 <script>
-const bannedWords = [
-  "a55","a55hole","anal","anus","ass","asshole","bitch","cock","cunt","dick","fuck","nigger",
-  "pussy","shit","slut","whore","zoophile","fag","faggot","nigga","motherfucker","damn"
-  // add all the words you gave me here, lowercase and without commas
-];
+const serverURL = "http://localhost:8000"; // Replace with your server URL
+let ws;
+let username;
 
-// Check username
-function isBanned(username) {
-  const lower = username.toLowerCase();
-  for (const word of bannedWords) {
-    if (lower.includes(word)) return true;
-  }
-  return false;
-}
-
-// Save banned users to localStorage
-function banUser(username) {
+// Local banned storage
+function banUser(name){
   let banned = JSON.parse(localStorage.getItem('bannedUsers')||'[]');
-  if(!banned.includes(username)) banned.push(username);
+  if(!banned.includes(name)) banned.push(name);
   localStorage.setItem('bannedUsers', JSON.stringify(banned));
 }
 
-function isLocallyBanned(username) {
+function isLocallyBanned(name){
   const banned = JSON.parse(localStorage.getItem('bannedUsers')||'[]');
-  return banned.includes(username);
+  return banned.includes(name);
 }
 
-// Game state
-let board = Array(9).fill('');
-let currentPlayer = 'X';
-let gameActive = true;
-let username = '';
-
-// Elements
-const usernameSection = document.getElementById('username-section');
-const boardSection = document.getElementById('board-section');
-const winnerSection = document.getElementById('winner-section');
-const usernameInput = document.getElementById('username-input');
-const startBtn = document.getElementById('start-btn');
-const boardCells = document.querySelectorAll('.cell');
-const turnText = document.getElementById('turn-text');
-const winnerText = document.getElementById('winner-text');
-const resetBtn = document.getElementById('reset-btn');
-const playAgainBtn = document.getElementById('play-again-btn');
-
-function checkWinner() {
-  const winPatterns = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  for (const pattern of winPatterns) {
-    const [a,b,c] = pattern;
-    if (board[a] && board[a]===board[b] && board[a]===board[c]) return board[a];
-  }
-  return board.includes('') ? null : 'Draw';
-}
-
-function updateBoard() {
-  boardCells.forEach((cell, i) => cell.textContent = board[i]);
-  const winner = checkWinner();
-  if (winner) {
-    gameActive = false;
-    boardSection.style.display = 'none';
-    winnerSection.style.display = 'block';
-    winnerText.textContent = winner==='Draw' ? "It's a draw!" : `${winner} wins!`;
-  } else {
-    turnText.textContent = `${currentPlayer}'s turn`;
+// Server banned check
+async function checkServerUsername(name){
+  try{
+    const res = await fetch(`${serverURL}/check_username?username=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    return data.allowed;
+  }catch(e){
+    console.error("Server error", e);
+    return false;
   }
 }
 
-// Events
-startBtn.addEventListener('click', () => {
-  username = usernameInput.value.trim();
-  if(!username) return document.getElementById('username-error').textContent="Enter a username";
-  if(isBanned(username) || isLocallyBanned(username)) {
-    banUser(username);
-    return document.getElementById('username-error').textContent="This username is banned!";
-  }
-  usernameSection.style.display='none';
-  boardSection.style.display='block';
-  updateBoard();
+// Login
+document.getElementById('login-btn').addEventListener('click', async ()=>{
+  let name = document.getElementById('username-input').value.trim();
+  if(!name){document.getElementById('error').textContent="Enter a username."; return;}
+  if(isLocallyBanned(name)){document.getElementById('error').textContent="This username is banned!"; return;}
+  const allowed = await checkServerUsername(name);
+  if(!allowed){banUser(name); document.getElementById('error').textContent="This username is banned for inappropriate language!"; return;}
+  username = name;
+  document.getElementById('login').style.display='none';
+  document.getElementById('game').style.display='block';
+  document.getElementById('welcome').textContent=`Welcome, ${username}`;
+  startWebSocket();
 });
 
-boardCells.forEach((cell, i) => {
-  cell.addEventListener('click', () => {
-    if(!gameActive || board[i]) return;
-    board[i] = currentPlayer;
-    currentPlayer = currentPlayer==='X' ? 'O':'X';
-    updateBoard();
+// WebSocket
+function startWebSocket(){
+  ws = new WebSocket(`${serverURL.replace("http","ws")}/ws`);
+  ws.onmessage = (event)=>{
+    const data = JSON.parse(event.data);
+    if(data.type==="chat"){
+      const chat = document.getElementById('chat');
+      chat.innerHTML += `<p><b>${data.username}:</b> ${data.message}</p>`;
+      chat.scrollTop = chat.scrollHeight;
+    } else if(data.type==="move"){
+      const cell = document.querySelector(`#cell-${data.index}`);
+      if(cell) cell.textContent = data.symbol;
+    }
+  }
+}
+
+// Board
+const boardDiv = document.getElementById('board');
+for(let i=0;i<9;i++){
+  const div = document.createElement('div');
+  div.className='cell';
+  div.id = `cell-${i}`;
+  div.addEventListener('click',()=>{
+    const symbol = "X"; // Simplified: all moves X (expand later for 2-player)
+    ws.send(JSON.stringify({type:"move",index:i,symbol:symbol,username:username}));
   });
-});
+  boardDiv.appendChild(div);
+}
 
-resetBtn.addEventListener('click', () => {
-  board = Array(9).fill('');
-  currentPlayer='X';
-  gameActive=true;
-  updateBoard();
-});
-
-playAgainBtn.addEventListener('click', () => {
-  winnerSection.style.display='none';
-  boardSection.style.display='block';
-  board = Array(9).fill('');
-  currentPlayer='X';
-  gameActive=true;
-  updateBoard();
+// Chat
+document.getElementById('send-msg').addEventListener('click',()=>{
+  const msgInput = document.getElementById('message');
+  const message = msgInput.value.trim();
+  if(message==="") return;
+  ws.send(JSON.stringify({type:"chat",username:username,message:message}));
+  msgInput.value="";
 });
 </script>
+
 </body>
 </html>
