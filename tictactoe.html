@@ -1,104 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Tic Tac Toe Online</title>
+<title>Tic Tac Toe</title>
 <style>
-  body { font-family: sans-serif; text-align: center; }
-  #board { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; margin: 20px auto; }
-  .cell { width: 100px; height: 100px; font-size: 48px; display: flex; align-items: center; justify-content: center; border: 1px solid #333; cursor: pointer; }
-  .cell.disabled { pointer-events: none; background: #eee; }
-  #status { margin-top: 20px; font-size: 18px; }
+body{font-family:sans-serif;text-align:center;margin-top:50px;}
+table{margin:auto;border-collapse:collapse;}
+td{width:80px;height:80px;font-size:50px;border:1px solid #333;cursor:pointer;text-align:center;}
+#status{margin-top:20px;font-size:20px;}
 </style>
 </head>
 <body>
 <h1>Tic Tac Toe</h1>
-<p>Enter a room name to play:</p>
-<input type="text" id="room" placeholder="Room ID">
-<button onclick="connect()">Join Room</button>
-
-<div id="board"></div>
-<div id="status"></div>
+<div id="status">Connecting...</div>
+<table id="board">
+<tr><td data-x="0" data-y="0"></td><td data-x="1" data-y="0"></td><td data-x="2" data-y="0"></td></tr>
+<tr><td data-x="0" data-y="1"></td><td data-x="1" data-y="1"></td><td data-x="2" data-y="1"></td></tr>
+<tr><td data-x="0" data-y="2"></td><td data-x="1" data-y="2"></td><td data-x="2" data-y="2"></td></tr>
+</table>
 
 <script>
-let ws;
-let playerSymbol;
-let board = [["","",""],["","",""],["","",""]];
-let myTurn = false;
+let ws = new WebSocket(`ws://${location.host}/ws`);
+let mySymbol = '';
+let boardEl = document.getElementById("board");
+let statusEl = document.getElementById("status");
 
-function createBoard() {
-    const boardDiv = document.getElementById('board');
-    boardDiv.innerHTML = '';
-    for(let y=0; y<3; y++){
-        for(let x=0; x<3; x++){
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.x = x;
-            cell.dataset.y = y;
-            cell.textContent = board[y][x];
-            cell.onclick = () => makeMove(x, y);
-            boardDiv.appendChild(cell);
+ws.onmessage = e => {
+    let msg = JSON.parse(e.data);
+    if(msg.action=="waiting"){
+        statusEl.innerText = "Waiting for opponent...";
+    } else if(msg.action=="start"){
+        statusEl.innerText = "Game started!";
+        updateBoard(msg.board);
+        mySymbol = "X"; // first player is always X
+    } else if(msg.action=="board"){
+        updateBoard(msg.board);
+        if(msg.last_move.symbol != mySymbol){
+            statusEl.innerText = "Your turn!";
+        } else {
+            statusEl.innerText = "Opponent's turn";
+        }
+    } else if(msg.action=="winner"){
+        statusEl.innerText = msg.winner==mySymbol?"You win!":"You lose!";
+    } else if(msg.action=="draw"){
+        statusEl.innerText = "Draw!";
+    } else if(msg.action=="error"){
+        alert(msg.msg);
+    }
+};
+
+function updateBoard(board){
+    for(let y=0;y<3;y++){
+        for(let x=0;x<3;x++){
+            boardEl.rows[y].cells[x].innerText = board[y][x];
         }
     }
 }
 
-function connect() {
-    const room = document.getElementById('room').value.trim();
-    if(!room){ alert("Enter a room ID"); return; }
-    ws = new WebSocket(`ws://${location.hostname}:8000/ws/${room}`);
-    
-    ws.onopen = () => {
-        document.getElementById('status').textContent = "Connected. Waiting for opponent...";
-    }
-
-    ws.onmessage = (msg) => {
-        const data = JSON.parse(msg.data);
-        if(data.error){ alert(data.error); return; }
-        if(data.action === "board"){
-            board = data.board;
-            createBoard();
-            if(!playerSymbol){
-                playerSymbol = (data.board.flat().filter(c=>c!=="").length % 2 === 0) ? "X" : "O";
-                myTurn = playerSymbol === "X";
-                updateStatus();
-            }
-        }
-        if(data.action === "winner"){
-            document.getElementById('status').textContent = "Winner: " + data.winner;
-            disableBoard();
-        }
-        if(data.action === "draw"){
-            document.getElementById('status').textContent = "Draw!";
-            disableBoard();
-        }
-        if(data.last_move){
-            board[data.last_move.y][data.last_move.x] = data.last_move.symbol;
-            createBoard();
-            myTurn = (data.last_move.symbol !== playerSymbol);
-            updateStatus();
-        }
-    }
-
-    ws.onclose = () => {
-        document.getElementById('status').textContent = "Disconnected.";
-        disableBoard();
-    }
-}
-
-function makeMove(x, y) {
-    if(!myTurn || board[y][x] !== "") return;
-    ws.send(JSON.stringify({action:"move", x:x, y:y}));
-}
-
-function updateStatus() {
-    document.getElementById('status').textContent = myTurn ? "Your turn ("+playerSymbol+")" : "Opponent's turn";
-}
-
-function disableBoard() {
-    document.querySelectorAll('.cell').forEach(c => c.classList.add('disabled'));
-}
-
-createBoard();
+boardEl.addEventListener("click", e=>{
+    if(e.target.tagName!="TD") return;
+    let x=parseInt(e.target.dataset.x);
+    let y=parseInt(e.target.dataset.y);
+    ws.send(JSON.stringify({action:"move",x:x,y:y}));
+});
 </script>
 </body>
 </html>
