@@ -1,67 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tic Tac Toe</title>
 <style>
-body{font-family:sans-serif;text-align:center;margin-top:50px;}
-table{margin:auto;border-collapse:collapse;}
-td{width:80px;height:80px;font-size:50px;border:1px solid #333;cursor:pointer;text-align:center;}
-#status{margin-top:20px;font-size:20px;}
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
+    #status { margin-bottom: 20px; font-size: 18px; }
+    #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; }
+    .cell { width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 48px; cursor: pointer; }
+    .cell.disabled { background: #ddd; cursor: default; }
 </style>
 </head>
 <body>
 <h1>Tic Tac Toe</h1>
 <div id="status">Connecting...</div>
-<table id="board">
-<tr><td data-x="0" data-y="0"></td><td data-x="1" data-y="0"></td><td data-x="2" data-y="0"></td></tr>
-<tr><td data-x="0" data-y="1"></td><td data-x="1" data-y="1"></td><td data-x="2" data-y="1"></td></tr>
-<tr><td data-x="0" data-y="2"></td><td data-x="1" data-y="2"></td><td data-x="2" data-y="2"></td></tr>
-</table>
+<div id="board"></div>
 
 <script>
-let ws = new WebSocket(`ws://${location.host}/ws`);
-let mySymbol = '';
-let boardEl = document.getElementById("board");
-let statusEl = document.getElementById("status");
+let ws;
+let board = [];
+let mySymbol = "";
+let myTurn = false;
 
-ws.onmessage = e => {
-    let msg = JSON.parse(e.data);
-    if(msg.action=="waiting"){
-        statusEl.innerText = "Waiting for opponent...";
-    } else if(msg.action=="start"){
-        statusEl.innerText = "Game started!";
-        updateBoard(msg.board);
-        mySymbol = "X"; // first player is always X
-    } else if(msg.action=="board"){
-        updateBoard(msg.board);
-        if(msg.last_move.symbol != mySymbol){
-            statusEl.innerText = "Your turn!";
-        } else {
-            statusEl.innerText = "Opponent's turn";
-        }
-    } else if(msg.action=="winner"){
-        statusEl.innerText = msg.winner==mySymbol?"You win!":"You lose!";
-    } else if(msg.action=="draw"){
-        statusEl.innerText = "Draw!";
-    } else if(msg.action=="error"){
-        alert(msg.msg);
-    }
-};
-
-function updateBoard(board){
-    for(let y=0;y<3;y++){
-        for(let x=0;x<3;x++){
-            boardEl.rows[y].cells[x].innerText = board[y][x];
+function renderBoard() {
+    const boardDiv = document.getElementById("board");
+    boardDiv.innerHTML = "";
+    for (let y = 0; y < 3; y++) {
+        for (let x = 0; x < 3; x++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.textContent = board[y][x];
+            if (!cell.textContent && myTurn) {
+                cell.addEventListener("click", () => makeMove(x, y));
+            } else {
+                cell.classList.add("disabled");
+            }
+            boardDiv.appendChild(cell);
         }
     }
 }
 
-boardEl.addEventListener("click", e=>{
-    if(e.target.tagName!="TD") return;
-    let x=parseInt(e.target.dataset.x);
-    let y=parseInt(e.target.dataset.y);
-    ws.send(JSON.stringify({action:"move",x:x,y:y}));
-});
+function makeMove(x, y) {
+    ws.send(JSON.stringify({action: "move", x, y}));
+}
+
+function connect() {
+    ws = new WebSocket(`ws://${window.location.hostname}:8000/ws`);
+
+    ws.onopen = () => {
+        document.getElementById("status").textContent = "Connected. Waiting for opponent...";
+    };
+
+    ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.status === "waiting") {
+            document.getElementById("status").textContent = data.message;
+        }
+        else if (data.status === "timeout") {
+            document.getElementById("status").textContent = data.message;
+        }
+        else if (data.status === "start") {
+            document.getElementById("status").textContent = "Opponent joined! Game starting...";
+            board = data.board;
+            mySymbol = "X"; // First player is X
+            myTurn = true;
+            renderBoard();
+        }
+        else if (data.action === "board") {
+            board = data.board;
+            const last = data.last_move;
+            if (last.symbol !== mySymbol) {
+                myTurn = true;
+                document.getElementById("status").textContent = "Your turn!";
+            } else {
+                myTurn = false;
+                document.getElementById("status").textContent = "Opponent's turn...";
+            }
+            renderBoard();
+        }
+        else if (data.action === "winner") {
+            document.getElementById("status").textContent = data.winner === mySymbol ? "You won!" : "You lost!";
+            myTurn = false;
+            renderBoard();
+        }
+        else if (data.action === "draw") {
+            document.getElementById("status").textContent = "Draw!";
+            myTurn = false;
+            renderBoard();
+        }
+    };
+
+    ws.onclose = () => {
+        document.getElementById("status").textContent = "Disconnected.";
+    };
+}
+
+connect();
 </script>
 </body>
 </html>
