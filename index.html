@@ -2,83 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Judeceno Games Menu</title>
+  <title>Jude’s Game Hub</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
       color: #fff;
-    }
-    header {
       text-align: center;
-      padding: 2rem 1rem;
-      font-size: 2.5rem;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-    nav {
+      min-height: 100vh;
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2rem;
-      padding: 2rem;
+      flex-direction: column;
     }
-    nav a {
-      display: block;
-      text-decoration: none;
-      background: rgba(255,255,255,0.1);
-      padding: 1.5rem 3rem;
-      border-radius: 15px;
-      font-size: 1.25rem;
+
+    header {
+      padding: 30px;
+      font-size: 36px;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      letter-spacing: 2px;
+      text-shadow: 0 3px 8px rgba(0,0,0,0.6);
+    }
+
+    .game-list {
+      margin: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+      width: 90%;
+      max-width: 1000px;
+      padding: 20px;
+    }
+
+    .game-card {
+      background: linear-gradient(145deg, #1f1f1f, #292929);
+      border-radius: 16px;
+      padding: 30px 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(#ff416c, #ff4b2b, #ff416c);
+      transform: rotate(0deg);
+      animation: spin 6s linear infinite;
+      z-index: 0;
+      opacity: 0.15;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .game-card a {
+      position: relative;
+      z-index: 1;
       color: #fff;
-      transition: 0.3s ease;
+      text-decoration: none;
+      font-size: 22px;
+      font-weight: bold;
+      display: block;
+      transition: color 0.2s;
     }
-    nav a:hover {
-      background: rgba(255,255,255,0.25);
-      transform: scale(1.05);
+
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6);
     }
-    .coming-soon-board {
-      margin: 3rem auto;
-      padding: 2rem;
-      width: 80%;
-      max-width: 800px;
-      background: rgba(0,0,0,0.4);
-      border-radius: 20px;
-      text-align: center;
-      font-size: 1.5rem;
-      color: #ffd700;
-      box-shadow: 0 0 20px rgba(255,255,0,0.5);
+
+    .game-card:hover a {
+      color: #ff4b2b;
     }
+
     footer {
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.9rem;
-      color: #ccc;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      font-size: 14px;
+      letter-spacing: 1px;
     }
   </style>
 </head>
 <body>
+  <header>
+    🎮 Jude’s Game Hub
+  </header>
 
-<header>Judeceno Games</header>
+  <div class="game-list">
+    <div class="game-card">
+      <a href="judeceno.html">Judeceno</a>
+    </div>
+    <div class="game-card">
+      <a href="click-a-jude.html">Click-a-Jude</a>
+    </div>
+    <div class="game-card">
+      <a href="flappy_jude.html">Flappy Jude</a>
+    </div>
+    <div class="game-card">
+      <a href="tictactoe.html">Tic Tac Toe</a>
+    </div>
+  </div>
 
-<nav>
-  <!-- Games menu -->
-  <a href="click-a-jude.html">Click a Jude</a>
-  <a href="flappy_jude.html">Flappy Jude</a>
-  <a href="judeceno.html">Judeceno Menu</a>
-  <!-- Add other games if needed -->
-</nav>
-
-<div class="coming-soon-board">
-  PLEASE NOTE THE JUDECENO IS IN EXTREME EARLY ACSESS YES I KNOW THE ARTS SUCK 
-  AND THE GAMES PAYOUT WAY TO MUuch THIS IS A HEAVY BETA
-</div>
-
-<footer>
-  thanks david for the fries
-</footer>
-
+  <footer>
+    © 2025 Jude’s Game Collection
+  </footer>
 </body>
 </html>
