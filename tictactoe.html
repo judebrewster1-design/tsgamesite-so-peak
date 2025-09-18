@@ -5,99 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tic Tac Toe</title>
 <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
-    #status { margin-bottom: 20px; font-size: 18px; }
-    #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; }
-    .cell { width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 48px; cursor: pointer; }
-    .cell.disabled { background: #ddd; cursor: default; }
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { margin-bottom: 20px; }
+  #login, #waiting, #game { display: none; }
+  input { padding: 10px; font-size: 16px; margin-bottom: 10px; width: 200px; }
+  button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; margin-top: 20px; }
+  .cell {
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 50px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .cell:hover { background: rgba(255,255,255,0.2); }
+  #status { margin-top: 20px; font-size: 18px; }
 </style>
 </head>
 <body>
+
 <h1>Tic Tac Toe</h1>
-<div id="status">Connecting...</div>
-<div id="board"></div>
+
+<div id="login">
+  <input type="text" id="playerName" placeholder="Enter your name">
+  <button onclick="joinGame()">Join Game</button>
+  <p id="loginError" style="color: red;"></p>
+</div>
+
+<div id="waiting">
+  <p>Waiting for another player to join...</p>
+</div>
+
+<div id="game">
+  <div id="board"></div>
+  <p id="status"></p>
+  <button onclick="resetGame()">Exit Game</button>
+</div>
 
 <script>
+const bannedWords = ["badword1","badword2","badword3"]; // add banned words here
 let ws;
-let board = [];
-let mySymbol = "";
-let myTurn = false;
+let roomId = null;
+let playerSymbol = null;
+let board = [["","",""],["","",""],["","",""]];
+
+function show(id) {
+  document.getElementById("login").style.display = "none";
+  document.getElementById("waiting").style.display = "none";
+  document.getElementById("game").style.display = "none";
+  document.getElementById(id).style.display = "block";
+}
+
+show("login");
+
+function joinGame() {
+  const name = document.getElementById("playerName").value.trim();
+  if(!name) return document.getElementById("loginError").textContent = "Enter a name";
+  if(bannedWords.some(w => name.toLowerCase().includes(w))) 
+    return document.getElementById("loginError").textContent = "Name not allowed";
+
+  ws = new WebSocket("wss://true-taxes-brush.loca.lt/ws");
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({action:"join", name}));
+    show("waiting");
+  };
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+
+    if(data.action === "start") {
+      playerSymbol = data.symbol;
+      board = data.board;
+      renderBoard();
+      show("game");
+      setStatus(`You are ${playerSymbol}`);
+    }
+
+    if(data.action === "board") {
+      board = data.board;
+      renderBoard();
+      if(data.last_move) {
+        const {symbol} = data.last_move;
+        setStatus(symbol === playerSymbol ? "Waiting for opponent" : "Your turn");
+      }
+    }
+
+    if(data.action === "win") {
+      setStatus(data.winner === playerSymbol ? "You won!" : "You lost!");
+    }
+
+    if(data.action === "draw") {
+      setStatus("Draw!");
+    }
+
+    if(data.error) {
+      alert(data.error);
+    }
+  };
+
+  ws.onclose = () => setStatus("Disconnected from server");
+}
 
 function renderBoard() {
-    const boardDiv = document.getElementById("board");
-    boardDiv.innerHTML = "";
-    for (let y = 0; y < 3; y++) {
-        for (let x = 0; x < 3; x++) {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            cell.textContent = board[y][x];
-            if (!cell.textContent && myTurn) {
-                cell.addEventListener("click", () => makeMove(x, y));
-            } else {
-                cell.classList.add("disabled");
-            }
-            boardDiv.appendChild(cell);
-        }
+  const boardDiv = document.getElementById("board");
+  boardDiv.innerHTML = "";
+  for(let y=0;y<3;y++){
+    for(let x=0;x<3;x++){
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.textContent = board[y][x];
+      cell.onclick = () => makeMove(x,y);
+      boardDiv.appendChild(cell);
     }
+  }
 }
 
-function makeMove(x, y) {
-    ws.send(JSON.stringify({action: "move", x, y}));
+function makeMove(x,y) {
+  if(board[y][x] || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({action:"move", x, y}));
 }
 
-function connect() {
-    ws = new WebSocket(`ws://${window.location.hostname}:8000/ws`);
-
-    ws.onopen = () => {
-        document.getElementById("status").textContent = "Connected. Waiting for opponent...";
-    };
-
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        if (data.status === "waiting") {
-            document.getElementById("status").textContent = data.message;
-        }
-        else if (data.status === "timeout") {
-            document.getElementById("status").textContent = data.message;
-        }
-        else if (data.status === "start") {
-            document.getElementById("status").textContent = "Opponent joined! Game starting...";
-            board = data.board;
-            mySymbol = "X"; // First player is X
-            myTurn = true;
-            renderBoard();
-        }
-        else if (data.action === "board") {
-            board = data.board;
-            const last = data.last_move;
-            if (last.symbol !== mySymbol) {
-                myTurn = true;
-                document.getElementById("status").textContent = "Your turn!";
-            } else {
-                myTurn = false;
-                document.getElementById("status").textContent = "Opponent's turn...";
-            }
-            renderBoard();
-        }
-        else if (data.action === "winner") {
-            document.getElementById("status").textContent = data.winner === mySymbol ? "You won!" : "You lost!";
-            myTurn = false;
-            renderBoard();
-        }
-        else if (data.action === "draw") {
-            document.getElementById("status").textContent = "Draw!";
-            myTurn = false;
-            renderBoard();
-        }
-    };
-
-    ws.onclose = () => {
-        document.getElementById("status").textContent = "Disconnected.";
-    };
+function setStatus(msg) {
+  document.getElementById("status").textContent = msg;
 }
 
-connect();
+function resetGame() {
+  if(ws) ws.close();
+  show("login");
+  document.getElementById("playerName").value = "";
+  setStatus("");
+}
 </script>
+
 </body>
 </html>
