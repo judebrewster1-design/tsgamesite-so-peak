@@ -45,7 +45,8 @@ function joinGame() {
   document.getElementById("waiting").style.display = "block";
 
   // connect to your LocalTunnel URL
-  ws = new WebSocket("wss://ripe-beers-scream.loca.lt/ws");
+const ws = new WebSocket("wss://hot-words-juggle.loca.lt/ws");
+
 
   ws.onopen = () => {
     ws.send(JSON.stringify({ action: "join", name }));
