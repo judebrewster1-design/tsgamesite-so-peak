@@ -5,132 +5,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tic-Tac-Toe Online</title>
 <style>
-  /* Reset */
-  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif; }
-  body { background: #1a1a1a; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; min-height:100vh; }
-  h1 { margin:20px; font-size:2.5em; color:#00d4ff; text-shadow: 2px 2px #000; }
-  
-  #game { display:grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap:10px; margin-top:30px; }
-  .cell { background:#222; display:flex; align-items:center; justify-content:center; font-size:3em; cursor:pointer; border-radius:10px; transition: all 0.2s; }
-  .cell:hover { background:#00d4ff; color:#000; transform:scale(1.05); }
-  
-  #status { margin-top:20px; font-size:1.2em; }
-  #chat { margin-top:30px; width:320px; display:flex; flex-direction:column; }
-  #messages { height:150px; overflow-y:auto; background:#111; padding:10px; border-radius:10px; margin-bottom:10px; }
-  #messages p { margin:5px 0; }
-  #chat-input { display:flex; }
-  #chat-input input { flex:1; padding:10px; border-radius:5px 0 0 5px; border:none; outline:none; }
-  #chat-input button { padding:10px 15px; border:none; border-radius:0 5px 5px 0; background:#00d4ff; color:#000; cursor:pointer; font-weight:bold; transition: all 0.2s; }
-  #chat-input button:hover { background:#00bcd4; }
+body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; padding: 20px; }
+h1 { color: #f39c12; }
+#login, #game { display: none; flex-direction: column; align-items: center; }
+#board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; margin: 20px 0; }
+.cell { width: 100px; height: 100px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; border-radius: 10px; transition: background 0.3s; }
+.cell:hover { background: #333; }
+#turn { margin: 10px 0; }
+#chat { margin-top: 20px; width: 320px; max-width: 90vw; display: flex; flex-direction: column; }
+#messages { height: 150px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 5px; background: #222; margin-bottom: 10px; }
+#input { display: flex; }
+#input input { flex: 1; padding: 8px; border: none; border-radius: 5px 0 0 5px; outline: none; }
+#input button { padding: 8px 15px; border: none; background: #f39c12; color: #111; font-weight: bold; cursor: pointer; border-radius: 0 5px 5px 0; }
+#input button:hover { background: #e67e22; }
+button { cursor: pointer; padding: 10px 20px; background: #f39c12; color: #111; border: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+button:hover { background: #e67e22; }
+input { padding: 10px; border-radius: 5px; border: none; outline: none; margin-top: 10px; }
 </style>
 </head>
 <body>
-<h1>⚡ Tic-Tac-Toe Online</h1>
-<div id="game"></div>
-<div id="status">Waiting for opponent...</div>
+<h1>Tic-Tac-Toe Online</h1>
 
-<div id="chat">
-  <div id="messages"></div>
-  <div id="chat-input">
-    <input type="text" id="message" placeholder="Type a message..." />
-    <button id="send">Send</button>
+<div id="login">
+  <input id="username" placeholder="Enter your username" />
+  <button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game">
+  <div id="waiting">Waiting for another player...</div>
+  <div id="turn"></div>
+  <div id="board"></div>
+
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="input">
+      <input id="msg" placeholder="Type message..." />
+      <button onclick="sendChat()">Send</button>
+    </div>
   </div>
 </div>
 
 <script>
-const LOCALTUNNEL_URL = "https://cruel-lizards-wave.loca.lt"; // your server
+const bannedWords = ["badword1","badword2","badword3"]; // add all banned words
+let playerName = "";
+let playerSymbol = "";
+let opponentName = "";
+let turn = "";
+let ws;
 
-// Banned words list
-const bannedWords = ["badword1","badword2","curse1","curse2","curse3","curse4","curse5","curse6"]; // add full list
-
-function filterMessage(msg) {
-  let filtered = msg;
-  bannedWords.forEach(word => {
-    const regex = new RegExp(word, 'gi');
-    filtered = filtered.replace(regex, '****');
-  });
-  return filtered;
-}
-
-// Tic-Tac-Toe logic
-const game = document.getElementById('game');
-const status = document.getElementById('status');
-let board = ["","","","","","","","",""];
-let myTurn = true; // will be synced with server later
-let socket;
-
-// Initialize board
-for(let i=0;i<9;i++){
-  const cell = document.createElement('div');
-  cell.className = 'cell';
-  cell.dataset.index = i;
-  cell.addEventListener('click', () => makeMove(i));
-  game.appendChild(cell);
-}
-
-function makeMove(i){
-  if(board[i]!=="" || !myTurn) return;
-  board[i] = "X";
-  updateBoard();
-  sendMove(i);
-  myTurn=false;
-  status.textContent = "Opponent's turn...";
-}
-
-function updateBoard(){
-  document.querySelectorAll('.cell').forEach((cell,i)=>{
-    cell.textContent = board[i];
-  });
-}
-
-// Connect to WebSocket
-function connectWS(){
-  socket = new WebSocket(`${LOCALTUNNEL_URL.replace(/^http/,'ws')}/ws/game/1`);
-  socket.onopen = ()=>{ status.textContent = "Connected. Waiting for opponent..."; };
-  socket.onmessage = (e)=>{
-    const data = JSON.parse(e.data);
-    if(data.type==="move"){
-      board[data.index] = "O";
-      updateBoard();
-      myTurn=true;
-      status.textContent = "Your turn";
-    }
-    if(data.type==="chat"){
-      const filtered = filterMessage(data.message);
-      addMessage(`Opponent: ${filtered}`);
-    }
-  };
-  socket.onclose = ()=>{ status.textContent = "Disconnected. Refresh to reconnect."; };
-}
-
-// Send move
-function sendMove(i){
-  if(socket && socket.readyState===1){
-    socket.send(JSON.stringify({type:"move", index:i}));
+function initBoard() {
+  const boardDiv = document.getElementById('board');
+  boardDiv.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.classList.add('cell');
+    cell.dataset.index = i;
+    cell.addEventListener('click', () => makeMove(i));
+    boardDiv.appendChild(cell);
   }
 }
 
-// Chat
-const messagesDiv = document.getElementById('messages');
-function addMessage(msg){
-  const p = document.createElement('p');
-  p.textContent = msg;
-  messagesDiv.appendChild(p);
+function startGame() {
+  const nameInput = document.getElementById('username');
+  if(!nameInput.value.trim()) return alert("Enter a username");
+  playerName = nameInput.value.trim();
+  document.getElementById('login').style.display = "none";
+  document.getElementById('game').style.display = "flex";
+
+  initBoard();
+
+  ws = new WebSocket("https://cruel-lizards-wave.loca.lt/ws");
+  ws.onopen = () => ws.send(JSON.stringify({type:"join", username: playerName}));
+  ws.onmessage = handleMessage;
+  ws.onclose = () => alert("Disconnected from server");
+}
+
+function handleMessage(event) {
+  const data = JSON.parse(event.data);
+
+  switch(data.type) {
+    case "assign":
+      playerSymbol = data.symbol;
+      opponentName = data.opponent || "Waiting...";
+      document.getElementById('waiting').innerText = "Waiting for " + (data.opponent || "opponent") + "...";
+      break;
+    case "start":
+      opponentName = data.opponent;
+      document.getElementById('waiting').style.display = "none";
+      turn = data.turn;
+      updateTurn();
+      break;
+    case "move":
+      const cell = document.querySelector(`.cell[data-index='${data.index}']`);
+      cell.innerText = data.symbol;
+      turn = data.turn;
+      updateTurn();
+      break;
+    case "chat":
+      addMessage(data.username + ": " + data.message);
+      break;
+    case "win":
+      alert(data.message);
+      resetBoard();
+      break;
+  }
+}
+
+function makeMove(index) {
+  if(turn !== playerSymbol) return;
+  ws.send(JSON.stringify({type:"move", index}));
+}
+
+function sendChat() {
+  const input = document.getElementById('msg');
+  let msg = input.value.trim();
+  if(!msg) return;
+
+  bannedWords.forEach(word => msg = msg.replace(new RegExp(word, "gi"), "****"));
+  ws.send(JSON.stringify({type:"chat", message: msg}));
+  input.value = "";
+}
+
+function addMessage(msg) {
+  const messagesDiv = document.getElementById('messages');
+  const msgDiv = document.createElement('div');
+  msgDiv.innerText = msg;
+  messagesDiv.appendChild(msgDiv);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-document.getElementById('send').addEventListener('click', ()=>{
-  const input = document.getElementById('message');
-  if(input.value.trim()==="") return;
-  const filtered = filterMessage(input.value);
-  addMessage(`You: ${filtered}`);
-  if(socket && socket.readyState===1){
-    socket.send(JSON.stringify({type:"chat", message:input.value}));
-  }
-  input.value="";
-});
+function updateTurn() {
+  const turnDiv = document.getElementById('turn');
+  turnDiv.innerText = (turn === playerSymbol ? "Your turn" : opponentName + "'s turn");
+}
 
-connectWS();
+function resetBoard() {
+  document.querySelectorAll('.cell').forEach(cell => cell.innerText = "");
+  document.getElementById('waiting').style.display = "block";
+  document.getElementById('waiting').innerText = "Waiting for another player...";
+}
+
+document.getElementById('login').style.display = "flex";
 </script>
 </body>
 </html>
