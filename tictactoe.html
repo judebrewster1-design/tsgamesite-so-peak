@@ -5,134 +5,211 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Tic Tac Toe</title>
 <style>
-  body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; margin: 0; padding: 0; }
-  h1 { margin-top: 20px; color: #333; }
-  #usernameForm, #game { margin-top: 30px; }
-  #board { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; justify-content: center; }
-  .cell { width: 100px; height: 100px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; border: 2px solid #333; }
-  .cell:hover { background: #ddd; }
-  #status { margin-top: 20px; font-weight: bold; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    color: #fff;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+#info {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+input, button {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: none;
+    margin: 5px;
+}
+
+button {
+    background: #fff;
+    color: #2575fc;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    background: #e0e0e0;
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.cell {
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+}
+
+.cell:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+#status {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
 </style>
 </head>
 <body>
-
 <h1>Online Tic Tac Toe</h1>
-
-<div id="usernameForm">
-  <input type="text" id="username" placeholder="Enter username">
-  <button id="startBtn">Start Game</button>
-  <p id="usernameWarning" style="color:red;"></p>
+<div id="info">
+    <input type="text" id="username" placeholder="Enter your username">
+    <button id="joinBtn">Join Game</button>
+    <p style="font-size:0.9rem;margin-top:5px;color:#ffdddd;">
+        Warning: Inappropriate usernames are banned.
+    </p>
 </div>
 
-<div id="game" style="display:none;">
-  <div id="board"></div>
-  <div id="status"></div>
-</div>
+<div id="board"></div>
+<div id="status"></div>
 
 <script>
-const SERVER_URL = "https://spicy-hornets-agree.loca.lt";
+const serverURL = "https://spicy-hornets-agree.loca.lt";
+let board = ["","","","","","","","",""];
+let mySymbol = "";
+let myTurn = false;
 let username = "";
-let banned = false;
-let board = ["", "", "", "", "", "", "", "", ""];
-let xTurn = true;
 
-// Load banned info from localStorage
-if(localStorage.getItem("banned") === "true") {
-  banned = true;
-  alert("You are banned from playing due to inappropriate username.");
+// DOM
+const statusDiv = document.getElementById("status");
+const boardDiv = document.getElementById("board");
+const joinBtn = document.getElementById("joinBtn");
+const usernameInput = document.getElementById("username");
+
+// Create board cells
+function createBoard() {
+    boardDiv.innerHTML = "";
+    for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.textContent = board[i];
+        cell.addEventListener("click", () => makeMove(i));
+        boardDiv.appendChild(cell);
+    }
 }
 
-// Start game
-document.getElementById("startBtn").onclick = async () => {
-  username = document.getElementById("username").value.trim();
-  if(!username) return;
-
-  if(await checkBanned(username)) {
-    banned = true;
-    localStorage.setItem("banned", "true");
-    document.getElementById("usernameWarning").innerText = "Username is banned!";
-    return;
-  }
-
-  localStorage.setItem("banned", "false");
-  document.getElementById("usernameForm").style.display = "none";
-  document.getElementById("game").style.display = "block";
-  initBoard();
-}
-
-// Check banned words from server
-async function checkBanned(name) {
-  try {
-    const res = await fetch(`${SERVER_URL}/banned_words`);
-    const bannedWords = await res.json();
-    return bannedWords.some(word => name.toLowerCase().includes(word.toLowerCase()));
-  } catch(e) {
-    console.error("Error fetching banned words", e);
-    return false;
-  }
-}
-
-// Initialize board UI
-function initBoard() {
-  const boardEl = document.getElementById("board");
-  boardEl.innerHTML = "";
-  board.forEach((cell, idx) => {
-    const div = document.createElement("div");
-    div.classList.add("cell");
-    div.dataset.index = idx;
-    div.innerText = cell;
-    div.onclick = cellClick;
-    boardEl.appendChild(div);
-  });
-  updateStatus();
-}
-
-// Handle cell click
-function cellClick(e) {
-  const idx = e.target.dataset.index;
-  if(board[idx] !== "" || banned) return;
-  board[idx] = xTurn ? "X" : "O";
-  xTurn = !xTurn;
-  syncBoard();
-  initBoard();
-}
-
-// Update status text
-function updateStatus() {
-  if(banned) {
-    document.getElementById("status").innerText = "You are banned from playing.";
-    return;
-  }
-  document.getElementById("status").innerText = xTurn ? "Your turn (X)" : "Opponent's turn (O)";
-}
-
-// Sync board with server
-async function syncBoard() {
-  try {
-    await fetch(`${SERVER_URL}/update_board`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({username, board})
+// Update board display
+function updateBoardDisplay() {
+    document.querySelectorAll(".cell").forEach((cell, i) => {
+        cell.textContent = board[i];
     });
-  } catch(e) {
-    console.error("Error syncing board", e);
-  }
 }
 
-// Poll board from server
-async function pollBoard() {
-  try {
-    const res = await fetch(`${SERVER_URL}/get_board?username=${encodeURIComponent(username)}`);
-    const data = await res.json();
-    board = data.board;
-    xTurn = data.xTurn;
-    initBoard();
-  } catch(e) {}
-  setTimeout(pollBoard, 1000);
+// Check winner
+function checkWinner(b) {
+    const winPatterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+    for (const [a,b1,c] of winPatterns) {
+        if (b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a];
+    }
+    return null;
 }
 
-pollBoard();
+// Join game
+joinBtn.addEventListener("click", async () => {
+    username = usernameInput.value.trim();
+    if (!username) { alert("Enter a username"); return; }
+
+    try {
+        const res = await fetch(`${serverURL}/join`, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({username})
+        });
+        const data = await res.json();
+        if (res.status === 403) { alert("Your username is banned."); return; }
+        mySymbol = data.symbol;
+        board = data.board;
+        myTurn = data.myTurn;
+        createBoard();
+        statusDiv.textContent = `Game started! You are ${mySymbol}. ${myTurn ? "Your turn" : "Opponent's turn"}`;
+        pollServer();
+    } catch(err) {
+        console.error(err);
+    }
+});
+
+// Make move
+async function makeMove(i) {
+    if (!myTurn || board[i] !== "") return;
+
+    board[i] = mySymbol;
+    updateBoardDisplay();
+    myTurn = false;
+    statusDiv.textContent = "Waiting for opponent...";
+    
+    await fetch(`${serverURL}/move`, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({username, index:i})
+    });
+
+    const winner = checkWinner(board);
+    if (winner) {
+        statusDiv.textContent = `Winner: ${winner}`;
+    }
+}
+
+// Poll server for updates
+async function pollServer() {
+    setInterval(async () => {
+        if (!username) return;
+        try {
+            const res = await fetch(`${serverURL}/state?username=${username}`);
+            const data = await res.json();
+            board = data.board;
+            myTurn = data.myTurn;
+            updateBoardDisplay();
+            const winner = checkWinner(board);
+            if (winner) {
+                statusDiv.textContent = `Winner: ${winner}`;
+            } else {
+                statusDiv.textContent = myTurn ? "Your turn" : "Opponent's turn";
+            }
+        } catch(err) {
+            console.error(err);
+        }
+    }, 1000); // poll every second
+}
+
+createBoard();
+statusDiv.textContent = "Enter username and join game!";
 </script>
-
 </body>
 </html>
