@@ -1,218 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tic Tac Toe Online</title>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Tic Tac Toe</title>
+<style>
     body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0;
-      padding: 0;
+        font-family: Arial, sans-serif;
+        background: #1a1a1a;
+        color: #f0f0f0;
+        text-align: center;
+        margin: 0;
+        padding: 0;
     }
-    h1 {
-      margin: 20px;
-      color: #00ff88;
-    }
-    #warning {
-      color: #ff4444;
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-    #usernamePrompt {
-      margin: 20px;
-    }
-    #game {
-      display: none;
-      margin-top: 20px;
-    }
-    #board {
-      display: grid;
-      grid-template-columns: repeat(3, 100px);
-      grid-template-rows: repeat(3, 100px);
-      gap: 5px;
-    }
-    .cell {
-      background: #222;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-    .cell.taken {
-      cursor: not-allowed;
-    }
-    #chat {
-      margin-top: 30px;
-      width: 320px;
-      max-height: 200px;
-      overflow-y: auto;
-      background: #1e1e1e;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    #chat p {
-      margin: 5px 0;
-    }
-    #chatInput {
-      margin-top: 10px;
-      display: flex;
-    }
-    #chatInput input {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      border-radius: 5px 0 0 5px;
-      outline: none;
-    }
-    #chatInput button {
-      padding: 8px 15px;
-      border: none;
-      background: #00ff88;
-      color: #000;
-      border-radius: 0 5px 5px 0;
-      cursor: pointer;
-    }
-    #status {
-      margin-top: 15px;
-      font-size: 18px;
-    }
-  </style>
+    h1 { margin-top: 20px; }
+    #login, #game { display: none; margin-top: 20px; }
+    input[type=text] { padding: 10px; font-size: 16px; width: 200px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+    #board { display: grid; grid-template-columns: repeat(3, 100px); grid-gap: 5px; justify-content: center; margin-top: 20px; }
+    .cell { width: 100px; height: 100px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 48px; cursor: pointer; }
+    #chat { margin-top: 20px; width: 300px; margin-left: auto; margin-right: auto; }
+    #messages { border: 1px solid #555; height: 150px; overflow-y: scroll; padding: 5px; background: #222; }
+    #messages p { margin: 5px 0; }
+</style>
 </head>
 <body>
-  <h1>Tic Tac Toe Online</h1>
-  <div id="warning">⚠️ Inappropriate usernames or chat messages will result in a ban.</div>
+<h1>Online Tic Tac Toe</h1>
+<p style="color: red;">Warning: Inappropriate usernames or language may get you banned!</p>
 
-  <div id="usernamePrompt">
-    <input type="text" id="usernameInput" placeholder="Enter a username"/>
-    <button id="startBtn">Start Game</button>
-  </div>
+<div id="login">
+    <input type="text" id="username" placeholder="Enter your username" />
+    <button id="loginBtn">Join Game</button>
+    <p id="loginMessage" style="color: yellow;"></p>
+</div>
 
-  <div id="game">
-    <div id="status">Waiting for opponent...</div>
-    <div id="board"></div>
-    <div id="chat"></div>
-    <div id="chatInput">
-      <input type="text" id="messageBox" placeholder="Type a message"/>
-      <button id="sendBtn">Send</button>
+<div id="game">
+    <div id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
     </div>
-  </div>
+    <p id="status"></p>
 
-  <script>
-    // Banned words list (full)
-    const bannedWords = [
-      "fuck","shit","bitch","asshole","bastard","cunt","nigger","faggot",
-      "slut","whore","dick","cock","pussy","motherfucker","retard","kike",
-      "spic","chink","tranny","twat","bollocks","bugger","wanker","prick",
-      "arse","damn","hell"
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type message" />
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+
+<script>
+const SERVER_URL = "https://open-corners-hammer.loca.lt";
+let username = localStorage.getItem("tictactoe_username");
+let bannedUsers = JSON.parse(localStorage.getItem("tictactoe_banned")) || [];
+let bannedWords = [];
+let board = Array(9).fill("");
+let myTurn = true; // always X for now
+
+// Fetch banned words from server on load
+fetch(`${SERVER_URL}/banned_words`)
+    .then(res => res.json())
+    .then(data => {
+        bannedWords = data.words.map(w => w.toLowerCase());
+    })
+    .catch(err => console.error("Failed to fetch banned words:", err));
+
+function checkBanned(name) {
+    return bannedUsers.includes(name.toLowerCase());
+}
+
+function loginUser() {
+    let inputName = document.getElementById("username").value.trim();
+    if (!inputName) return;
+    if (checkBanned(inputName)) {
+        document.getElementById("loginMessage").textContent = "You are banned from playing!";
+        return;
+    }
+
+    fetch(`${SERVER_URL}/check_username`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: inputName})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.banned) {
+            bannedUsers.push(inputName.toLowerCase());
+            localStorage.setItem("tictactoe_banned", JSON.stringify(bannedUsers));
+            document.getElementById("loginMessage").textContent = "You are banned from playing!";
+        } else {
+            username = inputName;
+            localStorage.setItem("tictactoe_username", username);
+            document.getElementById("login").style.display = "none";
+            document.getElementById("game").style.display = "block";
+            initGame();
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function initGame() {
+    document.getElementById("status").textContent = `You are X`;
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach(cell => {
+        cell.addEventListener("click", () => makeMove(cell));
+    });
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("messageInput").addEventListener("keypress", e => {
+        if (e.key === "Enter") sendMessage();
+    });
+}
+
+function makeMove(cell) {
+    const index = cell.getAttribute("data-index");
+    if (board[index] !== "" || !myTurn) return;
+    board[index] = "X";
+    cell.textContent = "X";
+    myTurn = false;
+    // TODO: send move to server for online play
+    checkWin();
+}
+
+function checkWin() {
+    const winCombos = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
     ];
+    for (let combo of winCombos) {
+        const [a,b,c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            document.getElementById("status").textContent = `${board[a]} wins!`;
+            return;
+        }
+    }
+    if (!board.includes("")) {
+        document.getElementById("status").textContent = `Draw!`;
+    }
+}
 
-    const socket = new WebSocket("wss://ready-moose-join.loca.lt");
+function sendMessage() {
+    const msgInput = document.getElementById("messageInput");
+    const message = msgInput.value.trim();
+    if (!message) return;
 
-    const boardEl = document.getElementById("board");
-    const statusEl = document.getElementById("status");
-    const chatEl = document.getElementById("chat");
-    const messageBox = document.getElementById("messageBox");
-
-    let username = "";
-    let playerSymbol = "";
-    let gameActive = false;
-
-    // Create board cells
-    for (let i = 0; i < 9; i++) {
-      const cell = document.createElement("div");
-      cell.classList.add("cell");
-      cell.dataset.index = i;
-      boardEl.appendChild(cell);
+    for (let word of bannedWords) {
+        if (message.toLowerCase().includes(word)) {
+            alert("Inappropriate language detected. You may be banned.");
+            return;
+        }
     }
 
-    // Ban check
-    function containsBannedWord(text) {
-      return bannedWords.some(word => text.toLowerCase().includes(word));
-    }
+    const messages = document.getElementById("messages");
+    const p = document.createElement("p");
+    p.textContent = `${username}: ${message}`;
+    messages.appendChild(p);
+    msgInput.value = "";
+    messages.scrollTop = messages.scrollHeight;
 
-    function isBanned() {
-      return localStorage.getItem("bannedUser") === "true";
-    }
+    // TODO: send chat to server for online sync
+}
 
-    function banUser(reason) {
-      localStorage.setItem("bannedUser", "true");
-      alert("You have been banned for inappropriate language: " + reason);
-      location.reload();
-    }
+document.getElementById("loginBtn").addEventListener("click", loginUser);
 
-    document.getElementById("startBtn").addEventListener("click", () => {
-      if (isBanned()) {
-        alert("You are banned and cannot play.");
-        return;
-      }
-      const input = document.getElementById("usernameInput").value.trim();
-      if (!input) {
-        alert("Enter a username.");
-        return;
-      }
-      if (containsBannedWord(input)) {
-        banUser("Inappropriate username");
-        return;
-      }
-      username = input;
-      document.getElementById("usernamePrompt").style.display = "none";
-      document.getElementById("game").style.display = "block";
-      socket.send(JSON.stringify({ type: "join", username }));
-    });
-
-    // Board click
-    boardEl.addEventListener("click", e => {
-      if (!gameActive) return;
-      const cell = e.target;
-      if (!cell.classList.contains("cell") || cell.classList.contains("taken")) return;
-      const index = cell.dataset.index;
-      socket.send(JSON.stringify({ type: "move", index, username }));
-    });
-
-    // Chat
-    document.getElementById("sendBtn").addEventListener("click", () => {
-      const msg = messageBox.value.trim();
-      if (!msg) return;
-      if (containsBannedWord(msg)) {
-        banUser("Inappropriate chat message");
-        return;
-      }
-      socket.send(JSON.stringify({ type: "chat", username, message: msg }));
-      messageBox.value = "";
-    });
-
-    // WebSocket messages
-    socket.addEventListener("message", e => {
-      const data = JSON.parse(e.data);
-      if (data.type === "assign") {
-        playerSymbol = data.symbol;
-        statusEl.textContent = "You are " + playerSymbol + ". Waiting for opponent...";
-      } else if (data.type === "start") {
-        gameActive = true;
-        statusEl.textContent = "Game started! Your turn: " + (data.turn === playerSymbol);
-      } else if (data.type === "move") {
-        const cell = boardEl.children[data.index];
-        cell.textContent = data.symbol;
-        cell.classList.add("taken");
-        statusEl.textContent = "Turn: " + data.turn;
-      } else if (data.type === "end") {
-        gameActive = false;
-        statusEl.textContent = data.message;
-      } else if (data.type === "chat") {
-        const p = document.createElement("p");
-        p.textContent = data.username + ": " + data.message;
-        chatEl.appendChild(p);
-        chatEl.scrollTop = chatEl.scrollHeight;
-      }
-    });
-  </script>
+if (username && !checkBanned(username)) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("game").style.display = "block";
+    initGame();
+} else {
+    document.getElementById("login").style.display = "block";
+}
+</script>
 </body>
 </html>
