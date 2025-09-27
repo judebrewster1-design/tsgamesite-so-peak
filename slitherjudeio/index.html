@@ -1,18 +1,18 @@
+@"
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 <head>
-  <meta charset="UTF-8">
+  <meta charset='UTF-8'>
   <title>SlitherJude.io</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel='stylesheet' href='style.css'>
 </head>
 <body>
   <h1>SlitherJude.io</h1>
-  <input id="username" placeholder="Enter your name">
-  <button onclick="joinGame()">Join</button>
-  <canvas id="gameCanvas"></canvas>
-  
-  <!-- Socket.IO CDN (for multiplayer later) -->
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="game.js"></script>
+  <input id='username' placeholder='Enter your name'>
+  <button onclick='joinGame()'>Join</button>
+  <canvas id='gameCanvas'></canvas>
+  <script src='https://cdn.socket.io/4.5.4/socket.io.min.js'></script>
+  <script src='game.js'></script>
 </body>
 </html>
+"@ | Set-Content (Join-Path $frontendPath "index.html")
