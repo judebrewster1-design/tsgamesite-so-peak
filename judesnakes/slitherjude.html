@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -300,6 +299,56 @@
             color: #4CAF50;
         }
 
+        #death-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(255,0,0,0.5);
+            z-index: 500;
+            display: none;
+            text-align: center;
+            border: 4px solid #e74c3c;
+        }
+
+        #death-screen h2 {
+            color: #e74c3c;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        #death-screen .stats {
+            color: white;
+            font-size: 1.5em;
+            margin: 15px 0;
+        }
+
+        #death-screen .stats span {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        #respawn-btn {
+            margin-top: 30px;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #respawn-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(46,204,113,0.5);
+        }
+
         #minimap-tooltip {
             position: fixed;
             background: rgba(0,0,0,0.9);
@@ -329,7 +378,7 @@
         <h1>🐍 Slither Game</h1>
         <p>Enter your username and connect to play!</p>
         <input type="text" id="username" placeholder="Enter your username" maxlength="20" />
-        <input type="text" id="ws-url" placeholder="wss://your-tunnel-url.trycloudflare.com" value="https://guided-mirror-landscapes-consoles.trycloudflare.com" />
+        <input type="text" id="ws-url" placeholder="wss://your-tunnel-url.trycloudflare.com" value="wss://joining-none-comments-besides.trycloudflare.com" />
         <button id="connect-btn" class="pulse">🎮 Connect & Play</button>
         <p id="status">Ready to connect</p>
     </div>
@@ -338,6 +387,14 @@
         <canvas id="game"></canvas>
         <canvas id="minimap"></canvas>
         <div id="minimap-tooltip"></div>
+        
+        <div id="death-screen">
+            <h2>💀 You Died!</h2>
+            <div class="stats">Final Score: <span id="death-score">0</span></div>
+            <div class="stats">Points Earned: <span id="death-points">0</span></div>
+            <div class="stats">High Score: <span id="death-highscore">0</span></div>
+            <button id="respawn-btn">🔄 Respawn</button>
+        </div>
         
         <div id="hud">
             <div>Score: <span id="score">0</span></div>
@@ -373,6 +430,21 @@
         let camera = { x: 0, y: 0 };
         let direction = { x: 1, y: 0 };
         let lastInputTime = 0;
+        let isDead = false;
+        let currentUsername = '';
+        let judeImage = new Image();
+        judeImage.src = 'jude.png'; // Make sure jude.png is in the frontend folder
+        let imageLoaded = false;
+        
+        judeImage.onload = () => {
+            imageLoaded = true;
+            console.log('✅ Jude image loaded!');
+        };
+        
+        judeImage.onerror = () => {
+            console.log('⚠️  Could not load jude.png - using circle instead');
+            imageLoaded = false;
+        };
 
         const availableSkins = [
             { id: 'default', name: 'Default', hue: 0, cost: 0 },
@@ -393,6 +465,16 @@
         });
         document.getElementById('close-shop').addEventListener('click', () => {
             document.getElementById('shop-panel').style.display = 'none';
+        });
+
+        document.getElementById('respawn-btn').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            isDead = false;
+            
+            // Reconnect with same username
+            if (currentUsername && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'setUsername', username: currentUsername }));
+            }
         });
 
         document.addEventListener('keydown', (e) => {
@@ -428,6 +510,7 @@
                 return;
             }
             
+            currentUsername = username;
             document.getElementById('status').textContent = 'Connecting...';
             document.getElementById('status').style.color = 'orange';
             
@@ -458,9 +541,19 @@
                 } else if (msg.type === 'welcome') {
                     playerId = msg.id;
                     playerData = msg.playerData;
+                    isDead = false;
                     document.getElementById('connection-panel').style.display = 'none';
                     document.getElementById('game-container').style.display = 'block';
+                    document.getElementById('death-screen').style.display = 'none';
                     startGame();
+                } else if (msg.type === 'death') {
+                    isDead = true;
+                    document.getElementById('death-score').textContent = msg.score;
+                    document.getElementById('death-points').textContent = msg.points;
+                    document.getElementById('death-highscore').textContent = msg.highScore;
+                    document.getElementById('death-screen').style.display = 'block';
+                    playerData.points += msg.points;
+                    playerData.highScore = msg.highScore;
                 } else if (msg.type === 'state') {
                     // Decompress optimized data
                     gameState.snakes = {};
@@ -513,7 +606,7 @@
             window.addEventListener('resize', resizeCanvas);
             
             function gameLoop() {
-                if (!playerId || !gameState.snakes[playerId]) {
+                if (!playerId || !gameState.snakes[playerId] || isDead) {
                     requestAnimationFrame(gameLoop);
                     return;
                 }
@@ -569,20 +662,59 @@
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
                     
-                    ctx.beginPath();
-                    for (let i = 0; i < snake.body.length; i++) {
-                        const seg = snake.body[i];
-                        if (i === 0) ctx.moveTo(seg.x, seg.y);
-                        else ctx.lineTo(seg.x, seg.y);
+                    // Draw body segments (skip head - we'll draw it separately)
+                    if (snake.body.length > 1) {
+                        ctx.beginPath();
+                        for (let i = 1; i < snake.body.length; i++) {
+                            const seg = snake.body[i];
+                            if (i === 1) ctx.moveTo(seg.x, seg.y);
+                            else ctx.lineTo(seg.x, seg.y);
+                        }
+                        ctx.stroke();
+                        
+                        // Draw body circles
+                        for (let i = 1; i < snake.body.length; i++) {
+                            ctx.fillStyle = snake.color;
+                            ctx.beginPath();
+                            ctx.arc(snake.body[i].x, snake.body[i].y, 6, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                     }
-                    ctx.stroke();
                     
-                    // Head
-                    ctx.fillStyle = snake.color;
+                    // Draw head with jude.png or circle
                     const head = snake.body[0];
-                    ctx.beginPath();
-                    ctx.arc(head.x, head.y, 8, 0, Math.PI * 2);
-                    ctx.fill();
+                    if (imageLoaded) {
+                        // Calculate rotation angle based on direction
+                        const nextSeg = snake.body[1] || head;
+                        const angle = Math.atan2(head.y - nextSeg.y, head.x - nextSeg.x);
+                        
+                        ctx.save();
+                        ctx.translate(head.x, head.y);
+                        ctx.rotate(angle);
+                        
+                        // Draw jude.png as snake head (20x20 size)
+                        ctx.drawImage(judeImage, -10, -10, 20, 20);
+                        ctx.restore();
+                    } else {
+                        // Fallback: draw larger circle for head
+                        ctx.fillStyle = snake.color;
+                        ctx.beginPath();
+                        ctx.arc(head.x, head.y, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw eyes
+                        ctx.fillStyle = 'white';
+                        ctx.beginPath();
+                        ctx.arc(head.x - 3, head.y - 2, 2, 0, Math.PI * 2);
+                        ctx.arc(head.x + 3, head.y - 2, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = 'black';
+                        ctx.beginPath();
+                        ctx.arc(head.x - 3, head.y - 2, 1, 0, Math.PI * 2);
+                        ctx.arc(head.x + 3, head.y - 2, 1, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                     
                     // Score
                     ctx.fillStyle = 'white';
