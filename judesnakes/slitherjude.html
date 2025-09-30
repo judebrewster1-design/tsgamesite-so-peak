@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐍 Slither.io Clone - Multiplayer</title>
+    <title>🐍 Slither Multiplayer Game</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -18,7 +13,6 @@
             width: 100vw;
             height: 100vh;
         }
-
         #connection-panel {
             position: fixed;
             top: 50%;
@@ -32,38 +26,17 @@
             z-index: 1000;
             min-width: 400px;
         }
-
-        #connection-panel h1 {
-            margin-bottom: 10px;
-            color: #667eea;
-            font-size: 2.5em;
-        }
-
-        #connection-panel p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        #username {
+        #connection-panel h1 { margin-bottom: 10px; color: #667eea; font-size: 2.5em; }
+        #connection-panel p { color: #666; margin-bottom: 20px; }
+        #username, #ws-url {
             width: 100%;
             padding: 15px;
             border: 2px solid #667eea;
             border-radius: 10px;
             margin-bottom: 10px;
             font-size: 16px;
-            font-weight: bold;
-            text-align: center;
         }
-
-        #ws-url {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
+        #username { font-weight: bold; text-align: center; }
         #connect-btn {
             width: 100%;
             padding: 15px 30px;
@@ -74,31 +47,10 @@
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
-            transition: transform 0.2s;
         }
-
-        #connect-btn:hover {
-            transform: scale(1.05);
-        }
-
-        #status {
-            margin-top: 15px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            display: none;
-        }
-
-        #game {
-            display: block;
-            background: #0f0f1e;
-        }
-
+        #status { margin-top: 15px; color: #666; font-weight: 500; }
+        #game-container { width: 100vw; height: 100vh; position: relative; display: none; }
+        #game { display: block; background: #0f0f1e; }
         #minimap {
             position: fixed;
             top: 20px;
@@ -110,7 +62,6 @@
             background: rgba(0,0,0,0.7);
             box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
-
         #hud {
             position: fixed;
             top: 20px;
@@ -122,20 +73,98 @@
             font-size: 18px;
             font-weight: bold;
             min-width: 200px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
-
-        #hud div {
-            margin: 8px 0;
-            display: flex;
-            justify-content: space-between;
+        #hud div { margin: 8px 0; display: flex; justify-content: space-between; }
+        #hud span { color: #ffd700; margin-left: 10px; }
+        #player-count {
+            position: fixed;
+            top: 170px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
         }
-
-        #hud span {
+        #player-count span { color: #4CAF50; }
+        #chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 400px;
+            background: rgba(0,0,0,0.9);
+            border-radius: 15px;
+            padding: 15px;
+            display: none;
+        }
+        #chat-messages {
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        .chat-msg {
+            color: white;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .chat-msg .username {
+            font-weight: bold;
             color: #ffd700;
-            margin-left: 10px;
         }
-
+        #chat-input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+        }
+        #chat-send {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #chat-toggle {
+            position: fixed;
+            bottom: 200px;
+            left: 20px;
+            padding: 15px 25px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+        #chat-unlock-notice {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(46, 204, 113, 0.95);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            z-index: 300;
+            border: 3px solid white;
+        }
         #shop-btn {
             position: fixed;
             bottom: 30px;
@@ -147,16 +176,9 @@
             font-size: 24px;
             cursor: pointer;
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            transition: all 0.3s;
             font-weight: bold;
             color: #333;
         }
-
-        #shop-btn:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 10px 30px rgba(255,215,0,0.5);
-        }
-
         #shop-panel {
             position: fixed;
             top: 50%;
@@ -172,14 +194,7 @@
             z-index: 200;
             display: none;
         }
-
-        #shop-panel h3 {
-            margin-bottom: 20px;
-            color: #667eea;
-            font-size: 2em;
-            text-align: center;
-        }
-
+        #shop-panel h3 { margin-bottom: 20px; color: #667eea; font-size: 2em; text-align: center; }
         .skin-item {
             display: flex;
             justify-content: space-between;
@@ -188,20 +203,8 @@
             margin: 15px 0;
             border: 3px solid #ddd;
             border-radius: 12px;
-            transition: all 0.3s;
         }
-
-        .skin-item:hover {
-            border-color: #667eea;
-            transform: translateX(5px);
-        }
-
-        .skin-info {
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-
+        .skin-info { display: flex; align-items: center; flex: 1; }
         .skin-color {
             width: 50px;
             height: 50px;
@@ -210,22 +213,9 @@
             border: 3px solid white;
             box-shadow: 0 3px 10px rgba(0,0,0,0.3);
         }
-
-        .skin-details {
-            flex: 1;
-        }
-
-        .skin-name {
-            font-weight: bold;
-            font-size: 18px;
-            color: #333;
-        }
-
-        .skin-cost {
-            color: #666;
-            font-size: 14px;
-        }
-
+        .skin-details { flex: 1; }
+        .skin-name { font-weight: bold; font-size: 18px; color: #333; }
+        .skin-cost { color: #666; font-size: 14px; }
         .skin-item button {
             padding: 10px 20px;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -235,22 +225,9 @@
             cursor: pointer;
             font-weight: bold;
             margin-left: 10px;
-            transition: all 0.3s;
         }
-
-        .skin-item button:hover:not(:disabled) {
-            transform: scale(1.1);
-        }
-
-        .skin-item button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .skin-item button.select-btn {
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-        }
-
+        .skin-item button:disabled { background: #ccc; cursor: not-allowed; }
+        .skin-item button.select-btn { background: linear-gradient(135deg, #2ecc71, #27ae60); }
         #close-shop {
             margin-top: 20px;
             padding: 15px 20px;
@@ -263,42 +240,6 @@
             font-size: 16px;
             font-weight: bold;
         }
-
-        #close-shop:hover {
-            background: #c0392b;
-        }
-
-        .controls-hint {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-        }
-
-        .controls-hint strong {
-            color: #ffd700;
-        }
-
-        #player-count {
-            position: fixed;
-            top: 170px;
-            left: 20px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        #player-count span {
-            color: #4CAF50;
-        }
-
         #death-screen {
             position: fixed;
             top: 50%;
@@ -313,24 +254,9 @@
             text-align: center;
             border: 4px solid #e74c3c;
         }
-
-        #death-screen h2 {
-            color: #e74c3c;
-            font-size: 3em;
-            margin-bottom: 20px;
-        }
-
-        #death-screen .stats {
-            color: white;
-            font-size: 1.5em;
-            margin: 15px 0;
-        }
-
-        #death-screen .stats span {
-            color: #ffd700;
-            font-weight: bold;
-        }
-
+        #death-screen h2 { color: #e74c3c; font-size: 3em; margin-bottom: 20px; }
+        #death-screen .stats { color: white; font-size: 1.5em; margin: 15px 0; }
+        #death-screen .stats span { color: #ffd700; font-weight: bold; }
         #respawn-btn {
             margin-top: 30px;
             padding: 20px 40px;
@@ -341,14 +267,7 @@
             font-size: 20px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s;
         }
-
-        #respawn-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 10px 30px rgba(46,204,113,0.5);
-        }
-
         #minimap-tooltip {
             position: fixed;
             background: rgba(0,0,0,0.9);
@@ -362,15 +281,17 @@
             z-index: 1000;
             border: 2px solid #ffd700;
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .controls-hint {
+            position: fixed;
+            bottom: 30px;
+            right: 450px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
         }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
+        .controls-hint strong { color: #ffd700; }
     </style>
 </head>
 <body>
@@ -378,8 +299,8 @@
         <h1>🐍 Slither Game</h1>
         <p>Enter your username and connect to play!</p>
         <input type="text" id="username" placeholder="Enter your username" maxlength="20" />
-        <input type="text" id="ws-url" placeholder="wss://your-tunnel-url.trycloudflare.com" value="https://said-achieving-expensive-references.trycloudflare.com " />
-        <button id="connect-btn" class="pulse">🎮 Connect & Play</button>
+        <input type="text" id="ws-url" placeholder="wss://your-tunnel-url.trycloudflare.com" value="wss://joining-none-comments-besides.trycloudflare.com" />
+        <button id="connect-btn">🎮 Connect & Play</button>
         <p id="status">Ready to connect</p>
     </div>
     
@@ -388,22 +309,32 @@
         <canvas id="minimap"></canvas>
         <div id="minimap-tooltip"></div>
         
-        <div id="death-screen">
-            <h2>💀 You Died!</h2>
-            <div class="stats">Final Score: <span id="death-score">0</span></div>
-            <div class="stats">Points Earned: <span id="death-points">0</span></div>
-            <div class="stats">High Score: <span id="death-highscore">0</span></div>
-            <button id="respawn-btn">🔄 Respawn</button>
-        </div>
-        
         <div id="hud">
             <div>Score: <span id="score">0</span></div>
             <div>Points: <span id="points">0</span></div>
             <div>High Score: <span id="highscore">0</span></div>
         </div>
         
-        <div id="player-count">
-            Real Players: <span id="player-num">0</span>
+        <div id="player-count">Real Players: <span id="player-num">0</span></div>
+        
+        <button id="chat-toggle">💬 Toggle Chat</button>
+        
+        <div id="chat-container">
+            <div id="chat-messages"></div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="Type message..." maxlength="200" />
+                <button id="chat-send">Send</button>
+            </div>
+        </div>
+        
+        <div id="chat-unlock-notice">
+            <div style="font-size: 2em; margin-bottom: 10px;">🎉 CHAT UNLOCKED!</div>
+            <div>You now have 50+ points!</div>
+            <div style="margin-top: 15px; font-size: 14px; color: #fff;">
+                ⚠️ WARNING: Using inappropriate language in chat will result in:<br>
+                • 10 minute chat ban<br>
+                • ALL progress reset (points & skins)
+            </div>
         </div>
         
         <button id="shop-btn">🛍️ Shop</button>
@@ -416,6 +347,15 @@
             <h3>🎨 Skin Shop</h3>
             <div id="skins-list"></div>
             <button id="close-shop">Close Shop</button>
+        </div>
+        
+        <div id="death-screen">
+            <h2>💀 You Died!</h2>
+            <div class="stats">Final Score: <span id="death-score">0</span></div>
+            <div class="stats">Points Earned: <span id="death-points">0</span></div>
+            <div class="stats">Total Points: <span id="death-totalpoints">0</span></div>
+            <div class="stats">High Score: <span id="death-highscore">0</span></div>
+            <button id="respawn-btn">🔄 Respawn</button>
         </div>
     </div>
     
@@ -432,8 +372,11 @@
         let lastInputTime = 0;
         let isDead = false;
         let currentUsername = '';
+        let chatUnlocked = false;
+        let chatShown = false;
+        
         let judeImage = new Image();
-        judeImage.src = 'jude.png'; // Make sure jude.png is in the frontend folder
+        judeImage.src = 'jude.png';
         let imageLoaded = false;
         
         judeImage.onload = () => {
@@ -442,18 +385,18 @@
         };
         
         judeImage.onerror = () => {
-            console.log('⚠️  Could not load jude.png - using circle instead');
+            console.log('⚠️ Could not load jude.png - using fallback');
             imageLoaded = false;
         };
 
         const availableSkins = [
-            { id: 'default', name: 'Default', hue: 0, cost: 0 },
-            { id: 'red', name: 'Red Ruby', hue: 0, cost: 50 },
-            { id: 'orange', name: 'Orange Burst', hue: 30, cost: 100 },
+            { id: 'default', name: 'Default Snake', hue: 0, cost: 0 },
+            { id: 'red', name: 'Ruby Red', hue: 0, cost: 50 },
+            { id: 'orange', name: 'Orange Blaze', hue: 30, cost: 100 },
             { id: 'yellow', name: 'Golden Sun', hue: 60, cost: 150 },
-            { id: 'green', name: 'Emerald Green', hue: 120, cost: 200 },
-            { id: 'cyan', name: 'Cyan Ocean', hue: 180, cost: 300 },
-            { id: 'blue', name: 'Sapphire Blue', hue: 240, cost: 400 },
+            { id: 'green', name: 'Emerald Dream', hue: 120, cost: 200 },
+            { id: 'cyan', name: 'Ocean Wave', hue: 180, cost: 300 },
+            { id: 'blue', name: 'Sapphire Sky', hue: 240, cost: 400 },
             { id: 'purple', name: 'Royal Purple', hue: 280, cost: 500 },
             { id: 'pink', name: 'Pink Diamond', hue: 320, cost: 600 }
         ];
@@ -466,20 +409,19 @@
         document.getElementById('close-shop').addEventListener('click', () => {
             document.getElementById('shop-panel').style.display = 'none';
         });
-
-        document.getElementById('respawn-btn').addEventListener('click', () => {
-            document.getElementById('death-screen').style.display = 'none';
-            isDead = false;
-            
-            // Reconnect with same username
-            if (currentUsername && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'setUsername', username: currentUsername }));
-            }
+        document.getElementById('respawn-btn').addEventListener('click', respawn);
+        document.getElementById('chat-toggle').addEventListener('click', () => {
+            chatShown = !chatShown;
+            document.getElementById('chat-container').style.display = chatShown ? 'block' : 'none';
+        });
+        document.getElementById('chat-send').addEventListener('click', sendChat);
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
         });
 
         document.addEventListener('keydown', (e) => {
             const now = Date.now();
-            if (now - lastInputTime < 16) return; // Throttle input to ~60fps
+            if (now - lastInputTime < 16) return;
             lastInputTime = now;
 
             let newDir = direction;
@@ -495,6 +437,31 @@
                 ws.send(JSON.stringify({ type: 'input', direction }));
             }
         });
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message || !chatUnlocked) return;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'chatMessage', message }));
+                input.value = '';
+            }
+        }
+
+        function addChatMessage(username, message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-msg';
+            msgDiv.innerHTML = `<span class="username">${username}:</span> ${message}`;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            while (chatMessages.children.length > 50) {
+                chatMessages.removeChild(chatMessages.firstChild);
+            }
+        }
 
         function connect() {
             const username = document.getElementById('username').value.trim();
@@ -519,8 +486,6 @@
             ws.onopen = () => {
                 document.getElementById('status').textContent = 'Connected! Loading game...';
                 document.getElementById('status').style.color = 'green';
-                
-                // Send username first
                 ws.send(JSON.stringify({ type: 'setUsername', username }));
             };
             
@@ -528,16 +493,14 @@
                 const msg = JSON.parse(event.data);
                 
                 if (msg.type === 'banned') {
-                    alert(`🚫 ${msg.message}`);
+                    alert(msg.message);
                     document.getElementById('status').textContent = `Banned for ${msg.timeLeft} minutes`;
                     document.getElementById('status').style.color = 'red';
                     ws.close();
-                    return;
                 } else if (msg.type === 'error') {
-                    alert(`❌ ${msg.message}`);
+                    alert(msg.message);
                     document.getElementById('status').textContent = msg.message;
                     document.getElementById('status').style.color = 'red';
-                    return;
                 } else if (msg.type === 'welcome') {
                     playerId = msg.id;
                     playerData = msg.playerData;
@@ -545,17 +508,19 @@
                     document.getElementById('connection-panel').style.display = 'none';
                     document.getElementById('game-container').style.display = 'block';
                     document.getElementById('death-screen').style.display = 'none';
+                    checkChatUnlock();
                     startGame();
                 } else if (msg.type === 'death') {
                     isDead = true;
                     document.getElementById('death-score').textContent = msg.score;
                     document.getElementById('death-points').textContent = msg.points;
+                    document.getElementById('death-totalpoints').textContent = msg.totalPoints;
                     document.getElementById('death-highscore').textContent = msg.highScore;
                     document.getElementById('death-screen').style.display = 'block';
-                    playerData.points += msg.points;
+                    playerData.points = msg.totalPoints;
                     playerData.highScore = msg.highScore;
+                    checkChatUnlock();
                 } else if (msg.type === 'state') {
-                    // Decompress optimized data
                     gameState.snakes = {};
                     for (const id in msg.snakes) {
                         const s = msg.snakes[id];
@@ -574,22 +539,51 @@
                     playerData.points = msg.points;
                     updateShop();
                     updateHUD();
-                    alert('Skin purchased successfully! 🎉');
+                    alert('Skin purchased successfully!');
+                } else if (msg.type === 'chatMessage') {
+                    addChatMessage(msg.username, msg.message);
+                } else if (msg.type === 'chatBanned') {
+                    alert(msg.message);
+                    playerData.points = 0;
+                    playerData.highScore = 0;
+                    playerData.ownedSkins = ['default'];
+                    chatUnlocked = false;
+                    document.getElementById('chat-toggle').style.display = 'none';
+                    document.getElementById('chat-container').style.display = 'none';
                 }
             };
             
-            ws.onerror = (error) => {
-                document.getElementById('status').textContent = 'Connection error - Check URL';
+            ws.onerror = () => {
+                document.getElementById('status').textContent = 'Connection error';
                 document.getElementById('status').style.color = 'red';
-                console.error('WebSocket error:', error);
             };
             
             ws.onclose = () => {
-                document.getElementById('status').textContent = 'Disconnected from server';
+                document.getElementById('status').textContent = 'Disconnected';
                 document.getElementById('status').style.color = 'red';
                 document.getElementById('game-container').style.display = 'none';
                 document.getElementById('connection-panel').style.display = 'block';
             };
+        }
+
+        function checkChatUnlock() {
+            if (!chatUnlocked && playerData.points >= 50) {
+                chatUnlocked = true;
+                document.getElementById('chat-toggle').style.display = 'block';
+                document.getElementById('chat-unlock-notice').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('chat-unlock-notice').style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function respawn() {
+            document.getElementById('death-screen').style.display = 'none';
+            isDead = false;
+            
+            if (currentUsername && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'setUsername', username: currentUsername }));
+            }
         }
 
         function startGame() {
@@ -617,14 +611,13 @@
                     camera.y = player.body[0].y - canvas.height / 2;
                 }
                 
-                // Background
                 ctx.fillStyle = '#0f0f1e';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
                 ctx.save();
                 ctx.translate(-camera.x, -camera.y);
                 
-                // Grid (lighter, less CPU intensive)
+                // Grid
                 ctx.strokeStyle = 'rgba(255,255,255,0.03)';
                 ctx.lineWidth = 1;
                 const gridSize = 100;
@@ -647,7 +640,6 @@
                 }
                 
                 // Balls
-                ctx.shadowBlur = 0;
                 gameState.balls.forEach(ball => {
                     ctx.fillStyle = ball.color;
                     ctx.beginPath();
@@ -662,7 +654,7 @@
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
                     
-                    // Draw body segments (skip head - we'll draw it separately)
+                    // Body
                     if (snake.body.length > 1) {
                         ctx.beginPath();
                         for (let i = 1; i < snake.body.length; i++) {
@@ -672,7 +664,6 @@
                         }
                         ctx.stroke();
                         
-                        // Draw body circles
                         for (let i = 1; i < snake.body.length; i++) {
                             ctx.fillStyle = snake.color;
                             ctx.beginPath();
@@ -681,56 +672,37 @@
                         }
                     }
                     
-                    // Draw head with jude.png or circle
+                    // Head with jude.png
                     const head = snake.body[0];
                     if (imageLoaded) {
-                        // Calculate rotation angle based on direction
                         const nextSeg = snake.body[1] || head;
                         const angle = Math.atan2(head.y - nextSeg.y, head.x - nextSeg.x);
                         
                         ctx.save();
                         ctx.translate(head.x, head.y);
                         ctx.rotate(angle);
-                        
-                        // Draw jude.png as snake head (20x20 size)
-                        ctx.drawImage(judeImage, -10, -10, 20, 20);
+                        ctx.drawImage(judeImage, -15, -15, 30, 30);
                         ctx.restore();
                     } else {
-                        // Fallback: draw larger circle for head
                         ctx.fillStyle = snake.color;
                         ctx.beginPath();
                         ctx.arc(head.x, head.y, 10, 0, Math.PI * 2);
                         ctx.fill();
-                        
-                        // Draw eyes
-                        ctx.fillStyle = 'white';
-                        ctx.beginPath();
-                        ctx.arc(head.x - 3, head.y - 2, 2, 0, Math.PI * 2);
-                        ctx.arc(head.x + 3, head.y - 2, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        ctx.fillStyle = 'black';
-                        ctx.beginPath();
-                        ctx.arc(head.x - 3, head.y - 2, 1, 0, Math.PI * 2);
-                        ctx.arc(head.x + 3, head.y - 2, 1, 0, Math.PI * 2);
-                        ctx.fill();
                     }
                     
-                    // Score
+                    // Username and score
                     ctx.fillStyle = 'white';
-                    ctx.font = 'bold 16px Arial';
+                    ctx.font = 'bold 14px Arial';
                     ctx.textAlign = 'center';
                     ctx.strokeStyle = 'black';
                     ctx.lineWidth = 3;
                     const scoreText = `${snake.username} (${snake.score})`;
-                    ctx.strokeText(scoreText, head.x, head.y - 20);
-                    ctx.fillText(scoreText, head.x, head.y - 20);
+                    ctx.strokeText(scoreText, head.x, head.y - 25);
+                    ctx.fillText(scoreText, head.x, head.y - 25);
                 });
                 
                 ctx.restore();
-                
                 drawMinimap(mmCtx);
-                
                 requestAnimationFrame(gameLoop);
             }
             
@@ -745,7 +717,6 @@
             ctx.fillStyle = 'rgba(15, 15, 30, 0.9)';
             ctx.fillRect(0, 0, minimap.width, minimap.height);
             
-            // Only show real players on minimap (no bots)
             let playerCount = 0;
             Object.entries(gameState.snakes).forEach(([id, snake]) => {
                 if (!snake.isBot && snake.body[0]) {
@@ -766,11 +737,9 @@
                 }
             });
             
-            // Update player count
             document.getElementById('player-num').textContent = playerCount;
         }
 
-        // Minimap hover tooltip
         const minimap = document.getElementById('minimap');
         const tooltip = document.getElementById('minimap-tooltip');
         
@@ -817,8 +786,13 @@
             if (playerId && gameState.snakes[playerId]) {
                 const player = gameState.snakes[playerId];
                 document.getElementById('score').textContent = player.score;
-                document.getElementById('points').textContent = playerData.points + player.points;
+                const totalPoints = playerData.points + player.points;
+                document.getElementById('points').textContent = totalPoints;
                 document.getElementById('highscore').textContent = playerData.highScore;
+                
+                if (totalPoints >= 50) {
+                    checkChatUnlock();
+                }
             }
         }
 
@@ -850,14 +824,13 @@
                 
                 detailsDiv.appendChild(nameSpan);
                 detailsDiv.appendChild(costSpan);
-                
                 infoDiv.appendChild(colorDiv);
                 infoDiv.appendChild(detailsDiv);
                 
                 const owned = playerData.ownedSkins.includes(skin.id);
                 
                 const btn = document.createElement('button');
-                btn.textContent = owned ? '✓ Owned' : '🛒 Buy';
+                btn.textContent = owned ? '✓ Owned' : 'Buy';
                 btn.disabled = owned || playerData.points < skin.cost;
                 
                 btn.onclick = () => {
@@ -875,7 +848,7 @@
                 
                 if (owned) {
                     const selectBtn = document.createElement('button');
-                    selectBtn.textContent = '✨ Select';
+                    selectBtn.textContent = 'Select';
                     selectBtn.className = 'select-btn';
                     selectBtn.onclick = () => {
                         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -885,7 +858,7 @@
                                 skinId: skin.id,
                                 color: color
                             }));
-                            alert(`${skin.name} skin selected! 🎨`);
+                            alert(`${skin.name} selected!`);
                         }
                     };
                     div.appendChild(selectBtn);
