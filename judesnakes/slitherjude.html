@@ -1,1 +1,767 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 Slither.io Clone - Multiplayer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #connection-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            text-align: center;
+            z-index: 1000;
+            min-width: 400px;
+        }
+
+        #connection-panel h1 {
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 2.5em;
+        }
+
+        #connection-panel p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        #username {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #ws-url {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        #connect-btn {
+            width: 100%;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        #connect-btn:hover {
+            transform: scale(1.05);
+        }
+
+        #status {
+            margin-top: 15px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: none;
+        }
+
+        #game {
+            display: block;
+            background: #0f0f1e;
+        }
+
+        #minimap {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 133px;
+            border: 4px solid rgba(255,255,255,0.8);
+            border-radius: 15px;
+            background: rgba(0,0,0,0.7);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            min-width: 200px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        #hud div {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #hud span {
+            color: #ffd700;
+            margin-left: 10px;
+        }
+
+        #shop-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border: none;
+            border-radius: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #shop-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 10px 30px rgba(255,215,0,0.5);
+        }
+
+        #shop-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 200;
+            display: none;
+        }
+
+        #shop-panel h3 {
+            margin-bottom: 20px;
+            color: #667eea;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .skin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 15px 0;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .skin-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .skin-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .skin-color {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            border: 3px solid white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        .skin-details {
+            flex: 1;
+        }
+
+        .skin-name {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .skin-cost {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .skin-item button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+
+        .skin-item button:hover:not(:disabled) {
+            transform: scale(1.1);
+        }
+
+        .skin-item button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .skin-item button.select-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        #close-shop {
+            margin-top: 20px;
+            padding: 15px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #close-shop:hover {
+            background: #c0392b;
+        }
+
+        .controls-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .controls-hint strong {
+            color: #ffd700;
+        }
+
+        #player-count {
+            position: fixed;
+            top: 170px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #player-count span {
+            color: #4CAF50;
+        }
+
+        #minimap-tooltip {
+            position: fixed;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+            border: 2px solid #ffd700;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="connection-panel">
+        <h1>🐍 Slither Game</h1>
+        <p>Enter your username and connect to play!</p>
+        <input type="text" id="username" placeholder="Enter your username" maxlength="20" />
+        <input type="text" id="ws-url" placeholder="wss://your-tunnel-url.trycloudflare.com" value="https://ltd-broker-idaho-opposed.trycloudflare.com" />
+        <button id="connect-btn" class="pulse">🎮 Connect & Play</button>
+        <p id="status">Ready to connect</p>
+    </div>
+    
+    <div id="game-container">
+        <canvas id="game"></canvas>
+        <canvas id="minimap"></canvas>
+        <div id="minimap-tooltip"></div>
+        
+        <div id="hud">
+            <div>Score: <span id="score">0</span></div>
+            <div>Points: <span id="points">0</span></div>
+            <div>High Score: <span id="highscore">0</span></div>
+        </div>
+        
+        <div id="player-count">
+            Real Players: <span id="player-num">0</span>
+        </div>
+        
+        <button id="shop-btn">🛍️ Shop</button>
+        
+        <div class="controls-hint">
+            <strong>Controls:</strong> Arrow Keys or WASD to move
+        </div>
+        
+        <div id="shop-panel">
+            <h3>🎨 Skin Shop</h3>
+            <div id="skins-list"></div>
+            <button id="close-shop">Close Shop</button>
+        </div>
+    </div>
+    
+    <script>
+        const WORLD_WIDTH = 3000;
+        const WORLD_HEIGHT = 2000;
+
+        let ws = null;
+        let playerId = null;
+        let gameState = { snakes: {}, balls: [] };
+        let playerData = { points: 0, highScore: 0, ownedSkins: ['default'] };
+        let camera = { x: 0, y: 0 };
+        let direction = { x: 1, y: 0 };
+        let lastInputTime = 0;
+
+        const availableSkins = [
+            { id: 'default', name: 'Default', hue: 0, cost: 0 },
+            { id: 'red', name: 'Red Ruby', hue: 0, cost: 50 },
+            { id: 'orange', name: 'Orange Burst', hue: 30, cost: 100 },
+            { id: 'yellow', name: 'Golden Sun', hue: 60, cost: 150 },
+            { id: 'green', name: 'Emerald Green', hue: 120, cost: 200 },
+            { id: 'cyan', name: 'Cyan Ocean', hue: 180, cost: 300 },
+            { id: 'blue', name: 'Sapphire Blue', hue: 240, cost: 400 },
+            { id: 'purple', name: 'Royal Purple', hue: 280, cost: 500 },
+            { id: 'pink', name: 'Pink Diamond', hue: 320, cost: 600 }
+        ];
+
+        document.getElementById('connect-btn').addEventListener('click', connect);
+        document.getElementById('shop-btn').addEventListener('click', () => {
+            document.getElementById('shop-panel').style.display = 'block';
+            updateShop();
+        });
+        document.getElementById('close-shop').addEventListener('click', () => {
+            document.getElementById('shop-panel').style.display = 'none';
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const now = Date.now();
+            if (now - lastInputTime < 16) return; // Throttle input to ~60fps
+            lastInputTime = now;
+
+            let newDir = direction;
+            if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') newDir = { x: 0, y: -1 };
+            else if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') newDir = { x: 0, y: 1 };
+            else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') newDir = { x: -1, y: 0 };
+            else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') newDir = { x: 1, y: 0 };
+            else return;
+
+            direction = newDir;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'input', direction }));
+            }
+        });
+
+        function connect() {
+            const username = document.getElementById('username').value.trim();
+            const url = document.getElementById('ws-url').value.trim();
+            
+            if (!username) {
+                alert('Please enter a username!');
+                return;
+            }
+            
+            if (!url) {
+                alert('Please enter a WebSocket URL');
+                return;
+            }
+            
+            document.getElementById('status').textContent = 'Connecting...';
+            document.getElementById('status').style.color = 'orange';
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Connected! Loading game...';
+                document.getElementById('status').style.color = 'green';
+                
+                // Send username first
+                ws.send(JSON.stringify({ type: 'setUsername', username }));
+            };
+            
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                
+                if (msg.type === 'banned') {
+                    alert(`🚫 ${msg.message}`);
+                    document.getElementById('status').textContent = `Banned for ${msg.timeLeft} minutes`;
+                    document.getElementById('status').style.color = 'red';
+                    ws.close();
+                    return;
+                } else if (msg.type === 'error') {
+                    alert(`❌ ${msg.message}`);
+                    document.getElementById('status').textContent = msg.message;
+                    document.getElementById('status').style.color = 'red';
+                    return;
+                } else if (msg.type === 'welcome') {
+                    playerId = msg.id;
+                    playerData = msg.playerData;
+                    document.getElementById('connection-panel').style.display = 'none';
+                    document.getElementById('game-container').style.display = 'block';
+                    startGame();
+                } else if (msg.type === 'state') {
+                    // Decompress optimized data
+                    gameState.snakes = {};
+                    for (const id in msg.snakes) {
+                        const s = msg.snakes[id];
+                        gameState.snakes[id] = {
+                            body: s.b.map(p => ({ x: p[0], y: p[1] })),
+                            color: s.c,
+                            score: s.s,
+                            isBot: s.i,
+                            username: s.u
+                        };
+                    }
+                    gameState.balls = msg.balls.map(b => ({ x: b.x, y: b.y, color: b.c }));
+                    updateHUD();
+                } else if (msg.type === 'skinPurchased') {
+                    playerData.ownedSkins.push(msg.skinId);
+                    playerData.points = msg.points;
+                    updateShop();
+                    updateHUD();
+                    alert('Skin purchased successfully! 🎉');
+                }
+            };
+            
+            ws.onerror = (error) => {
+                document.getElementById('status').textContent = 'Connection error - Check URL';
+                document.getElementById('status').style.color = 'red';
+                console.error('WebSocket error:', error);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('status').textContent = 'Disconnected from server';
+                document.getElementById('status').style.color = 'red';
+                document.getElementById('game-container').style.display = 'none';
+                document.getElementById('connection-panel').style.display = 'block';
+            };
+        }
+
+        function startGame() {
+            const canvas = document.getElementById('game');
+            const minimap = document.getElementById('minimap');
+            const ctx = canvas.getContext('2d');
+            const mmCtx = minimap.getContext('2d');
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            function gameLoop() {
+                if (!playerId || !gameState.snakes[playerId]) {
+                    requestAnimationFrame(gameLoop);
+                    return;
+                }
+                
+                const player = gameState.snakes[playerId];
+                if (player && player.body.length > 0) {
+                    camera.x = player.body[0].x - canvas.width / 2;
+                    camera.y = player.body[0].y - canvas.height / 2;
+                }
+                
+                // Background
+                ctx.fillStyle = '#0f0f1e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.save();
+                ctx.translate(-camera.x, -camera.y);
+                
+                // Grid (lighter, less CPU intensive)
+                ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+                ctx.lineWidth = 1;
+                const gridSize = 100;
+                const startX = Math.floor(camera.x / gridSize) * gridSize;
+                const startY = Math.floor(camera.y / gridSize) * gridSize;
+                const endX = startX + canvas.width + gridSize;
+                const endY = startY + canvas.height + gridSize;
+                
+                for (let x = startX; x < endX; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, startY);
+                    ctx.lineTo(x, endY);
+                    ctx.stroke();
+                }
+                for (let y = startY; y < endY; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(startX, y);
+                    ctx.lineTo(endX, y);
+                    ctx.stroke();
+                }
+                
+                // Balls
+                ctx.shadowBlur = 0;
+                gameState.balls.forEach(ball => {
+                    ctx.fillStyle = ball.color;
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                // Snakes
+                Object.values(gameState.snakes).forEach(snake => {
+                    ctx.strokeStyle = snake.color;
+                    ctx.lineWidth = 12;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    ctx.beginPath();
+                    for (let i = 0; i < snake.body.length; i++) {
+                        const seg = snake.body[i];
+                        if (i === 0) ctx.moveTo(seg.x, seg.y);
+                        else ctx.lineTo(seg.x, seg.y);
+                    }
+                    ctx.stroke();
+                    
+                    // Head
+                    ctx.fillStyle = snake.color;
+                    const head = snake.body[0];
+                    ctx.beginPath();
+                    ctx.arc(head.x, head.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Score
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    const scoreText = `${snake.username} (${snake.score})`;
+                    ctx.strokeText(scoreText, head.x, head.y - 20);
+                    ctx.fillText(scoreText, head.x, head.y - 20);
+                });
+                
+                ctx.restore();
+                
+                drawMinimap(mmCtx);
+                
+                requestAnimationFrame(gameLoop);
+            }
+            
+            gameLoop();
+        }
+
+        function drawMinimap(ctx) {
+            const minimap = document.getElementById('minimap');
+            const scaleX = minimap.width / WORLD_WIDTH;
+            const scaleY = minimap.height / WORLD_HEIGHT;
+            
+            ctx.fillStyle = 'rgba(15, 15, 30, 0.9)';
+            ctx.fillRect(0, 0, minimap.width, minimap.height);
+            
+            // Only show real players on minimap (no bots)
+            let playerCount = 0;
+            Object.entries(gameState.snakes).forEach(([id, snake]) => {
+                if (!snake.isBot && snake.body[0]) {
+                    playerCount++;
+                    if (id === playerId) {
+                        ctx.fillStyle = 'yellow';
+                        ctx.shadowBlur = 8;
+                        ctx.shadowColor = 'yellow';
+                    } else {
+                        ctx.fillStyle = snake.color;
+                        ctx.shadowBlur = 4;
+                        ctx.shadowColor = snake.color;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(snake.body[0].x * scaleX, snake.body[0].y * scaleY, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+            
+            // Update player count
+            document.getElementById('player-num').textContent = playerCount;
+        }
+
+        // Minimap hover tooltip
+        const minimap = document.getElementById('minimap');
+        const tooltip = document.getElementById('minimap-tooltip');
+        
+        minimap.addEventListener('mousemove', (e) => {
+            const rect = minimap.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const worldX = (x / minimap.width) * WORLD_WIDTH;
+            const worldY = (y / minimap.height) * WORLD_HEIGHT;
+            
+            let foundPlayer = null;
+            let minDist = Infinity;
+            
+            Object.entries(gameState.snakes).forEach(([id, snake]) => {
+                if (!snake.isBot && snake.body[0]) {
+                    const dx = snake.body[0].x - worldX;
+                    const dy = snake.body[0].y - worldY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < 100 && dist < minDist) {
+                        minDist = dist;
+                        foundPlayer = snake;
+                    }
+                }
+            });
+            
+            if (foundPlayer) {
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+                tooltip.textContent = `${foundPlayer.username} - Score: ${foundPlayer.score}`;
+                tooltip.style.borderColor = foundPlayer.color;
+            } else {
+                tooltip.style.display = 'none';
+            }
+        });
+        
+        minimap.addEventListener('mouseleave', () => {
+            tooltip.style.display = 'none';
+        });
+
+        function updateHUD() {
+            if (playerId && gameState.snakes[playerId]) {
+                const player = gameState.snakes[playerId];
+                document.getElementById('score').textContent = player.score;
+                document.getElementById('points').textContent = playerData.points + player.points;
+                document.getElementById('highscore').textContent = playerData.highScore;
+            }
+        }
+
+        function updateShop() {
+            const skinsList = document.getElementById('skins-list');
+            skinsList.innerHTML = '';
+            
+            availableSkins.forEach(skin => {
+                const div = document.createElement('div');
+                div.className = 'skin-item';
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'skin-info';
+                
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'skin-color';
+                colorDiv.style.background = `hsl(${skin.hue}, 70%, 50%)`;
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'skin-details';
+                
+                const nameSpan = document.createElement('div');
+                nameSpan.className = 'skin-name';
+                nameSpan.textContent = skin.name;
+                
+                const costSpan = document.createElement('div');
+                costSpan.className = 'skin-cost';
+                costSpan.textContent = `${skin.cost} points`;
+                
+                detailsDiv.appendChild(nameSpan);
+                detailsDiv.appendChild(costSpan);
+                
+                infoDiv.appendChild(colorDiv);
+                infoDiv.appendChild(detailsDiv);
+                
+                const owned = playerData.ownedSkins.includes(skin.id);
+                
+                const btn = document.createElement('button');
+                btn.textContent = owned ? '✓ Owned' : '🛒 Buy';
+                btn.disabled = owned || playerData.points < skin.cost;
+                
+                btn.onclick = () => {
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'buySkin',
+                            skinId: skin.id,
+                            cost: skin.cost
+                        }));
+                    }
+                };
+                
+                div.appendChild(infoDiv);
+                div.appendChild(btn);
+                
+                if (owned) {
+                    const selectBtn = document.createElement('button');
+                    selectBtn.textContent = '✨ Select';
+                    selectBtn.className = 'select-btn';
+                    selectBtn.onclick = () => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            const color = `hsl(${skin.hue}, 70%, 50%)`;
+                            ws.send(JSON.stringify({
+                                type: 'selectSkin',
+                                skinId: skin.id,
+                                color: color
+                            }));
+                            alert(`${skin.name} skin selected! 🎨`);
+                        }
+                    };
+                    div.appendChild(selectBtn);
+                }
+                
+                skinsList.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>
