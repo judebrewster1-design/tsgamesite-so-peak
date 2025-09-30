@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Slither JudeIO</title>
+<style>
+  body { margin:0; background:#111; color:#eee; font-family:sans-serif; }
+  #game { background:#222; display:block; margin:0 auto; }
+  #hud { position:absolute; top:10px; left:10px; color:#eee; font-size:16px; }
+  #minimap { position:absolute; top:10px; right:10px; background:#000; border:1px solid #555; }
+</style>
+</head>
+<body>
+
+<div id="hud">Score: 0 | High Score: 0 | Points: 0</div>
+<canvas id="game" width="800" height="600"></canvas>
+<canvas id="minimap" width="200" height="150"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const mini = document.getElementById("minimap");
+const miniCtx = mini.getContext("2d");
+
+let socket;
+let playerId = null;
+let snakes = {};
+let balls = [];
+let score = 0;
+let points = 0;
+let highScore = localStorage.getItem("highScore") || 0;
+let keys = {};
+let hue = Math.random()*360;
+
+// connect to your backend here
+socket = new WebSocket("wss://YOUR_CLOUDFLARE_TUNNEL");
+
+socket.onopen = ()=>console.log("Connected to server");
+
+socket.onmessage = msg=>{
+    const data = JSON.parse(msg.data);
+    if(data.t==="welcome") playerId = data.id;
+    else if(data.t==="state"){
+        snakes = data.snakes;
+        balls = data.balls;
+    }
+};
+
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
+
+function sendInput(){
+    if(!playerId) return;
+    const dir = {up:keys["ArrowUp"]||keys["w"], down:keys["ArrowDown"]||keys["s"], left:keys["ArrowLeft"]||keys["a"], right:keys["ArrowRight"]||keys["d"]};
+    socket.send(JSON.stringify({t:"input", dir}));
+}
+
+function gameLoop(){
+    sendInput();
+    drawGame();
+    requestAnimationFrame(gameLoop);
+}
+
+function drawGame(){
+    ctx.fillStyle="#222";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // draw balls
+    for(const b of balls){
+        ctx.fillStyle="#ff0";
+        ctx.beginPath();
+        ctx.arc(b.x,b.y,5,0,Math.PI*2);
+        ctx.fill();
+    }
+
+    // draw snakes
+    for(const id in snakes){
+        const s = snakes[id];
+        ctx.strokeStyle = (id===playerId) ? "hsl("+hue+",100%,50%)" : s.color;
+        ctx.lineWidth=10;
+        ctx.beginPath();
+        ctx.moveTo(s.body[0].x,s.body[0].y);
+        for(let i=1;i<s.body.length;i++){
+            ctx.lineTo(s.body[i].x,s.body[i].y);
+        }
+        ctx.stroke();
+    }
+
+    // update score display
+    if(snakes[playerId]){
+        score = snakes[playerId].score || 0;
+        points = snakes[playerId].points || 0;
+        if(score>highScore) { highScore=score; localStorage.setItem("highScore",highScore); }
+        document.getElementById("hud").textContent = `Score: ${score} | High Score: ${highScore} | Points: ${points}`;
+    }
+
+    drawMiniMap();
+}
+
+function drawMiniMap(){
+    miniCtx.fillStyle="#000";
+    miniCtx.fillRect(0,0,mini.width,mini.height);
+    const scaleX = mini.width/2100;
+    const scaleY = mini.height/1600; // assuming max world height
+    // draw balls
+    for(const b of balls){
+        miniCtx.fillStyle="#ff0";
+        miniCtx.fillRect(b.x*scaleX-2,b.y*scaleY-2,4,4);
+    }
+    // draw snakes
+    for(const id in snakes){
+        const s = snakes[id];
+        miniCtx.fillStyle = (id===playerId) ? "hsl("+hue+",100%,50%)" : s.color;
+        const head = s.body[0];
+        miniCtx.fillRect(head.x*scaleX-3, head.y*scaleY-3, 6,6);
+    }
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
