@@ -876,7 +876,13 @@
             document.getElementById('death-screen').style.display = 'none';
             isDead = false;
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'setUsername', username: currentUsername, skinId: currentSkinId }));
+                ws.send(JSON.stringify({ 
+                    type: 'respawn', 
+                    username: currentUsername, 
+                    skinId: currentSkinId 
+                }));
+            } else {
+                alert('Connection lost. Please refresh the page.');
             }
         }
         
