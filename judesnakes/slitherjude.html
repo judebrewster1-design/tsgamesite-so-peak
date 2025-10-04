@@ -114,14 +114,14 @@
             #main-hud {
                 top: 5px;
                 left: 5px;
-                padding: 8px 10px;
-                min-width: 120px;
-                font-size: 11px;
+                padding: 4px 6px;
+                min-width: 90px;
+                font-size: 8px;
                 border-width: 1px;
             }
             #main-hud .stat {
-                font-size: 10px;
-                margin: 4px 0;
+                font-size: 7px;
+                margin: 2px 0;
             }
             
             #player-list {
@@ -145,8 +145,8 @@
             #minimap {
                 bottom: 5px;
                 right: 5px;
-                width: 100px;
-                height: 67px;
+                width: 50px;
+                height: 33px;
                 border-width: 2px;
             }
             
@@ -186,25 +186,20 @@
                 border-width: 2px;
             }
             
-            #export-btn, #import-btn {
-                right: 5px;
-                padding: 8px 14px;
-                font-size: 11px;
-                border-width: 2px;
-            }
-            #export-btn {
-                bottom: 130px;
-            }
-            #import-btn {
-                bottom: 175px;
-            }
-            
             #shop-panel {
                 padding: 20px;
                 max-width: 95vw;
             }
             #shop-panel h2 {
                 font-size: 2em;
+            }
+            .save-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .save-buttons button {
+                padding: 10px 20px;
+                font-size: 12px;
             }
             .skin-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -488,16 +483,7 @@
             font-size: 14px;
             box-shadow: 0 5px 20px rgba(0,204,255,0.5);
             transition: all 0.3s;
-        }
-        #export-btn {
-            bottom: 300px;
-        }
-        #import-btn {
-            bottom: 360px;
-        }
-        #export-btn:hover, #import-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,204,255,0.8);
+            display: none;
         }
         
         #shop-panel {
@@ -519,9 +505,32 @@
         #shop-panel h2 {
             color: #ff00ff;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-size: 2.5em;
             text-shadow: 0 0 15px #ff00ff;
+        }
+        .save-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .save-buttons button {
+            padding: 12px 25px;
+            background: linear-gradient(145deg, #00ccff, #0099cc);
+            color: #fff;
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 15px rgba(0,204,255,0.5);
+        }
+        .save-buttons button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,204,255,0.8);
         }
         .skin-grid {
             display: grid;
@@ -810,11 +819,13 @@
         </div>
         
         <button id="shop-btn">SHOP</button>
-        <button id="export-btn">EXPORT SAVE</button>
-        <button id="import-btn">IMPORT SAVE</button>
         <input type="file" id="import-file" style="display: none;" accept=".json" />
         <div id="shop-panel">
             <h2>SKIN COLLECTION</h2>
+            <div class="save-buttons">
+                <button id="export-btn">EXPORT SAVE</button>
+                <button id="import-btn">IMPORT SAVE</button>
+            </div>
             <div class="skin-grid" id="skins-grid"></div>
             <button id="close-shop">CLOSE</button>
         </div>
