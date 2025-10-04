@@ -27,7 +27,6 @@
             z-index: 2000;
         }
         
-        /* Auth Screen */
         #auth-screen {
             background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
             display: flex;
@@ -95,34 +94,34 @@
             box-shadow: 0 10px 30px rgba(0,255,136,0.8);
         }
         
-        .auth-toggle {
+        .register-link {
             text-align: center;
             color: #00ffff;
             cursor: pointer;
             margin-top: 15px;
             font-size: 0.9em;
+            padding: 10px;
         }
         
-        .auth-toggle:hover {
+        .register-link:hover {
             text-decoration: underline;
         }
         
-        /* Control Select */
         #control-select {
             background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: center;
             overflow-y: auto;
-            padding: 30px 20px 50px 20px;
+            padding: 30px 20px;
         }
         
         #control-select h1 {
             font-size: 3em;
             color: #00ff88;
             text-shadow: 0 0 20px #00ff88;
-            margin: 20px 0 10px 0;
+            margin-bottom: 20px;
         }
         
         .control-options {
@@ -130,8 +129,6 @@
             gap: 30px;
             flex-wrap: wrap;
             justify-content: center;
-            max-width: 1200px;
-            padding-bottom: 30px;
         }
         
         .control-card {
@@ -162,7 +159,6 @@
             margin-bottom: 12px;
         }
         
-        /* Main Menu */
         #main-menu {
             background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
             display: flex;
@@ -170,6 +166,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
+            overflow-y: auto;
         }
         
         .menu-container {
@@ -251,7 +248,6 @@
         .leader-item.top2 { border: 2px solid silver; }
         .leader-item.top3 { border: 2px solid #cd7f32; }
         
-        /* Game Container */
         #game-container {
             width: 100vw;
             height: 100vh;
@@ -284,11 +280,12 @@
             display: flex;
             justify-content: space-between;
             margin: 8px 0;
+            color: #fff;
         }
         
         #player-list {
             top: 10px;
-            right: 10px;
+            right: 180px;
             min-width: 150px;
             max-height: 225px;
             overflow-y: auto;
@@ -390,6 +387,87 @@
             font-size: 13px;
         }
         
+        #death-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #1a0033, #0a001a);
+            border: 5px solid #ff0055;
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 20px 60px rgba(255,0,85,0.6);
+            min-width: 400px;
+        }
+        
+        #death-screen h2 {
+            color: #ff0055;
+            font-size: 3.5em;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px #ff0055;
+        }
+        
+        #death-screen .stat-line {
+            font-size: 1.3em;
+            margin: 12px 0;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        #death-screen .stat-line .label {
+            color: #00ff88;
+        }
+        
+        #death-screen .stat-line .value {
+            color: #00ffff;
+            font-weight: 900;
+        }
+        
+        #death-screen .death-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        #death-screen button {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        #respawn-btn {
+            background: linear-gradient(145deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
+        }
+        
+        #respawn-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,255,136,0.8);
+        }
+        
+        #menu-btn {
+            background: linear-gradient(145deg, #0099ff, #0066cc);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(0,153,255,0.5);
+        }
+        
+        #menu-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,153,255,0.8);
+        }
+        
         #shop-panel {
             position: fixed;
             top: 50%;
@@ -412,25 +490,6 @@
             text-align: center;
             margin-bottom: 20px;
             font-size: 2em;
-        }
-        
-        .save-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-        
-        .save-buttons button {
-            padding: 10px 20px;
-            background: linear-gradient(145deg, #00ccff, #0099cc);
-            color: #fff;
-            border: 2px solid #00ccff;
-            border-radius: 10px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
         }
         
         .skin-grid {
@@ -483,6 +542,27 @@
             margin: 4px;
         }
         
+        .save-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255,0,255,0.3);
+        }
+        
+        .save-buttons button {
+            padding: 12px 25px;
+            background: linear-gradient(145deg, #00ccff, #0099cc);
+            color: #fff;
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        
         #close-shop {
             width: 100%;
             padding: 15px;
@@ -494,6 +574,7 @@
             font-family: 'Orbitron', sans-serif;
             font-weight: 900;
             font-size: 16px;
+            margin-top: 20px;
         }
         
         #mobile-controls {
@@ -524,7 +605,6 @@
             transform: translate(-50%, -50%);
         }
         
-        /* Mobile Optimizations */
         @media (max-width: 768px) {
             .auth-container {
                 padding: 25px;
@@ -540,19 +620,12 @@
                 font-size: 9px;
             }
             
-            #main-hud .stat {
-                margin: 5px 0;
-            }
-            
             #player-list {
+                right: 120px;
                 min-width: 120px;
                 max-height: 170px;
                 padding: 10px;
                 font-size: 9px;
-            }
-            
-            #player-list h3 {
-                font-size: 11px;
             }
             
             #minimap {
@@ -573,6 +646,15 @@
                 font-size: 2.2em;
             }
             
+            #death-screen {
+                min-width: 90vw;
+                padding: 30px 20px;
+            }
+            
+            #death-screen h2 {
+                font-size: 2.5em;
+            }
+            
             .skin-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
                 gap: 15px;
@@ -589,20 +671,18 @@
     </style>
 </head>
 <body>
-    <!-- Auth Screen -->
     <div id="auth-screen" class="screen" style="display: flex;">
         <div class="auth-container">
             <h1>SLITHER ARENA</h1>
             <p class="warning">⚠️ Do NOT use your email or Google login!</p>
             <input type="text" id="auth-username" placeholder="Username" maxlength="20" />
             <input type="password" id="auth-password" placeholder="Password" maxlength="50" />
-            <button id="auth-submit">LOGIN</button>
-            <div class="auth-toggle" id="auth-toggle">Don't have an account? Register</div>
+            <button id="login-btn">LOGIN</button>
+            <div class="register-link" id="register-link">Create New Account</div>
             <p id="auth-status" style="color: #ffaa00; text-align: center; margin-top: 15px;"></p>
         </div>
     </div>
     
-    <!-- Control Select -->
     <div id="control-select" class="screen">
         <h1>CHOOSE CONTROLS</h1>
         <div class="control-options">
@@ -624,7 +704,6 @@
         </div>
     </div>
     
-    <!-- Main Menu -->
     <div id="main-menu" class="screen">
         <div class="menu-container">
             <h1>MAIN MENU</h1>
@@ -640,7 +719,6 @@
         </div>
     </div>
     
-    <!-- Game Container -->
     <div id="game-container">
         <canvas id="game"></canvas>
         
@@ -666,14 +744,26 @@
             </div>
         </div>
         
+        <div id="death-screen">
+            <h2>ELIMINATED</h2>
+            <div class="stat-line"><span class="label">SCORE:</span> <span class="value" id="death-score">0</span></div>
+            <div class="stat-line"><span class="label">EARNED:</span> <span class="value" id="death-points">0</span></div>
+            <div class="stat-line"><span class="label">TOTAL:</span> <span class="value" id="death-total">0</span></div>
+            <div class="stat-line"><span class="label">BEST:</span> <span class="value" id="death-high">0</span></div>
+            <div class="death-buttons">
+                <button id="respawn-btn">RESPAWN</button>
+                <button id="menu-btn">MAIN MENU</button>
+            </div>
+        </div>
+        
         <input type="file" id="import-file" style="display: none;" accept=".json" />
         <div id="shop-panel">
             <h2>SKIN SHOP</h2>
-            <div class="save-buttons">
-                <button id="export-btn">EXPORT</button>
-                <button id="import-btn">IMPORT</button>
-            </div>
             <div class="skin-grid" id="skins-grid"></div>
+            <div class="save-buttons">
+                <button id="export-btn">EXPORT SAVE</button>
+                <button id="import-btn">IMPORT SAVE</button>
+            </div>
             <button id="close-shop">CLOSE</button>
         </div>
         
@@ -706,23 +796,15 @@
         let skins = [];
         let skinImages = {};
         let lastInputTime = 0;
-        let isRegistering = false;
         let gameLoopRunning = false;
         
-        // Auth Screen
-        document.getElementById('auth-toggle').addEventListener('click', () => {
-            isRegistering = !isRegistering;
-            document.getElementById('auth-submit').textContent = isRegistering ? 'REGISTER' : 'LOGIN';
-            document.getElementById('auth-toggle').textContent = isRegistering ? 
-                'Already have an account? Login' : "Don't have an account? Register";
-        });
-        
-        document.getElementById('auth-submit').addEventListener('click', handleAuth);
+        document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
+        document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
         document.getElementById('auth-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAuth();
+            if (e.key === 'Enter') handleAuth(false);
         });
         
-        async function handleAuth() {
+        async function handleAuth(isRegister) {
             const username = document.getElementById('auth-username').value.trim();
             const password = document.getElementById('auth-password').value.trim();
             const status = document.getElementById('auth-status');
@@ -740,18 +822,16 @@
             currentUsername = username;
             currentPassword = password;
             
-            status.textContent = isRegistering ? 'Creating account...' : 'Logging in...';
-            
-            // Connect to server for auth
-            connectForAuth();
+            status.textContent = isRegister ? 'Creating account...' : 'Logging in...';
+            connectForAuth(isRegister);
         }
         
-        function connectForAuth() {
+        function connectForAuth(isRegister) {
             ws = new WebSocket(WS_URL);
             
             ws.onopen = () => {
                 ws.send(JSON.stringify({
-                    type: isRegistering ? 'register' : 'login',
+                    type: isRegister ? 'register' : 'login',
                     username: currentUsername,
                     password: currentPassword
                 }));
@@ -768,10 +848,10 @@
                     updateLeaderboard(msg.leaderboard || []);
                     
                     document.getElementById('auth-screen').style.display = 'none';
-                    document.getElementById('control-select').style.display = 'flex';
+                    document.getElementById('main-menu').style.display = 'flex';
+                    setupGameHandlers();
                 } else if (msg.type === 'authError') {
                     document.getElementById('auth-status').textContent = msg.message;
-                    ws.close();
                 }
             };
             
@@ -780,27 +860,98 @@
             };
         }
         
-        // Control Selection
+        function setupGameHandlers() {
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                
+                if (msg.type === 'welcome') {
+                    playerId = msg.id;
+                    playerData = msg.playerData;
+                } else if (msg.type === 'death') {
+                    isDead = true;
+                    playerData.points = msg.totalPoints;
+                    playerData.highScore = msg.highScore;
+                    
+                    document.getElementById('death-score').textContent = msg.score;
+                    document.getElementById('death-points').textContent = msg.points;
+                    document.getElementById('death-total').textContent = msg.totalPoints;
+                    document.getElementById('death-high').textContent = msg.highScore;
+                    document.getElementById('death-screen').style.display = 'block';
+                } else if (msg.type === 'state') {
+                    gameState.snakes = {};
+                    for (const id in msg.snakes) {
+                        const s = msg.snakes[id];
+                        gameState.snakes[id] = {
+                            body: s.b.map(p => ({ x: p[0], y: p[1] })),
+                            score: s.s,
+                            isBot: s.i,
+                            username: s.u,
+                            skinId: s.sk || 'jude'
+                        };
+                    }
+                    gameState.balls = msg.balls;
+                    updateHUD();
+                } else if (msg.type === 'chatMessage') {
+                    addChat(msg.username, msg.message);
+                } else if (msg.type === 'skinPurchased') {
+                    playerData.ownedSkins.push(msg.skinId);
+                    playerData.points = msg.points;
+                    updateShop();
+                } else if (msg.type === 'leaderboardUpdate') {
+                    updateLeaderboard(msg.leaderboard);
+                }
+            };
+        }
+        
         document.querySelectorAll('.control-card').forEach(card => {
             card.addEventListener('click', () => {
                 controlMode = card.dataset.mode;
                 document.getElementById('control-select').style.display = 'none';
-                document.getElementById('main-menu').style.display = 'flex';
+                document.getElementById('game-container').style.display = 'block';
+                
                 if (controlMode === 'mobile') {
                     document.getElementById('mobile-controls').style.display = 'block';
                 }
+                
+                if (!gameLoopRunning) {
+                    setupGame();
+                    gameLoopRunning = true;
+                }
+                
+                spawnPlayer();
             });
         });
         
-        // Main Menu
-        document.getElementById('play-btn').addEventListener('click', startGame);
+        document.getElementById('play-btn').addEventListener('click', () => {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('control-select').style.display = 'flex';
+        });
+        
         document.getElementById('menu-shop-btn').addEventListener('click', () => {
             document.getElementById('shop-panel').style.display = 'block';
             updateShop();
         });
+        
         document.getElementById('logout-btn').addEventListener('click', () => {
             if (ws) ws.close();
             location.reload();
+        });
+        
+        document.getElementById('respawn-btn').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            isDead = false;
+            spawnPlayer();
+        });
+        
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            isDead = false;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'getLeaderboard' }));
+            }
         });
         
         document.getElementById('close-shop').addEventListener('click', () => {
@@ -823,6 +974,15 @@
             if (e.key === 'Enter') sendChat();
         });
         
+        function spawnPlayer() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'spawn',
+                    skinId: currentSkinId
+                }));
+            }
+        }
+        
         function updateLeaderboard(leaderboard) {
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = '';
@@ -834,10 +994,7 @@
                 else if (i === 1) div.classList.add('top2');
                 else if (i === 2) div.classList.add('top3');
                 
-                div.innerHTML = `
-                    <span>${i + 1}. ${player.username}</span>
-                    <span>${player.highScore}</span>
-                `;
+                div.innerHTML = `<span>${i + 1}. ${player.username}</span><span>${player.highScore}</span>`;
                 list.appendChild(div);
             });
         }
@@ -848,90 +1005,6 @@
                 img.src = skin.img;
                 skinImages[skin.id] = img;
             });
-        }
-        
-        function startGame() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            isDead = false;
-            
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                connectToGame();
-            } else {
-                ws.send(JSON.stringify({ 
-                    type: 'spawn', 
-                    skinId: currentSkinId 
-                }));
-            }
-            
-            if (!gameLoopRunning) {
-                setupGame();
-                gameLoopRunning = true;
-            }
-            
-            checkChatUnlock();
-        }
-        
-        function connectToGame() {
-            ws = new WebSocket(WS_URL);
-            
-            ws.onopen = () => {
-                ws.send(JSON.stringify({
-                    type: 'spawn',
-                    username: currentUsername,
-                    password: currentPassword,
-                    skinId: currentSkinId
-                }));
-            };
-            
-            ws.onmessage = handleGameMessage;
-            ws.onclose = () => console.log('Disconnected');
-        }
-        
-        function handleGameMessage(e) {
-            const msg = JSON.parse(e.data);
-            
-            if (msg.type === 'welcome') {
-                playerId = msg.id;
-                playerData = msg.playerData;
-            } else if (msg.type === 'death') {
-                isDead = true;
-                playerData.points = msg.totalPoints;
-                playerData.highScore = msg.highScore;
-                returnToMenu();
-            } else if (msg.type === 'state') {
-                gameState.snakes = {};
-                for (const id in msg.snakes) {
-                    const s = msg.snakes[id];
-                    gameState.snakes[id] = {
-                        body: s.b.map(p => ({ x: p[0], y: p[1] })),
-                        score: s.s,
-                        isBot: s.i,
-                        username: s.u,
-                        skinId: s.sk || 'jude'
-                    };
-                }
-                gameState.balls = msg.balls;
-                updateHUD();
-            } else if (msg.type === 'chatMessage') {
-                addChat(msg.username, msg.message);
-            } else if (msg.type === 'skinPurchased') {
-                playerData.ownedSkins.push(msg.skinId);
-                playerData.points = msg.points;
-                updateShop();
-            } else if (msg.type === 'leaderboardUpdate') {
-                updateLeaderboard(msg.leaderboard);
-            }
-        }
-        
-        function returnToMenu() {
-            isDead = true;
-            document.getElementById('game-container').style.display = 'none';
-            document.getElementById('main-menu').style.display = 'flex';
-            
-            if (ws) {
-                ws.send(JSON.stringify({ type: 'getLeaderboard' }));
-            }
         }
         
         function setupGame() {
@@ -948,7 +1021,6 @@
                 canvas.height = window.innerHeight;
             });
             
-            // Input handlers
             document.addEventListener('keydown', (e) => {
                 if (controlMode === 'wasd' && !isDead) {
                     let newDir = null;
@@ -971,7 +1043,6 @@
                 }
             });
             
-            // Joystick
             const joystick = document.getElementById('joystick');
             const handle = document.getElementById('joystick-handle');
             
@@ -1015,7 +1086,7 @@
                 }
                 
                 const player = gameState.snakes[playerId];
-                if (player?.body?.length > 0) {
+                if (player && player.body && player.body.length > 0) {
                     camera.x = player.body[0].x - canvas.width / 2;
                     camera.y = player.body[0].y - canvas.height / 2;
                     
@@ -1032,13 +1103,11 @@
                     }
                 }
                 
-                // Clear and draw
                 ctx.fillStyle = '#000';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.save();
                 ctx.translate(-camera.x, -camera.y);
                 
-                // Grid
                 ctx.strokeStyle = 'rgba(0,255,136,0.1)';
                 ctx.lineWidth = 1;
                 for (let x = 0; x < WORLD_WIDTH; x += 100) {
@@ -1054,7 +1123,6 @@
                     ctx.stroke();
                 }
                 
-                // Balls
                 gameState.balls.forEach(ball => {
                     const grad = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 8);
                     grad.addColorStop(0, '#00ffff');
@@ -1065,9 +1133,8 @@
                     ctx.fill();
                 });
                 
-                // Snakes
                 Object.values(gameState.snakes).forEach(snake => {
-                    if (!snake?.body?.length) return;
+                    if (!snake || !snake.body || snake.body.length === 0) return;
                     
                     const hue = (snake.username.charCodeAt(0) * 10) % 360;
                     const snakeColor = `hsl(${hue}, 70%, 50%)`;
@@ -1091,7 +1158,7 @@
                     
                     const head = snake.body[0];
                     const img = skinImages[snake.skinId];
-                    if (img?.complete && img.naturalWidth > 0) {
+                    if (img && img.complete && img.naturalWidth > 0) {
                         const next = snake.body[1] || head;
                         const angle = Math.atan2(head.y - next.y, head.x - next.x);
                         ctx.save();
@@ -1133,7 +1200,7 @@
             ctx.fillRect(0, 0, mm.width, mm.height);
             
             Object.entries(gameState.snakes).forEach(([id, snake]) => {
-                if (!snake.isBot && snake.body?.[0]) {
+                if (!snake.isBot && snake.body && snake.body[0]) {
                     const hue = (snake.username.charCodeAt(0) * 10) % 360;
                     ctx.fillStyle = id === playerId ? '#ffff00' : `hsl(${hue}, 70%, 50%)`;
                     ctx.shadowBlur = 4;
@@ -1181,7 +1248,7 @@
             if (now - lastInputTime < 50) return;
             lastInputTime = now;
             
-            if (ws?.readyState === WebSocket.OPEN && !isDead) {
+            if (ws && ws.readyState === WebSocket.OPEN && !isDead) {
                 ws.send(JSON.stringify({ type: 'input', direction }));
             }
         }
@@ -1190,7 +1257,7 @@
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
             if (!message || !chatUnlocked) return;
-            if (ws?.readyState === WebSocket.OPEN) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'chatMessage', message }));
                 input.value = '';
             }
@@ -1233,13 +1300,14 @@
                 
                 if (owned) {
                     const selectBtn = document.createElement('button');
-                    selectBtn.textContent = 'SELECT';
+                    selectBtn.textContent = currentSkinId === skin.id ? 'SELECTED' : 'SELECT';
+                    selectBtn.disabled = currentSkinId === skin.id;
                     selectBtn.onclick = () => {
                         currentSkinId = skin.id;
-                        if (ws?.readyState === WebSocket.OPEN) {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'selectSkin', skinId: skin.id }));
                         }
-                        alert(`Selected ${skin.name}!`);
+                        updateShop();
                     };
                     card.appendChild(selectBtn);
                 } else {
@@ -1247,7 +1315,7 @@
                     buyBtn.textContent = 'BUY';
                     buyBtn.disabled = playerData.points < skin.cost;
                     buyBtn.onclick = () => {
-                        if (ws?.readyState === WebSocket.OPEN) {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'buySkin', skinId: skin.id, cost: skin.cost }));
                         }
                     };
@@ -1284,7 +1352,7 @@
                 try {
                     const saveData = JSON.parse(e.target.result);
                     if (saveData.playerData && saveData.username) {
-                        alert('Import successful! Login with this account to use it.');
+                        alert('Save file valid! Use these credentials to login:\nUsername: ' + saveData.username);
                     }
                 } catch (error) {
                     alert('Invalid save file');
