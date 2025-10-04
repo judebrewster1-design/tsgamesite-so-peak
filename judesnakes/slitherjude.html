@@ -568,7 +568,7 @@
     <div id="connection-panel">
         <h1>ENTER ARENA</h1>
         <input type="text" id="username" placeholder="Enter Username" maxlength="20" />
-        <input type="text" id="ws-url" placeholder="WebSocket URL" value="ws://localhost:30900" />
+        <input type="text" id="ws-url" placeholder="WebSocket URL" value="https://reception-packs-nicholas-lived.trycloudflare.com" />
         <button id="connect-btn">CONNECT</button>
         <p id="status">Ready</p>
     </div>
@@ -819,6 +819,10 @@
                         isDead = false;
                         checkChatUnlock();
                         startGame();
+                    } else if (msg.type === 'respawned') {
+                        isDead = false;
+                        playerData = msg.playerData;
+                        console.log('Respawned successfully!');
                     } else if (msg.type === 'death') {
                         isDead = true;
                         document.getElementById('death-score').textContent = msg.score;
