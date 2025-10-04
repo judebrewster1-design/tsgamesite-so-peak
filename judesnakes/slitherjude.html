@@ -1,186 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slither Arena</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        
-        body {
-            font-family: 'Orbitron', sans-serif;
-            background: radial-gradient(circle at 50% 50%, #1a0033, #000000);
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-        }
-        
-        .screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: none;
-            z-index: 2000;
-        }
-        
-        #auth-screen {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .auth-container {
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 4px solid #00ff88;
-            padding: 40px;
-            border-radius: 25px;
-            max-width: 450px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
-        }
-        
-        .auth-container h1 {
-            font-size: 2.8em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        
-        .auth-container .warning {
-            color: #ffaa00;
-            font-size: 0.85em;
-            text-align: center;
-            margin-bottom: 25px;
-            opacity: 0.9;
-        }
-        
-        .auth-container input {
-            width: 100%;
-            padding: 15px;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #00ff88;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .auth-container button {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            color: #000;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
-            transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-            margin-bottom: 10px;
-        }
-        
-        .auth-container button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,255,136,0.8);
-        }
-        
-        .register-link {
-            text-align: center;
-            color: #00ffff;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 0.9em;
-            padding: 10px;
-        }
-        
-        .register-link:hover {
-            text-decoration: underline;
-        }
-        
-        #control-select {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow-y: auto;
-            padding: 30px 20px;
-        }
-        
-        #control-select h1 {
-            font-size: 3em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
-            margin-bottom: 20px;
-        }
-        
-        .control-options {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .control-card {
-            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
-            border: 3px solid #00ff88;
-            border-radius: 20px;
-            padding: 30px;
-            width: 280px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(0,255,136,0.3);
-        }
-        
-        .control-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 20px 50px rgba(0,255,136,0.6);
-        }
-        
-        .control-card .icon {
-            font-size: 4em;
-            margin-bottom: 15px;
-        }
-        
-        .control-card h3 {
-            font-size: 1.6em;
-            color: #00ff88;
-            margin-bottom: 12px;
-        }
-        
-        #main-menu {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        .menu-container {
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 4px solid #00ff88;
-            padding: 40px;
-            border-radius: 25px;
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
-        }
-        
-        .menu-container h1 {
+.menu-container h1 {
             font-size: 3em;
             color: #00ff88;
             text-shadow: 0 0 20px #00ff88;
@@ -190,32 +8,44 @@
         .menu-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 30px;
         }
         
         .menu-btn {
-            padding: 20px;
+            padding: 25px;
             background: linear-gradient(145deg, #00ff88, #00cc66);
             color: #000;
-            border: none;
+            border: 3px solid #00ff88;
             border-radius: 15px;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 900;
             font-family: 'Orbitron', sans-serif;
             transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
+            box-shadow: 0 8px 25px rgba(0,255,136,0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         
         .menu-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,255,136,0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,255,136,0.8);
+        }
+        
+        .menu-btn:active {
+            transform: translateY(0px);
+            box-shadow: 0 5px 20px rgba(0,255,136,0.6);
         }
         
         .menu-btn.shop {
             background: linear-gradient(145deg, #ff00ff, #cc00cc);
-            box-shadow: 0 5px 20px rgba(255,0,255,0.5);
+            border-color: #ff00ff;
+            box-shadow: 0 8px 25px rgba(255,0,255,0.5);
+        }
+        
+        .menu-btn.shop:hover {
+            box-shadow: 0 12px 35px rgba(255,0,255,0.8);
         }
         
         .leaderboard {
@@ -316,6 +146,31 @@
             border-radius: 15px;
             background: rgba(0,0,0,0.8);
             box-shadow: 0 5px 20px rgba(0,255,136,0.4);
+        }
+        
+        #sprint-btn {
+            position: fixed;
+            bottom: 170px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(145deg, #ffaa00, #ff8800);
+            color: #fff;
+            border: 4px solid #ffaa00;
+            border-radius: 50%;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            box-shadow: 0 5px 20px rgba(255,170,0,0.5);
+            display: none;
+            z-index: 100;
+        }
+        
+        #sprint-btn:active {
+            transform: translateX(-50%) scale(0.95);
+            box-shadow: 0 3px 15px rgba(255,170,0,0.7);
         }
         
         #chat-box {
@@ -477,10 +332,10 @@
             border: 4px solid #ff00ff;
             padding: 30px;
             border-radius: 25px;
-            max-width: 90vw;
+            max-width: 800px;
             max-height: 85vh;
             overflow-y: auto;
-            z-index: 1000;
+            z-index: 3000;
             display: none;
             box-shadow: 0 20px 60px rgba(255,0,255,0.5);
         }
@@ -489,7 +344,15 @@
             color: #ff00ff;
             text-align: center;
             margin-bottom: 20px;
-            font-size: 2em;
+            font-size: 2.5em;
+            text-shadow: 0 0 15px #ff00ff;
+        }
+        
+        .shop-info {
+            text-align: center;
+            color: #00ffff;
+            margin-bottom: 20px;
+            font-size: 1.2em;
         }
         
         .skin-grid {
@@ -505,6 +368,21 @@
             border-radius: 15px;
             padding: 20px;
             text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .skin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255,0,255,0.5);
+        }
+        
+        .skin-card.owned {
+            border-color: #00ff88;
+        }
+        
+        .skin-card.selected {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.6);
         }
         
         .skin-preview {
@@ -529,6 +407,12 @@
             font-size: 1.2em;
         }
         
+        .skin-card .cost {
+            color: #ffaa00;
+            margin: 8px 0;
+            font-weight: 700;
+        }
+        
         .skin-card button {
             padding: 10px 20px;
             background: linear-gradient(145deg, #00ff88, #00cc66);
@@ -540,27 +424,21 @@
             font-weight: 900;
             font-size: 13px;
             margin: 4px;
+            transition: all 0.3s;
         }
         
-        .save-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid rgba(255,0,255,0.3);
+        .skin-card button:hover:not(:disabled) {
+            transform: scale(1.05);
         }
         
-        .save-buttons button {
-            padding: 12px 25px;
-            background: linear-gradient(145deg, #00ccff, #0099cc);
-            color: #fff;
-            border: 2px solid #00ccff;
-            border-radius: 10px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
+        .skin-card button:disabled {
+            background: linear-gradient(145deg, #555, #333);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .skin-card button.select {
+            background: linear-gradient(145deg, #00ffff, #00cccc);
         }
         
         #close-shop {
@@ -575,6 +453,11 @@
             font-weight: 900;
             font-size: 16px;
             margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        #close-shop:hover {
+            transform: scale(1.02);
         }
         
         #mobile-controls {
@@ -655,9 +538,18 @@
                 font-size: 2.5em;
             }
             
+            #shop-panel {
+                padding: 20px;
+                max-width: 95vw;
+            }
+            
             .skin-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
                 gap: 15px;
+            }
+            
+            #sprint-btn {
+                display: block;
             }
         }
         
@@ -689,17 +581,17 @@
             <div class="control-card" data-mode="wasd">
                 <div class="icon">⌨️</div>
                 <h3>WASD</h3>
-                <p>Keyboard controls</p>
+                <p>Keyboard controls<br>SHIFT to sprint</p>
             </div>
             <div class="control-card" data-mode="cursor">
                 <div class="icon">🖱️</div>
                 <h3>CURSOR</h3>
-                <p>Follow mouse</p>
+                <p>Follow mouse<br>SHIFT to sprint</p>
             </div>
             <div class="control-card" data-mode="mobile">
                 <div class="icon">📱</div>
                 <h3>MOBILE</h3>
-                <p>Touch joystick</p>
+                <p>Touch joystick<br>Sprint button included</p>
             </div>
         </div>
     </div>
@@ -744,6 +636,8 @@
             </div>
         </div>
         
+        <button id="sprint-btn">SPRINT</button>
+        
         <div id="death-screen">
             <h2>ELIMINATED</h2>
             <div class="stat-line"><span class="label">SCORE:</span> <span class="value" id="death-score">0</span></div>
@@ -756,17 +650,6 @@
             </div>
         </div>
         
-        <input type="file" id="import-file" style="display: none;" accept=".json" />
-        <div id="shop-panel">
-            <h2>SKIN SHOP</h2>
-            <div class="skin-grid" id="skins-grid"></div>
-            <div class="save-buttons">
-                <button id="export-btn">EXPORT SAVE</button>
-                <button id="import-btn">IMPORT SAVE</button>
-            </div>
-            <button id="close-shop">CLOSE</button>
-        </div>
-        
         <div id="mobile-controls">
             <div class="joystick" id="joystick">
                 <div class="joystick-handle" id="joystick-handle"></div>
@@ -774,10 +657,17 @@
         </div>
     </div>
     
+    <div id="shop-panel">
+        <h2>SKIN SHOP</h2>
+        <div class="shop-info">Your Points: <span id="shop-points">0</span></div>
+        <div class="skin-grid" id="skins-grid"></div>
+        <button id="close-shop">CLOSE</button>
+    </div>
+    
     <script>
         const WORLD_WIDTH = 3000;
         const WORLD_HEIGHT = 2000;
-        const WS_URL = 'wss://perfectly-vegas-rolling-conf.trycloudflare.com';
+        const WS_URL = 'https://perfectly-vegas-rolling-conf.trycloudflare.com';
         
         let controlMode = null;
         let ws = null;
@@ -797,6 +687,7 @@
         let skinImages = {};
         let lastInputTime = 0;
         let gameLoopRunning = false;
+        let isSprinting = false;
         
         document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
         document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
@@ -894,8 +785,11 @@
                 } else if (msg.type === 'chatMessage') {
                     addChat(msg.username, msg.message);
                 } else if (msg.type === 'skinPurchased') {
-                    playerData.ownedSkins.push(msg.skinId);
+                    playerData.ownedSkins = msg.ownedSkins;
                     playerData.points = msg.points;
+                    updateShop();
+                } else if (msg.type === 'skinSelected') {
+                    currentSkinId = msg.skinId;
                     updateShop();
                 } else if (msg.type === 'leaderboardUpdate') {
                     updateLeaderboard(msg.leaderboard);
@@ -911,6 +805,7 @@
                 
                 if (controlMode === 'mobile') {
                     document.getElementById('mobile-controls').style.display = 'block';
+                    document.getElementById('sprint-btn').style.display = 'block';
                 }
                 
                 if (!gameLoopRunning) {
@@ -958,12 +853,6 @@
             document.getElementById('shop-panel').style.display = 'none';
         });
         
-        document.getElementById('export-btn').addEventListener('click', exportSave);
-        document.getElementById('import-btn').addEventListener('click', () => {
-            document.getElementById('import-file').click();
-        });
-        document.getElementById('import-file').addEventListener('change', importSave);
-        
         document.getElementById('chat-toggle').addEventListener('click', () => {
             const chat = document.getElementById('chat-box');
             chat.style.display = chat.style.display === 'none' ? 'block' : 'none';
@@ -974,12 +863,33 @@
             if (e.key === 'Enter') sendChat();
         });
         
+        // Sprint button for mobile
+        const sprintBtn = document.getElementById('sprint-btn');
+        sprintBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isSprinting = true;
+            sendSprint(true);
+            sprintBtn.style.background = 'linear-gradient(145deg, #ff8800, #ff6600)';
+        });
+        sprintBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isSprinting = false;
+            sendSprint(false);
+            sprintBtn.style.background = 'linear-gradient(145deg, #ffaa00, #ff8800)';
+        });
+        
         function spawnPlayer() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({
                     type: 'spawn',
                     skinId: currentSkinId
                 }));
+            }
+        }
+        
+        function sendSprint(sprinting) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'sprint', sprinting }));
             }
         }
         
@@ -1021,6 +931,7 @@
                 canvas.height = window.innerHeight;
             });
             
+            // PC Sprint with Shift key
             document.addEventListener('keydown', (e) => {
                 if (controlMode === 'wasd' && !isDead) {
                     let newDir = null;
@@ -1033,6 +944,19 @@
                         direction = newDir;
                         sendDirection();
                     }
+                }
+                
+                // Sprint with Shift
+                if (e.key === 'Shift' && !isSprinting && controlMode !== 'mobile') {
+                    isSprinting = true;
+                    sendSprint(true);
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                if (e.key === 'Shift' && isSprinting && controlMode !== 'mobile') {
+                    isSprinting = false;
+                    sendSprint(false);
                 }
             });
             
@@ -1274,12 +1198,18 @@
         }
         
         function updateShop() {
+            document.getElementById('shop-points').textContent = playerData.points;
             const grid = document.getElementById('skins-grid');
             grid.innerHTML = '';
+            
             skins.forEach(skin => {
                 const card = document.createElement('div');
                 card.className = 'skin-card';
                 const owned = playerData.ownedSkins.includes(skin.id);
+                const selected = currentSkinId === skin.id;
+                
+                if (owned) card.classList.add('owned');
+                if (selected) card.classList.add('selected');
                 
                 const preview = document.createElement('div');
                 preview.className = 'skin-preview';
@@ -1291,8 +1221,8 @@
                 title.textContent = skin.name;
                 
                 const cost = document.createElement('div');
-                cost.style.cssText = 'color: #ffaa00; margin: 8px 0; font-weight: 700;';
-                cost.textContent = skin.cost === 0 ? 'FREE' : `${skin.cost} pts`;
+                cost.className = 'cost';
+                cost.textContent = skin.cost === 0 ? 'FREE' : `${skin.cost} points`;
                 
                 card.appendChild(preview);
                 card.appendChild(title);
@@ -1300,14 +1230,13 @@
                 
                 if (owned) {
                     const selectBtn = document.createElement('button');
-                    selectBtn.textContent = currentSkinId === skin.id ? 'SELECTED' : 'SELECT';
-                    selectBtn.disabled = currentSkinId === skin.id;
+                    selectBtn.className = 'select';
+                    selectBtn.textContent = selected ? 'SELECTED' : 'SELECT';
+                    selectBtn.disabled = selected;
                     selectBtn.onclick = () => {
-                        currentSkinId = skin.id;
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'selectSkin', skinId: skin.id }));
                         }
-                        updateShop();
                     };
                     card.appendChild(selectBtn);
                 } else {
@@ -1325,42 +1254,186 @@
                 grid.appendChild(card);
             });
         }
-        
-        function exportSave() {
-            const saveData = {
-                username: currentUsername,
-                playerData: playerData,
-                currentSkinId: currentSkinId,
-                exportDate: new Date().toISOString()
-            };
-            
-            const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `slither_${currentUsername}_${Date.now()}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
-        }
-        
-        function importSave(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const saveData = JSON.parse(e.target.result);
-                    if (saveData.playerData && saveData.username) {
-                        alert('Save file valid! Use these credentials to login:\nUsername: ' + saveData.username);
-                    }
-                } catch (error) {
-                    alert('Invalid save file');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
     </script>
 </body>
-</html>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slither Arena</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at 50% 50%, #1a0033, #000000);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+        
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            z-index: 2000;
+        }
+        
+        #auth-screen {
+            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .auth-container {
+            background: linear-gradient(145deg, #1a0033, #0a001a);
+            border: 4px solid #00ff88;
+            padding: 40px;
+            border-radius: 25px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
+        }
+        
+        .auth-container h1 {
+            font-size: 2.8em;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .auth-container .warning {
+            color: #ffaa00;
+            font-size: 0.85em;
+            text-align: center;
+            margin-bottom: 25px;
+            opacity: 0.9;
+        }
+        
+        .auth-container input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00ff88;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .auth-container button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(145deg, #00ff88, #00cc66);
+            color: #000;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
+            margin-bottom: 10px;
+        }
+        
+        .auth-container button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,255,136,0.8);
+        }
+        
+        .register-link {
+            text-align: center;
+            color: #00ffff;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9em;
+            padding: 10px;
+        }
+        
+        .register-link:hover {
+            text-decoration: underline;
+        }
+        
+        #control-select {
+            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            padding: 30px 20px;
+        }
+        
+        #control-select h1 {
+            font-size: 3em;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88;
+            margin-bottom: 20px;
+        }
+        
+        .control-options {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .control-card {
+            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
+            border: 3px solid #00ff88;
+            border-radius: 20px;
+            padding: 30px;
+            width: 280px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,255,136,0.3);
+        }
+        
+        .control-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 50px rgba(0,255,136,0.6);
+        }
+        
+        .control-card .icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        
+        .control-card h3 {
+            font-size: 1.6em;
+            color: #00ff88;
+            margin-bottom: 12px;
+        }
+        
+        #main-menu {
+            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .menu-container {
+            background: linear-gradient(145deg, #1a0033, #0a001a);
+            border: 4px solid #00ff88;
+            padding: 40px;
+            border-radius: 25px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
+        }
