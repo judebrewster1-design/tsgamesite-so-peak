@@ -186,6 +186,19 @@
                 border-width: 2px;
             }
             
+            #export-btn, #import-btn {
+                right: 5px;
+                padding: 8px 14px;
+                font-size: 11px;
+                border-width: 2px;
+            }
+            #export-btn {
+                bottom: 130px;
+            }
+            #import-btn {
+                bottom: 175px;
+            }
+            
             #shop-panel {
                 padding: 20px;
                 max-width: 95vw;
@@ -459,6 +472,32 @@
         #shop-btn:hover {
             transform: scale(1.1);
             box-shadow: 0 12px 35px rgba(255,0,255,0.8);
+        }
+        
+        #export-btn, #import-btn {
+            position: fixed;
+            right: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(145deg, #00ccff, #0099cc);
+            color: #fff;
+            border: 3px solid #00ccff;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 5px 20px rgba(0,204,255,0.5);
+            transition: all 0.3s;
+        }
+        #export-btn {
+            bottom: 300px;
+        }
+        #import-btn {
+            bottom: 360px;
+        }
+        #export-btn:hover, #import-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,204,255,0.8);
         }
         
         #shop-panel {
@@ -771,6 +810,9 @@
         </div>
         
         <button id="shop-btn">SHOP</button>
+        <button id="export-btn">EXPORT SAVE</button>
+        <button id="import-btn">IMPORT SAVE</button>
+        <input type="file" id="import-file" style="display: none;" accept=".json" />
         <div id="shop-panel">
             <h2>SKIN COLLECTION</h2>
             <div class="skin-grid" id="skins-grid"></div>
@@ -854,6 +896,12 @@
             if (e.key === 'Enter') sendChat();
         });
         
+        document.getElementById('export-btn').addEventListener('click', exportSave);
+        document.getElementById('import-btn').addEventListener('click', () => {
+            document.getElementById('import-file').click();
+        });
+        document.getElementById('import-file').addEventListener('change', importSave);
+        
         // Cheat code listener
         let cheatBuffer = '';
         document.addEventListener('keypress', (e) => {
@@ -864,6 +912,50 @@
                 cheatBuffer = '';
             }
         });
+        
+        function exportSave() {
+            const saveData = {
+                username: currentUsername,
+                playerData: playerData,
+                currentSkinId: currentSkinId,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(saveData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `slither_save_${currentUsername}_${Date.now()}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            alert('Save exported successfully!');
+        }
+        
+        function importSave(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const saveData = JSON.parse(e.target.result);
+                    if (saveData.playerData && saveData.username) {
+                        playerData = saveData.playerData;
+                        currentUsername = saveData.username;
+                        currentSkinId = saveData.currentSkinId || 'jude';
+                        updateHUD();
+                        alert(`Save imported! Welcome back ${currentUsername}!\nPoints: ${playerData.points}\nHigh Score: ${playerData.highScore}`);
+                    } else {
+                        alert('Invalid save file format');
+                    }
+                } catch (error) {
+                    alert('Error reading save file');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
         
         document.addEventListener('keydown', (e) => {
             if (controlMode === 'wasd' && !isDead) {
