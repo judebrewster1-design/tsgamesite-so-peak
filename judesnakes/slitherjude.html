@@ -14,6 +14,7 @@
             overflow: hidden;
             width: 100vw;
             height: 100vh;
+            position: fixed;
         }
         
         #control-select {
@@ -25,39 +26,48 @@
             background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             z-index: 2000;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 30px 20px 50px 20px;
         }
         #control-select h1 {
-            font-size: 4em;
+            font-size: 3em;
             color: #00ff88;
             text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             animation: glow 2s ease-in-out infinite;
+            margin-top: 20px;
         }
         #control-select p {
-            font-size: 1.5em;
+            font-size: 1.2em;
             color: #fff;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
             opacity: 0.8;
         }
         .control-options {
             display: flex;
-            gap: 40px;
+            gap: 30px;
             flex-wrap: wrap;
             justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+            padding-bottom: 30px;
         }
         .control-card {
             background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
             border: 3px solid #00ff88;
             border-radius: 20px;
-            padding: 40px;
-            width: 300px;
+            padding: 30px;
+            width: 280px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 10px 30px rgba(0,255,136,0.3);
+            flex-shrink: 0;
         }
         .control-card:hover {
             transform: translateY(-10px) scale(1.05);
@@ -65,18 +75,173 @@
             border-color: #00ffff;
         }
         .control-card .icon {
-            font-size: 5em;
-            margin-bottom: 20px;
-        }
-        .control-card h3 {
-            font-size: 1.8em;
-            color: #00ff88;
+            font-size: 4em;
             margin-bottom: 15px;
         }
+        .control-card h3 {
+            font-size: 1.6em;
+            color: #00ff88;
+            margin-bottom: 12px;
+        }
         .control-card p {
-            font-size: 1em;
+            font-size: 0.95em;
             color: #bbb;
             margin: 0;
+            opacity: 1;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            #control-select h1 {
+                font-size: 2.5em;
+            }
+            #control-select p {
+                font-size: 1em;
+            }
+            .control-card {
+                width: 90%;
+                max-width: 350px;
+                padding: 25px;
+            }
+            .control-card .icon {
+                font-size: 3.5em;
+            }
+            .control-card h3 {
+                font-size: 1.4em;
+            }
+            
+            /* Mobile HUD adjustments */
+            #main-hud {
+                top: 10px;
+                left: 10px;
+                padding: 12px;
+                min-width: 160px;
+                font-size: 14px;
+            }
+            #main-hud .stat {
+                font-size: 13px;
+                margin: 6px 0;
+            }
+            
+            #player-list {
+                top: 10px;
+                right: 10px;
+                padding: 12px;
+                min-width: 140px;
+                max-height: 200px;
+                font-size: 12px;
+            }
+            #player-list h3 {
+                font-size: 14px;
+            }
+            .player-item {
+                font-size: 11px;
+                padding: 5px 0;
+            }
+            
+            #minimap {
+                bottom: 10px;
+                right: 10px;
+                width: 150px;
+                height: 100px;
+            }
+            
+            #chat-box {
+                bottom: 10px;
+                left: 10px;
+                width: calc(100vw - 180px);
+                max-height: 180px;
+                padding: 10px;
+            }
+            #chat-messages {
+                height: 100px;
+                font-size: 11px;
+            }
+            #chat-input {
+                font-size: 12px;
+                padding: 8px;
+            }
+            #chat-send {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            #chat-toggle {
+                bottom: 200px;
+                left: 10px;
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+            
+            #shop-btn {
+                bottom: 120px;
+                right: 10px;
+                padding: 15px 20px;
+                font-size: 15px;
+            }
+            
+            #shop-panel {
+                padding: 20px;
+                max-width: 95vw;
+            }
+            #shop-panel h2 {
+                font-size: 2em;
+            }
+            .skin-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            .skin-card {
+                padding: 15px;
+            }
+            .skin-preview {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 12px;
+            }
+            .skin-card h4 {
+                font-size: 1.1em;
+            }
+            .skin-card button {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            
+            #mobile-controls {
+                bottom: 10px;
+            }
+            .joystick {
+                width: 120px;
+                height: 120px;
+            }
+            .joystick-handle {
+                width: 50px;
+                height: 50px;
+            }
+            
+            #death-screen {
+                padding: 30px;
+                min-width: 90vw;
+                max-width: 400px;
+            }
+            #death-screen h2 {
+                font-size: 2.5em;
+            }
+            #death-screen .stat-line {
+                font-size: 1.1em;
+            }
+            #respawn-btn {
+                padding: 15px 35px;
+                font-size: 18px;
+            }
+            
+            #connection-panel {
+                min-width: 90vw;
+                max-width: 400px;
+                padding: 30px;
+            }
+            #connection-panel h1 {
+                font-size: 2.2em;
+            }
         }
         
         #connection-panel {
