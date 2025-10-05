@@ -922,7 +922,7 @@
                 document.getElementById('game-container').style.display = 'block';
                 
                 if (controlMode === 'mobile') {
-                    document.getElementById('mobile-controls').style.display = 'block';
+                    document.getElementById('mobile-controls').style.display = 'flex';
                 }
                 
                 if (!gameLoopRunning) {
@@ -1135,15 +1135,17 @@
                 }
                 
                 const now = Date.now();
-                if (isSprinting && now - lastSprintDropTime >= 1000) {
-                    const player = gameState.snakes[playerId];
-                    if (player && player.body && player.body.length > 3) {
+                const player = gameState.snakes[playerId];
+                
+                // Check if player can sprint (needs more than 3 segments and score > 0)
+                if (isSprinting) {
+                    if (!player || !player.body || player.body.length <= 3 || player.score <= 0) {
+                        isSprinting = false;
+                    } else if (now - lastSprintDropTime >= 1000) {
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'sprintDrop' }));
                         }
                         lastSprintDropTime = now;
-                    } else {
-                        isSprinting = false;
                     }
                 }
                 
