@@ -569,8 +569,6 @@
             left: 50%;
             transform: translateX(-50%);
             display: none;
-            gap: 40px;
-            align-items: center;
         }
         
         .joystick {
@@ -591,31 +589,6 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-        }
-        
-        #mobile-sprint-btn {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            border: 4px solid #00ff88;
-            border-radius: 50%;
-            color: #000;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 14px;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        #mobile-sprint-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 3px 15px rgba(0,255,136,0.7);
-            background: linear-gradient(145deg, #00cc66, #00aa55);
         }
         
         @media (max-width: 768px) {
@@ -786,7 +759,7 @@
     <script>
         const WORLD_WIDTH = 3000;
         const WORLD_HEIGHT = 2000;
-        const WS_URL = ' https://pharmaceuticals-fruit-mirror-isa.trycloudflare.com ';
+        const WS_URL = 'wss://perfectly-vegas-rolling-conf.trycloudflare.com';
         
         let controlMode = null;
         let ws = null;
