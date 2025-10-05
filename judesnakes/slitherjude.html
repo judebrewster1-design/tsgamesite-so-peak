@@ -806,7 +806,7 @@
     <script>
         const WORLD_WIDTH = 3000;
         const WORLD_HEIGHT = 2000;
-        const WS_URL = 'https://pharmaceuticals-fruit-mirror-isa.trycloudflare.com ';
+        const WS_URL = 'wss://pharmaceuticals-fruit-mirror-isa.trycloudflare.com';
         
         let controlMode = null;
         let ws = null;
@@ -1108,12 +1108,20 @@
             joystick.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 joystickActive = true;
-            });
+            }, { passive: false });
             
             document.addEventListener('touchmove', (e) => {
                 if (!joystickActive || controlMode !== 'mobile') return;
+                
+                const touch = Array.from(e.touches).find(t => {
+                    const rect = joystick.getBoundingClientRect();
+                    return t.clientX >= rect.left && t.clientX <= rect.right &&
+                           t.clientY >= rect.top && t.clientY <= rect.bottom;
+                });
+                
+                if (!touch) return;
                 e.preventDefault();
-                const touch = e.touches[0];
+                
                 const rect = joystick.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
@@ -1129,12 +1137,20 @@
                     direction = { x: dx / dist, y: dy / dist };
                     sendDirection();
                 }
-            });
+            }, { passive: false });
             
-            document.addEventListener('touchend', () => {
+            document.addEventListener('touchend', (e) => {
                 if (controlMode === 'mobile') {
-                    joystickActive = false;
-                    handle.style.transform = 'translate(-50%, -50%)';
+                    const touchStillOnJoystick = Array.from(e.touches).some(t => {
+                        const rect = joystick.getBoundingClientRect();
+                        return t.clientX >= rect.left && t.clientX <= rect.right &&
+                               t.clientY >= rect.top && t.clientY <= rect.bottom;
+                    });
+                    
+                    if (!touchStillOnJoystick) {
+                        joystickActive = false;
+                        handle.style.transform = 'translate(-50%, -50%)';
+                    }
                 }
             });
             
