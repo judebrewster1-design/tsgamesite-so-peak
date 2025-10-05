@@ -318,31 +318,6 @@
             box-shadow: 0 5px 20px rgba(0,255,136,0.4);
         }
         
-        #sprint-btn {
-            position: fixed;
-            bottom: 170px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(145deg, #ffaa00, #ff8800);
-            color: #fff;
-            border: 4px solid #ffaa00;
-            border-radius: 50%;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 16px;
-            box-shadow: 0 5px 20px rgba(255,170,0,0.5);
-            display: none;
-            z-index: 100;
-        }
-        
-        #sprint-btn:active {
-            transform: translateX(-50%) scale(0.95);
-            box-shadow: 0 3px 15px rgba(255,170,0,0.7);
-        }
-        
         #chat-box {
             position: fixed;
             bottom: 10px;
@@ -505,7 +480,7 @@
             max-width: 90vw;
             max-height: 85vh;
             overflow-y: auto;
-            z-index: 3000;
+            z-index: 1000;
             display: none;
             box-shadow: 0 20px 60px rgba(255,0,255,0.5);
         }
@@ -513,15 +488,8 @@
         #shop-panel h2 {
             color: #ff00ff;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 2em;
-        }
-        
-        .shop-info {
-            text-align: center;
-            color: #00ffff;
             margin-bottom: 20px;
-            font-size: 1.2em;
+            font-size: 2em;
         }
         
         .skin-grid {
@@ -537,21 +505,6 @@
             border-radius: 15px;
             padding: 20px;
             text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .skin-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(255,0,255,0.5);
-        }
-        
-        .skin-card.owned {
-            border-color: #00ff88;
-        }
-        
-        .skin-card.selected {
-            border-color: #00ffff;
-            box-shadow: 0 0 20px rgba(0,255,255,0.6);
         }
         
         .skin-preview {
@@ -587,21 +540,27 @@
             font-weight: 900;
             font-size: 13px;
             margin: 4px;
-            transition: all 0.3s;
         }
         
-        .skin-card button:hover:not(:disabled) {
-            transform: scale(1.05);
+        .save-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255,0,255,0.3);
         }
         
-        .skin-card button:disabled {
-            background: linear-gradient(145deg, #555, #333);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-        
-        .skin-card button.select {
-            background: linear-gradient(145deg, #00ffff, #00cccc);
+        .save-buttons button {
+            padding: 12px 25px;
+            background: linear-gradient(145deg, #00ccff, #0099cc);
+            color: #fff;
+            border: 2px solid #00ccff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
         }
         
         #close-shop {
@@ -700,10 +659,6 @@
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
                 gap: 15px;
             }
-            
-            #sprint-btn {
-                display: block;
-            }
         }
         
         ::-webkit-scrollbar {
@@ -734,17 +689,17 @@
             <div class="control-card" data-mode="wasd">
                 <div class="icon">⌨️</div>
                 <h3>WASD</h3>
-                <p>Keyboard controls<br>SHIFT to sprint</p>
+                <p>Keyboard controls</p>
             </div>
             <div class="control-card" data-mode="cursor">
                 <div class="icon">🖱️</div>
                 <h3>CURSOR</h3>
-                <p>Follow mouse<br>SHIFT to sprint</p>
+                <p>Follow mouse</p>
             </div>
             <div class="control-card" data-mode="mobile">
                 <div class="icon">📱</div>
                 <h3>MOBILE</h3>
-                <p>Touch joystick<br>Sprint button</p>
+                <p>Touch joystick</p>
             </div>
         </div>
     </div>
@@ -789,8 +744,6 @@
             </div>
         </div>
         
-        <button id="sprint-btn">SPRINT</button>
-        
         <div id="death-screen">
             <h2>ELIMINATED</h2>
             <div class="stat-line"><span class="label">SCORE:</span> <span class="value" id="death-score">0</span></div>
@@ -803,18 +756,20 @@
             </div>
         </div>
         
+        <input type="file" id="import-file" style="display: none;" accept=".json" />
+        <div id="shop-panel">
+            <h2>SKIN SHOP</h2>
+            <div class="skin-grid" id="skins-grid"></div>
+       
+            </div>
+            <button id="close-shop">CLOSE</button>
+        </div>
+        
         <div id="mobile-controls">
             <div class="joystick" id="joystick">
                 <div class="joystick-handle" id="joystick-handle"></div>
             </div>
         </div>
-    </div>
-    
-    <div id="shop-panel">
-        <h2>SKIN SHOP</h2>
-        <div class="shop-info">Your Points: <span id="shop-points">0</span></div>
-        <div class="skin-grid" id="skins-grid"></div>
-        <button id="close-shop">CLOSE</button>
     </div>
     
     <script>
@@ -840,8 +795,6 @@
         let skinImages = {};
         let lastInputTime = 0;
         let gameLoopRunning = false;
-        let isSprinting = false;
-        let keys = {};
         
         document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
         document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
@@ -890,7 +843,11 @@
                     currentSkinId = msg.currentSkin || 'jude';
                     skins = msg.skins || [];
                     loadSkinImages();
-                    showScreen('control-select');
+                    updateLeaderboard(msg.leaderboard || []);
+                    
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('main-menu').style.display = 'flex';
+                    setupGameHandlers();
                 } else if (msg.type === 'authError') {
                     document.getElementById('auth-status').textContent = msg.message;
                 }
@@ -901,540 +858,506 @@
             };
         }
         
-        function loadSkinImages() {
-            skins.forEach(skin => {
-                const img = new Image();
-                img.src = skin.imageUrl;
-                skinImages[skin.id] = img;
-            });
+        function setupGameHandlers() {
+            ws.onmessage = (e) => {
+                const msg = JSON.parse(e.data);
+                
+                if (msg.type === 'welcome') {
+                    playerId = msg.id;
+                    playerData = msg.playerData;
+                } else if (msg.type === 'death') {
+                    isDead = true;
+                    playerData.points = msg.totalPoints;
+                    playerData.highScore = msg.highScore;
+                    
+                    document.getElementById('death-score').textContent = msg.score;
+                    document.getElementById('death-points').textContent = msg.points;
+                    document.getElementById('death-total').textContent = msg.totalPoints;
+                    document.getElementById('death-high').textContent = msg.highScore;
+                    document.getElementById('death-screen').style.display = 'block';
+                } else if (msg.type === 'state') {
+                    gameState.snakes = {};
+                    for (const id in msg.snakes) {
+                        const s = msg.snakes[id];
+                        gameState.snakes[id] = {
+                            body: s.b.map(p => ({ x: p[0], y: p[1] })),
+                            score: s.s,
+                            isBot: s.i,
+                            username: s.u,
+                            skinId: s.sk || 'jude'
+                        };
+                    }
+                    gameState.balls = msg.balls;
+                    updateHUD();
+                } else if (msg.type === 'chatMessage') {
+                    addChat(msg.username, msg.message);
+                } else if (msg.type === 'skinPurchased') {
+                    playerData.ownedSkins.push(msg.skinId);
+                    playerData.points = msg.points;
+                    updateShop();
+                } else if (msg.type === 'leaderboardUpdate') {
+                    updateLeaderboard(msg.leaderboard);
+                }
+            };
         }
         
         document.querySelectorAll('.control-card').forEach(card => {
             card.addEventListener('click', () => {
                 controlMode = card.dataset.mode;
-                showScreen('main-menu');
-                loadLeaderboard();
+                document.getElementById('control-select').style.display = 'none';
+                document.getElementById('game-container').style.display = 'block';
+                
+                if (controlMode === 'mobile') {
+                    document.getElementById('mobile-controls').style.display = 'block';
+                }
+                
+                if (!gameLoopRunning) {
+                    setupGame();
+                    gameLoopRunning = true;
+                }
+                
+                spawnPlayer();
             });
         });
         
-        document.getElementById('play-btn').addEventListener('click', startGame);
-        document.getElementById('menu-shop-btn').addEventListener('click', openShop);
-        document.getElementById('logout-btn').addEventListener('click', logout);
-        document.getElementById('respawn-btn').addEventListener('click', respawn);
-        document.getElementById('menu-btn').addEventListener('click', returnToMenu);
-        document.getElementById('close-shop').addEventListener('click', closeShop);
+        document.getElementById('play-btn').addEventListener('click', () => {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('control-select').style.display = 'flex';
+        });
         
-        function openShop() {
-            document.getElementById('shop-points').textContent = playerData.points;
-            const grid = document.getElementById('skins-grid');
-            grid.innerHTML = '';
-            
-            skins.forEach(skin => {
-                const card = document.createElement('div');
-                card.className = 'skin-card';
-                const owned = playerData.ownedSkins.includes(skin.id);
-                const selected = currentSkinId === skin.id;
-                
-                if (owned) card.classList.add('owned');
-                if (selected) card.classList.add('selected');
-                
-                card.innerHTML = `
-                    <div class="skin-preview">
-                        <img src="${skin.imageUrl}" alt="${skin.name}">
-                    </div>
-                    <h4>${skin.name}</h4>
-                    <p style="color: #ffaa00; margin: 8px 0;">${skin.price} Points</p>
-                    ${owned ? 
-                        (selected ? 
-                            '<button class="select" disabled>SELECTED</button>' : 
-                            '<button class="select" onclick="selectSkin(\'' + skin.id + '\')">SELECT</button>') :
-                        '<button onclick="buySkin(\'' + skin.id + '\')" ' + 
-                        (playerData.points >= skin.price ? '' : 'disabled') + 
-                        '>BUY</button>'}
-                `;
-                
-                grid.appendChild(card);
-            });
-            
+        document.getElementById('menu-shop-btn').addEventListener('click', () => {
             document.getElementById('shop-panel').style.display = 'block';
-        }
+            updateShop();
+        });
         
-        function closeShop() {
-            document.getElementById('shop-panel').style.display = 'none';
-        }
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if (ws) ws.close();
+            location.reload();
+        });
         
-        window.buySkin = function(skinId) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'buySkin', skinId }));
-            }
-        };
+        document.getElementById('respawn-btn').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            isDead = false;
+            spawnPlayer();
+        });
         
-        window.selectSkin = function(skinId) {
-            currentSkinId = skinId;
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'selectSkin', skinId }));
-            }
-            openShop();
-        };
-        
-        function loadLeaderboard() {
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            document.getElementById('death-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            isDead = false;
+            
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'getLeaderboard' }));
             }
-        }
+        });
         
-        function startGame() {
-            showScreen('game-container');
-            isDead = false;
-            document.getElementById('death-screen').style.display = 'none';
-            document.getElementById('chat-toggle').style.display = 'block';
-            
-            if (controlMode === 'mobile') {
-                document.getElementById('mobile-controls').style.display = 'block';
-                document.getElementById('sprint-btn').style.display = 'block';
-            }
-            
-            setupCanvas();
-            connectToGame();
-            if (!gameLoopRunning) {
-                gameLoopRunning = true;
-                gameLoop();
-            }
-        }
+        document.getElementById('close-shop').addEventListener('click', () => {
+            document.getElementById('shop-panel').style.display = 'none';
+        });
         
-        function connectToGame() {
+        document.getElementById('export-btn').addEventListener('click', exportSave);
+        document.getElementById('import-btn').addEventListener('click', () => {
+            document.getElementById('import-file').click();
+        });
+        document.getElementById('import-file').addEventListener('change', importSave);
+        
+        document.getElementById('chat-toggle').addEventListener('click', () => {
+            const chat = document.getElementById('chat-box');
+            chat.style.display = chat.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        document.getElementById('chat-send').addEventListener('click', sendChat);
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+        
+        function spawnPlayer() {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ 
-                    type: 'join', 
-                    username: currentUsername,
+                ws.send(JSON.stringify({
+                    type: 'spawn',
                     skinId: currentSkinId
                 }));
             }
         }
         
-        function respawn() {
-            isDead = false;
-            document.getElementById('death-screen').style.display = 'none';
-            connectToGame();
-        }
-        
-        function returnToMenu() {
-            showScreen('main-menu');
-            isDead = false;
-            document.getElementById('death-screen').style.display = 'none';
-            document.getElementById('chat-box').style.display = 'none';
-            document.getElementById('chat-toggle').style.display = 'none';
-            document.getElementById('mobile-controls').style.display = 'none';
-            document.getElementById('sprint-btn').style.display = 'none';
-            chatUnlocked = false;
-            loadLeaderboard();
-        }
-        
-        function logout() {
-            if (ws) ws.close();
-            showScreen('auth-screen');
-            document.getElementById('auth-username').value = '';
-            document.getElementById('auth-password').value = '';
-            document.getElementById('auth-status').textContent = '';
-        }
-        
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById('game-container').style.display = 'none';
+        function updateLeaderboard(leaderboard) {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
             
-            if (screenId === 'game-container') {
-                document.getElementById('game-container').style.display = 'block';
-            } else {
-                document.getElementById(screenId).style.display = 'flex';
-            }
+            leaderboard.slice(0, 10).forEach((player, i) => {
+                const div = document.createElement('div');
+                div.className = 'leader-item';
+                if (i === 0) div.classList.add('top1');
+                else if (i === 1) div.classList.add('top2');
+                else if (i === 2) div.classList.add('top3');
+                
+                div.innerHTML = `<span>${i + 1}. ${player.username}</span><span>${player.highScore}</span>`;
+                list.appendChild(div);
+            });
         }
         
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        const minimap = document.getElementById('minimap');
-        const minimapCtx = minimap.getContext('2d');
+        function loadSkinImages() {
+            skins.forEach(skin => {
+                const img = new Image();
+                img.src = skin.img;
+                skinImages[skin.id] = img;
+            });
+        }
         
-        function setupCanvas() {
+        function setupGame() {
+            const canvas = document.getElementById('game');
+            const ctx = canvas.getContext('2d');
+            const minimap = document.getElementById('minimap');
+            const mmCtx = minimap.getContext('2d');
+            
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-        }
-        
-        window.addEventListener('resize', () => {
-            if (document.getElementById('game-container').style.display === 'block') {
-                setupCanvas();
-            }
-        });
-        
-        // Keyboard controls for WASD and sprint
-        document.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
             
-            if (e.key === 'Shift') {
-                isSprinting = true;
-            }
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
             
-            if (controlMode === 'wasd' && !isDead) {
-                const now = Date.now();
-                if (now - lastInputTime > 50) {
-                    updateWASDDirection();
-                    sendInput();
-                    lastInputTime = now;
-                }
-            }
-            
-            if (e.key === 'Enter' && chatUnlocked) {
-                const input = document.getElementById('chat-input');
-                if (document.activeElement === input) {
-                    sendChatMessage();
-                } else {
-                    input.focus();
-                }
-            }
-            
-            // Space bar to drop balls
-            if (e.key === ' ' && !isDead) {
-                e.preventDefault();
-                dropBall();
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-            
-            if (e.key === 'Shift') {
-                isSprinting = false;
-            }
-            
-            if (controlMode === 'wasd' && !isDead) {
-                updateWASDDirection();
-                sendInput();
-            }
-        });
-        
-        function updateWASDDirection() {
-            let dx = 0, dy = 0;
-            if (keys['w']) dy -= 1;
-            if (keys['s']) dy += 1;
-            if (keys['a']) dx -= 1;
-            if (keys['d']) dx += 1;
-            
-            if (dx !== 0 || dy !== 0) {
-                const len = Math.sqrt(dx * dx + dy * dy);
-                direction.x = dx / len;
-                direction.y = dy / len;
-            }
-        }
-        
-        // Cursor controls
-        document.addEventListener('mousemove', (e) => {
-            if (controlMode === 'cursor' && !isDead) {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                
-                const snake = gameState.snakes[playerId];
-                if (snake && snake.body.length > 0) {
-                    const head = snake.body[0];
-                    const worldX = head.x - camera.x + canvas.width / 2;
-                    const worldY = head.y - camera.y + canvas.height / 2;
+            document.addEventListener('keydown', (e) => {
+                if (controlMode === 'wasd' && !isDead) {
+                    let newDir = null;
+                    if (e.key.toLowerCase() === 'w') newDir = { x: 0, y: -1 };
+                    else if (e.key.toLowerCase() === 's') newDir = { x: 0, y: 1 };
+                    else if (e.key.toLowerCase() === 'a') newDir = { x: -1, y: 0 };
+                    else if (e.key.toLowerCase() === 'd') newDir = { x: 1, y: 0 };
                     
-                    const dx = mouseX - worldX;
-                    const dy = mouseY - worldY;
-                    const len = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (len > 10) {
-                        direction.x = dx / len;
-                        direction.y = dy / len;
-                        sendInput();
+                    if (newDir) {
+                        direction = newDir;
+                        sendDirection();
                     }
                 }
-            }
-        });
-        
-        // Mobile joystick
-        const joystick = document.getElementById('joystick');
-        const joystickHandle = document.getElementById('joystick-handle');
-        
-        joystick.addEventListener('touchstart', handleJoystickStart);
-        joystick.addEventListener('touchmove', handleJoystickMove);
-        joystick.addEventListener('touchend', handleJoystickEnd);
-        
-        function handleJoystickStart(e) {
-            e.preventDefault();
-            joystickActive = true;
-        }
-        
-        function handleJoystickMove(e) {
-            if (!joystickActive || isDead) return;
-            e.preventDefault();
+            });
             
-            const touch = e.touches[0];
-            const rect = joystick.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            let dx = touch.clientX - centerX;
-            let dy = touch.clientY - centerY;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const maxDist = 37.5;
-            
-            if (dist > maxDist) {
-                dx = (dx / dist) * maxDist;
-                dy = (dy / dist) * maxDist;
-            }
-            
-            joystickHandle.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            
-            if (dist > 5) {
-                direction.x = dx / maxDist;
-                direction.y = dy / maxDist;
-                sendInput();
-            }
-        }
-        
-        function handleJoystickEnd() {
-            joystickActive = false;
-            joystickHandle.style.transform = 'translate(-50%, -50%)';
-        }
-        
-        // Sprint button for mobile
-        const sprintBtn = document.getElementById('sprint-btn');
-        sprintBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isSprinting = true;
-        });
-        sprintBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            isSprinting = false;
-        });
-        
-        // Drop ball function
-        function dropBall() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'dropBall' }));
-            }
-        }
-        
-        function sendInput() {
-            if (ws && ws.readyState === WebSocket.OPEN && !isDead) {
-                ws.send(JSON.stringify({
-                    type: 'input',
-                    direction: direction,
-                    sprinting: isSprinting
-                }));
-            }
-        }
-        
-        // WebSocket message handling
-        if (ws) {
-            ws.onmessage = (e) => {
-                const msg = JSON.parse(e.data);
-                
-                switch (msg.type) {
-                    case 'init':
-                        playerId = msg.id;
-                        gameState = msg.gameState;
-                        break;
-                    case 'update':
-                        gameState = msg.gameState;
-                        updateHUD();
-                        break;
-                    case 'death':
-                        handleDeath(msg);
-                        break;
-                    case 'chat':
-                        addChatMessage(msg.username, msg.message);
-                        break;
-                    case 'chatUnlocked':
-                        chatUnlocked = true;
-                        break;
-                    case 'leaderboard':
-                        displayLeaderboard(msg.leaders);
-                        break;
-                    case 'skinPurchased':
-                        playerData = msg.playerData;
-                        openShop();
-                        break;
+            document.addEventListener('mousemove', (e) => {
+                if (controlMode === 'cursor') {
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
                 }
-            };
+            });
+            
+            const joystick = document.getElementById('joystick');
+            const handle = document.getElementById('joystick-handle');
+            
+            joystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                joystickActive = true;
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (!joystickActive || controlMode !== 'mobile') return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const dx = touch.clientX - centerX;
+                const dy = touch.clientY - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const maxDist = 40;
+                
+                if (dist > 0) {
+                    const angle = Math.atan2(dy, dx);
+                    const limitedDist = Math.min(dist, maxDist);
+                    handle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * limitedDist}px), calc(-50% + ${Math.sin(angle) * limitedDist}px))`;
+                    direction = { x: dx / dist, y: dy / dist };
+                    sendDirection();
+                }
+            });
+            
+            document.addEventListener('touchend', () => {
+                if (controlMode === 'mobile') {
+                    joystickActive = false;
+                    handle.style.transform = 'translate(-50%, -50%)';
+                }
+            });
+            
+            function gameLoop() {
+                if (!playerId || isDead || !gameState.snakes[playerId]) {
+                    requestAnimationFrame(gameLoop);
+                    return;
+                }
+                
+                const player = gameState.snakes[playerId];
+                if (player && player.body && player.body.length > 0) {
+                    camera.x = player.body[0].x - canvas.width / 2;
+                    camera.y = player.body[0].y - canvas.height / 2;
+                    
+                    if (controlMode === 'cursor' && !isDead) {
+                        const worldX = camera.x + mouseX;
+                        const worldY = camera.y + mouseY;
+                        const dx = worldX - player.body[0].x;
+                        const dy = worldY - player.body[0].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist > 10) {
+                            direction = { x: dx / dist, y: dy / dist };
+                            sendDirection();
+                        }
+                    }
+                }
+                
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.translate(-camera.x, -camera.y);
+                
+                ctx.strokeStyle = 'rgba(0,255,136,0.1)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < WORLD_WIDTH; x += 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, WORLD_HEIGHT);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < WORLD_HEIGHT; y += 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(WORLD_WIDTH, y);
+                    ctx.stroke();
+                }
+                
+                gameState.balls.forEach(ball => {
+                    const grad = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 8);
+                    grad.addColorStop(0, '#00ffff');
+                    grad.addColorStop(1, '#00ff88');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                Object.values(gameState.snakes).forEach(snake => {
+                    if (!snake || !snake.body || snake.body.length === 0) return;
+                    
+                    const hue = (snake.username.charCodeAt(0) * 10) % 360;
+                    const snakeColor = `hsl(${hue}, 70%, 50%)`;
+                    
+                    ctx.strokeStyle = snakeColor;
+                    ctx.lineWidth = 14;
+                    ctx.lineCap = 'round';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = snakeColor;
+                    
+                    if (snake.body.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(snake.body[1].x, snake.body[1].y);
+                        for (let i = 2; i < snake.body.length; i++) {
+                            ctx.lineTo(snake.body[i].x, snake.body[i].y);
+                        }
+                        ctx.stroke();
+                    }
+                    
+                    ctx.shadowBlur = 0;
+                    
+                    const head = snake.body[0];
+                    const img = skinImages[snake.skinId];
+                    if (img && img.complete && img.naturalWidth > 0) {
+                        const next = snake.body[1] || head;
+                        const angle = Math.atan2(head.y - next.y, head.x - next.x);
+                        ctx.save();
+                        ctx.translate(head.x, head.y);
+                        ctx.rotate(angle);
+                        ctx.drawImage(img, -25, -25, 50, 50);
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = snakeColor;
+                        ctx.beginPath();
+                        ctx.arc(head.x, head.y, 15, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.fillStyle = '#00ffff';
+                    ctx.font = 'bold 13px Orbitron';
+                    ctx.textAlign = 'center';
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    const text = `${snake.username} [${snake.score}]`;
+                    ctx.strokeText(text, head.x, head.y - 30);
+                    ctx.fillText(text, head.x, head.y - 30);
+                });
+                
+                ctx.restore();
+                drawMinimap(mmCtx);
+                updatePlayerList();
+                requestAnimationFrame(gameLoop);
+            }
+            
+            requestAnimationFrame(gameLoop);
         }
         
-        function handleDeath(msg) {
-            isDead = true;
-            document.getElementById('death-score').textContent = msg.score;
-            document.getElementById('death-points').textContent = msg.pointsEarned;
-            document.getElementById('death-total').textContent = msg.totalPoints;
-            document.getElementById('death-high').textContent = msg.highScore;
-            document.getElementById('death-screen').style.display = 'block';
-            playerData.points = msg.totalPoints;
-            playerData.highScore = msg.highScore;
+        function drawMinimap(ctx) {
+            const mm = document.getElementById('minimap');
+            const sx = mm.width / WORLD_WIDTH;
+            const sy = mm.height / WORLD_HEIGHT;
+            ctx.fillStyle = 'rgba(0,0,0,0.9)';
+            ctx.fillRect(0, 0, mm.width, mm.height);
+            
+            Object.entries(gameState.snakes).forEach(([id, snake]) => {
+                if (!snake.isBot && snake.body && snake.body[0]) {
+                    const hue = (snake.username.charCodeAt(0) * 10) % 360;
+                    ctx.fillStyle = id === playerId ? '#ffff00' : `hsl(${hue}, 70%, 50%)`;
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = ctx.fillStyle;
+                    ctx.beginPath();
+                    ctx.arc(snake.body[0].x * sx, snake.body[0].y * sy, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
         }
         
         function updateHUD() {
-            const snake = gameState.snakes[playerId];
-            if (snake) {
-                document.getElementById('score').textContent = snake.score;
-                document.getElementById('points').textContent = playerData.points;
+            if (playerId && gameState.snakes[playerId]) {
+                const p = gameState.snakes[playerId];
+                document.getElementById('score').textContent = p.score;
+                document.getElementById('points').textContent = playerData.points + p.score;
                 document.getElementById('highscore').textContent = playerData.highScore;
+                if (playerData.points + p.score >= 50) checkChatUnlock();
             }
+        }
+        
+        function updatePlayerList() {
+            const container = document.getElementById('players-container');
+            container.innerHTML = '';
+            const players = Object.values(gameState.snakes).filter(s => !s.isBot && s.body);
+            players.sort((a, b) => b.score - a.score);
+            players.slice(0, 8).forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `<span>${p.username}</span><span>${p.score}</span>`;
+                container.appendChild(div);
+            });
+        }
+        
+        function checkChatUnlock() {
+            if (!chatUnlocked && playerData.points >= 50) {
+                chatUnlocked = true;
+                document.getElementById('chat-toggle').style.display = 'block';
+            }
+        }
+        
+        function sendDirection() {
+            const now = Date.now();
+            if (now - lastInputTime < 50) return;
+            lastInputTime = now;
             
-            const playersContainer = document.getElementById('players-container');
-            playersContainer.innerHTML = '';
-            const sortedSnakes = Object.values(gameState.snakes).sort((a, b) => b.score - a.score);
-            sortedSnakes.forEach(snake => {
-                const item = document.createElement('div');
-                item.className = 'player-item';
-                item.innerHTML = `<span>${snake.username}</span><span>${snake.score}</span>`;
-                playersContainer.appendChild(item);
-            });
+            if (ws && ws.readyState === WebSocket.OPEN && !isDead) {
+                ws.send(JSON.stringify({ type: 'input', direction }));
+            }
         }
         
-        function displayLeaderboard(leaders) {
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '';
-            leaders.forEach((leader, i) => {
-                const item = document.createElement('div');
-                item.className = 'leader-item';
-                if (i === 0) item.classList.add('top1');
-                else if (i === 1) item.classList.add('top2');
-                else if (i === 2) item.classList.add('top3');
-                item.innerHTML = `<span>${i + 1}. ${leader.username}</span><span>${leader.highScore}</span>`;
-                list.appendChild(item);
-            });
-        }
-        
-        // Chat
-        document.getElementById('chat-toggle').addEventListener('click', () => {
-            const chatBox = document.getElementById('chat-box');
-            chatBox.style.display = chatBox.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        document.getElementById('chat-send').addEventListener('click', sendChatMessage);
-        
-        function sendChatMessage() {
+        function sendChat() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
-            if (message && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'chat', message }));
+            if (!message || !chatUnlocked) return;
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'chatMessage', message }));
                 input.value = '';
             }
         }
         
-        function addChatMessage(username, message) {
-            const container = document.getElementById('chat-messages');
-            const msgEl = document.createElement('div');
-            msgEl.className = 'chat-msg';
-            msgEl.innerHTML = `<span class="user">${username}:</span> ${message}`;
-            container.appendChild(msgEl);
-            container.scrollTop = container.scrollHeight;
+        function addChat(user, msg) {
+            const chat = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `<span class="user">${user}:</span> ${msg}`;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+            while (chat.children.length > 50) chat.removeChild(chat.firstChild);
         }
         
-        // Game rendering
-        function gameLoop() {
-            if (!isDead) {
-                render();
-                renderMinimap();
-            }
-            requestAnimationFrame(gameLoop);
-        }
-        
-        function render() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const snake = gameState.snakes[playerId];
-            if (snake && snake.body.length > 0) {
-                camera.x = snake.body[0].x;
-                camera.y = snake.body[0].y;
-            }
-            
-            ctx.save();
-            ctx.translate(-camera.x + canvas.width / 2, -camera.y + canvas.height / 2);
-            
-            // Draw grid
-            ctx.strokeStyle = 'rgba(0,255,136,0.1)';
-            ctx.lineWidth = 1;
-            const gridSize = 50;
-            const startX = Math.floor((camera.x - canvas.width / 2) / gridSize) * gridSize;
-            const startY = Math.floor((camera.y - canvas.height / 2) / gridSize) * gridSize;
-            
-            for (let x = startX; x < camera.x + canvas.width / 2; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, camera.y - canvas.height / 2);
-                ctx.lineTo(x, camera.y + canvas.height / 2);
-                ctx.stroke();
-            }
-            for (let y = startY; y < camera.y + canvas.height / 2; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(camera.x - canvas.width / 2, y);
-                ctx.lineTo(camera.x + canvas.width / 2, y);
-                ctx.stroke();
-            }
-            
-            // Draw world bounds
-            ctx.strokeStyle = '#ff0055';
-            ctx.lineWidth = 5;
-            ctx.strokeRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-            
-            // Draw balls
-            gameState.balls.forEach(ball => {
-                ctx.fillStyle = ball.color;
-                ctx.beginPath();
-                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            
-            // Draw snakes
-            Object.values(gameState.snakes).forEach(snake => {
-                snake.body.forEach((segment, i) => {
-                    const img = skinImages[snake.skinId];
-                    if (img && img.complete) {
-                        ctx.save();
-                        ctx.translate(segment.x, segment.y);
-                        ctx.drawImage(img, -segment.radius, -segment.radius, segment.radius * 2, segment.radius * 2);
-                        ctx.restore();
-                    } else {
-                        ctx.fillStyle = i === 0 ? '#00ff88' : '#00cc66';
-                        ctx.beginPath();
-                        ctx.arc(segment.x, segment.y, segment.radius, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                });
+        function updateShop() {
+            const grid = document.getElementById('skins-grid');
+            grid.innerHTML = '';
+            skins.forEach(skin => {
+                const card = document.createElement('div');
+                card.className = 'skin-card';
+                const owned = playerData.ownedSkins.includes(skin.id);
                 
-                // Draw username
-                if (snake.body.length > 0) {
-                    const head = snake.body[0];
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 14px Orbitron';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(snake.username, head.x, head.y - head.radius - 10);
+                const preview = document.createElement('div');
+                preview.className = 'skin-preview';
+                const img = document.createElement('img');
+                img.src = skin.img;
+                preview.appendChild(img);
+                
+                const title = document.createElement('h4');
+                title.textContent = skin.name;
+                
+                const cost = document.createElement('div');
+                cost.style.cssText = 'color: #ffaa00; margin: 8px 0; font-weight: 700;';
+                cost.textContent = skin.cost === 0 ? 'FREE' : `${skin.cost} pts`;
+                
+                card.appendChild(preview);
+                card.appendChild(title);
+                card.appendChild(cost);
+                
+                if (owned) {
+                    const selectBtn = document.createElement('button');
+                    selectBtn.textContent = currentSkinId === skin.id ? 'SELECTED' : 'SELECT';
+                    selectBtn.disabled = currentSkinId === skin.id;
+                    selectBtn.onclick = () => {
+                        currentSkinId = skin.id;
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'selectSkin', skinId: skin.id }));
+                        }
+                        updateShop();
+                    };
+                    card.appendChild(selectBtn);
+                } else {
+                    const buyBtn = document.createElement('button');
+                    buyBtn.textContent = 'BUY';
+                    buyBtn.disabled = playerData.points < skin.cost;
+                    buyBtn.onclick = () => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'buySkin', skinId: skin.id, cost: skin.cost }));
+                        }
+                    };
+                    card.appendChild(buyBtn);
                 }
+                
+                grid.appendChild(card);
             });
-            
-            ctx.restore();
         }
         
-        function renderMinimap() {
-            minimapCtx.fillStyle = 'rgba(0,0,0,0.8)';
-            minimapCtx.fillRect(0, 0, minimap.width, minimap.height);
+        function exportSave() {
+            const saveData = {
+                username: currentUsername,
+                playerData: playerData,
+                currentSkinId: currentSkinId,
+                exportDate: new Date().toISOString()
+            };
             
-            const scaleX = minimap.width / WORLD_WIDTH;
-            const scaleY = minimap.height / WORLD_HEIGHT;
+            const blob = new Blob([JSON.stringify(saveData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `slither_${currentUsername}_${Date.now()}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function importSave(event) {
+            const file = event.target.files[0];
+            if (!file) return;
             
-            // Draw world bounds
-            minimapCtx.strokeStyle = '#00ff88';
-            minimapCtx.lineWidth = 2;
-            minimapCtx.strokeRect(0, 0, minimap.width, minimap.height);
-            
-            // Draw snakes
-            Object.values(gameState.snakes).forEach(snake => {
-                if (snake.body.length > 0) {
-                    const head = snake.body[0];
-                    minimapCtx.fillStyle = snake.id === playerId ? '#00ffff' : '#ff00ff';
-                    minimapCtx.beginPath();
-                    minimapCtx.arc(head.x * scaleX, head.y * scaleY, 3, 0, Math.PI * 2);
-                    minimapCtx.fill();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const saveData = JSON.parse(e.target.result);
+                    if (saveData.playerData && saveData.username) {
+                        alert('Save file valid! Use these credentials to login:\nUsername: ' + saveData.username);
+                    }
+                } catch (error) {
+                    alert('Invalid save file');
                 }
-            });
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
     </script>
 </body>
