@@ -283,6 +283,18 @@
             color: #fff;
         }
         
+        .sprint-indicator {
+            color: #ffaa00;
+            font-size: 11px;
+            margin-top: 8px;
+            text-align: center;
+        }
+        
+        .sprint-indicator.active {
+            color: #00ff88;
+            font-weight: 900;
+        }
+        
         #player-list {
             top: 10px;
             right: 180px;
@@ -618,6 +630,12 @@
             background: linear-gradient(145deg, #00cc66, #00aa55);
         }
         
+        #mobile-sprint-btn.sprinting {
+            background: linear-gradient(145deg, #ffaa00, #ff8800);
+            border-color: #ffaa00;
+            box-shadow: 0 5px 20px rgba(255,170,0,0.7);
+        }
+        
         @media (max-width: 768px) {
             .auth-container {
                 padding: 25px;
@@ -712,7 +730,7 @@
             <div class="control-card" data-mode="mobile">
                 <div class="icon">📱</div>
                 <h3>MOBILE</h3>
-                <p>Touch joystick</p>
+                <p>Touch joystick<br>Tap button to sprint</p>
             </div>
         </div>
     </div>
@@ -739,6 +757,7 @@
             <div class="stat"><span>SCORE</span><span id="score">0</span></div>
             <div class="stat"><span>POINTS</span><span id="points">0</span></div>
             <div class="stat"><span>HIGH</span><span id="highscore">0</span></div>
+            <div class="sprint-indicator" id="sprint-indicator">SHIFT to sprint</div>
         </div>
         
         <div id="player-list" class="hud-panel">
@@ -773,6 +792,7 @@
             <div class="joystick" id="joystick">
                 <div class="joystick-handle" id="joystick-handle"></div>
             </div>
+            <button id="mobile-sprint-btn">SPRINT</button>
         </div>
     </div>
     
@@ -786,7 +806,7 @@
     <script>
         const WORLD_WIDTH = 3000;
         const WORLD_HEIGHT = 2000;
-        const WS_URL = 'https://pharmaceuticals-fruit-mirror-isa.trycloudflare.com ';
+        const WS_URL = 'wss://your-server-url-here.com';
         
         let controlMode = null;
         let ws = null;
@@ -807,7 +827,6 @@
         let lastInputTime = 0;
         let gameLoopRunning = false;
         let isSprinting = false;
-        let lastSprintDropTime = 0;
         
         document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
         document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
@@ -880,6 +899,7 @@
                     playerData = msg.playerData;
                 } else if (msg.type === 'death') {
                     isDead = true;
+                    isSprinting = false;
                     playerData.points = msg.totalPoints;
                     playerData.highScore = msg.highScore;
                     
@@ -888,6 +908,7 @@
                     document.getElementById('death-total').textContent = msg.totalPoints;
                     document.getElementById('death-high').textContent = msg.highScore;
                     document.getElementById('death-screen').style.display = 'block';
+                    updateSprintIndicator();
                 } else if (msg.type === 'state') {
                     gameState.snakes = {};
                     for (const id in msg.snakes) {
@@ -921,7 +942,7 @@
                 document.getElementById('game-container').style.display = 'block';
                 
                 if (controlMode === 'mobile') {
-                    document.getElementById('mobile-controls').style.display = 'block';
+                    document.getElementById('mobile-controls').style.display = 'flex';
                 }
                 
                 if (!gameLoopRunning) {
@@ -1012,6 +1033,22 @@
             });
         }
         
+        function updateSprintIndicator() {
+            const indicator = document.getElementById('sprint-indicator');
+            const player = gameState.snakes[playerId];
+            
+            if (!player || player.score === 0) {
+                indicator.textContent = 'Need score > 0 to sprint';
+                indicator.classList.remove('active');
+            } else if (isSprinting) {
+                indicator.textContent = 'SPRINTING (-1 ball/sec)';
+                indicator.classList.add('active');
+            } else {
+                indicator.textContent = 'SHIFT to sprint';
+                indicator.classList.remove('active');
+            }
+        }
+        
         function setupGame() {
             const canvas = document.getElementById('game');
             const ctx = canvas.getContext('2d');
@@ -1027,14 +1064,12 @@
             });
             
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Shift') {
-                    isSprinting = true;
-                }
-                
-                if (e.key === ' ' && !isDead) {
-                    e.preventDefault();
-                    if (ws && ws.readyState === WebSocket.OPEN) {
-                        ws.send(JSON.stringify({ type: 'dropBall' }));
+                if (e.key === 'Shift' && !isDead) {
+                    const player = gameState.snakes[playerId];
+                    if (player && player.score > 0) {
+                        isSprinting = true;
+                        sendDirection();
+                        updateSprintIndicator();
                     }
                 }
                 
@@ -1055,6 +1090,8 @@
             document.addEventListener('keyup', (e) => {
                 if (e.key === 'Shift') {
                     isSprinting = false;
+                    sendDirection();
+                    updateSprintIndicator();
                 }
             });
             
@@ -1101,16 +1138,24 @@
                 }
             });
             
-            // Mobile sprint button
-            const sprintBtn = document.getElementById('sprint-btn');
+            const sprintBtn = document.getElementById('mobile-sprint-btn');
             if (sprintBtn) {
                 sprintBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    isSprinting = true;
+                    const player = gameState.snakes[playerId];
+                    if (player && player.score > 0 && !isDead) {
+                        isSprinting = true;
+                        sprintBtn.classList.add('sprinting');
+                        sendDirection();
+                        updateSprintIndicator();
+                    }
                 });
                 sprintBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
                     isSprinting = false;
+                    sprintBtn.classList.remove('sprinting');
+                    sendDirection();
+                    updateSprintIndicator();
                 });
             }
             
@@ -1118,19 +1163,6 @@
                 if (!playerId || isDead || !gameState.snakes[playerId]) {
                     requestAnimationFrame(gameLoop);
                     return;
-                }
-                
-                const now = Date.now();
-                if (isSprinting && now - lastSprintDropTime >= 1000) {
-                    const player = gameState.snakes[playerId];
-                    if (player && player.body && player.body.length > 3) {
-                        if (ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({ type: 'sprintDrop' }));
-                        }
-                        lastSprintDropTime = now;
-                    } else {
-                        isSprinting = false;
-                    }
                 }
                 
                 const player = gameState.snakes[playerId];
@@ -1267,6 +1299,7 @@
                 document.getElementById('score').textContent = p.score;
                 document.getElementById('points').textContent = playerData.points + p.score;
                 document.getElementById('highscore').textContent = playerData.highScore;
+                updateSprintIndicator();
                 if (playerData.points + p.score >= 50) checkChatUnlock();
             }
         }
