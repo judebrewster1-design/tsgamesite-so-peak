@@ -773,7 +773,6 @@
             <div class="joystick" id="joystick">
                 <div class="joystick-handle" id="joystick-handle"></div>
             </div>
-            <div id="mobile-sprint-btn">SPRINT</div>
         </div>
     </div>
     
@@ -922,7 +921,7 @@
                 document.getElementById('game-container').style.display = 'block';
                 
                 if (controlMode === 'mobile') {
-                    document.getElementById('mobile-controls').style.display = 'flex';
+                    document.getElementById('mobile-controls').style.display = 'block';
                 }
                 
                 if (!gameLoopRunning) {
@@ -1104,25 +1103,12 @@
             
             // Mobile sprint button
             const sprintBtn = document.getElementById('sprint-btn');
-            const mobileSprintBtn = document.getElementById('mobile-sprint-btn');
-            
             if (sprintBtn) {
                 sprintBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     isSprinting = true;
                 });
                 sprintBtn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    isSprinting = false;
-                });
-            }
-            
-            if (mobileSprintBtn) {
-                mobileSprintBtn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    isSprinting = true;
-                });
-                mobileSprintBtn.addEventListener('touchend', (e) => {
                     e.preventDefault();
                     isSprinting = false;
                 });
@@ -1135,17 +1121,15 @@
                 }
                 
                 const now = Date.now();
-                const player = gameState.snakes[playerId];
-                
-                // Check if player can sprint (needs more than 3 segments and score > 0)
-                if (isSprinting) {
-                    if (!player || !player.body || player.body.length <= 3 || player.score <= 0) {
-                        isSprinting = false;
-                    } else if (now - lastSprintDropTime >= 1000) {
+                if (isSprinting && now - lastSprintDropTime >= 1000) {
+                    const player = gameState.snakes[playerId];
+                    if (player && player.body && player.body.length > 3) {
                         if (ws && ws.readyState === WebSocket.OPEN) {
                             ws.send(JSON.stringify({ type: 'sprintDrop' }));
                         }
                         lastSprintDropTime = now;
+                    } else {
+                        isSprinting = false;
                     }
                 }
                 
