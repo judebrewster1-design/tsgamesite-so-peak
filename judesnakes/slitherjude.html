@@ -188,33 +188,123 @@
         }
         
         .happy-hour-banner {
-            background: linear-gradient(145deg, #ff00ff, #cc00cc);
-            border: 3px solid #ffaa00;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            animation: pulse 2s infinite;
+            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
+            border: 4px solid #ffaa00;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .happy-hour-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,170,0,0.1) 10px,
+                rgba(255,170,0,0.1) 20px
+            );
+            animation: slide 20s linear infinite;
+        }
+        
+        @keyframes slide {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
         
         .happy-hour-banner.active {
             background: linear-gradient(145deg, #ffaa00, #ff8800);
+            border-color: #fff;
+            animation: pulse 2s infinite;
+        }
+        
+        .happy-hour-banner.active::before {
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.2) 10px,
+                rgba(255,255,255,0.2) 20px
+            );
+        }
+        
+        .happy-hour-content {
+            position: relative;
+            z-index: 1;
         }
         
         .happy-hour-banner h3 {
             color: #fff;
-            font-size: 1.5em;
-            margin-bottom: 8px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            font-size: 2em;
+            margin-bottom: 12px;
+            text-shadow: 0 0 15px rgba(0,0,0,0.8);
+            letter-spacing: 2px;
+        }
+        
+        .happy-hour-banner.active h3 {
+            color: #000;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8);
+        }
+        
+        .happy-hour-schedule {
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,170,0,0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 1.1em;
+        }
+        
+        .happy-hour-banner.active .happy-hour-schedule {
+            background: rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.6);
+        }
+        
+        .schedule-line {
+            color: #00ff88;
+            font-weight: 700;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .happy-hour-banner.active .schedule-line {
+            color: #fff;
+        }
+        
+        .schedule-icon {
+            font-size: 1.3em;
         }
         
         .happy-hour-banner p {
             color: #fff;
             font-size: 1em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+        
+        .happy-hour-banner.active p {
+            color: #000;
+            font-weight: 700;
         }
         
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255,170,0,0.5); }
-            50% { box-shadow: 0 0 40px rgba(255,170,0,0.9); }
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255,170,0,0.6), 0 0 60px rgba(255,170,0,0.3);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(255,170,0,0.9), 0 0 100px rgba(255,170,0,0.5);
+                transform: scale(1.02);
+            }
         }
         
         .menu-buttons {
@@ -315,20 +405,27 @@
         
         .happy-hour-hud {
             background: linear-gradient(145deg, #ffaa00, #ff8800);
-            border: 2px solid #fff;
-            border-radius: 10px;
-            padding: 8px;
+            border: 3px solid #fff;
+            border-radius: 12px;
+            padding: 10px;
             margin-top: 10px;
             text-align: center;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
             color: #000;
             animation: glow 1.5s infinite;
+            box-shadow: 0 0 20px rgba(255,170,0,0.8);
         }
         
         @keyframes glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(255,170,0,0.6); }
-            50% { box-shadow: 0 0 20px rgba(255,170,0,1); }
+            0%, 100% { 
+                box-shadow: 0 0 15px rgba(255,170,0,0.6);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255,170,0,1);
+                transform: scale(1.05);
+            }
         }
         
         .sprint-indicator {
@@ -787,8 +884,20 @@
         <div class="menu-container">
             <h1>MAIN MENU</h1>
             <div class="happy-hour-banner" id="happy-hour-banner">
-                <h3 id="hh-title">HAPPY HOUR INACTIVE</h3>
-                <p id="hh-info">Next Happy Hour starts soon!</p>
+                <div class="happy-hour-content">
+                    <h3 id="hh-title">⚡ HAPPY HOUR ⚡</h3>
+                    <div class="happy-hour-schedule">
+                        <div class="schedule-line">
+                            <span class="schedule-icon">🕕</span>
+                            <span>DAILY: 6:00 PM - 7:00 PM</span>
+                        </div>
+                        <div class="schedule-line">
+                            <span class="schedule-icon">🎁</span>
+                            <span>3X POINTS MULTIPLIER</span>
+                        </div>
+                    </div>
+                    <p id="hh-info">Loading status...</p>
+                </div>
             </div>
             <div class="menu-buttons">
                 <button class="menu-btn" id="play-btn">PLAY</button>
@@ -1012,27 +1121,47 @@
             
             if (happyHourActive) {
                 banner.classList.add('active');
-                title.textContent = 'HAPPY HOUR ACTIVE!';
-                const timeLeft = Math.ceil((happyHourEndTime - Date.now()) / 1000 / 60);
-                info.textContent = `2X POINTS! Ends in ${timeLeft} minutes`;
-                hhHud.style.display = 'block';
+                title.textContent = '🔥 HAPPY HOUR ACTIVE NOW! 🔥';
                 
-                setInterval(() => {
+                const now = new Date();
+                const endTime = new Date(happyHourEndTime);
+                const minsLeft = Math.ceil((endTime - now) / 60000);
+                
+                info.innerHTML = `<strong>GET IN NOW!</strong> Ends at ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} (${minsLeft} min left)`;
+                hhHud.style.display = 'block';
+                hhHud.textContent = '🎉 3X POINTS ACTIVE! 🎉';
+                
+                const updateTimer = setInterval(() => {
                     if (happyHourActive && happyHourEndTime) {
-                        const mins = Math.ceil((happyHourEndTime - Date.now()) / 1000 / 60);
+                        const now = new Date();
+                        const endTime = new Date(happyHourEndTime);
+                        const mins = Math.ceil((endTime - now) / 60000);
                         if (mins > 0) {
-                            info.textContent = `2X POINTS! Ends in ${mins} minutes`;
+                            info.innerHTML = `<strong>GET IN NOW!</strong> Ends at ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} (${mins} min left)`;
+                        } else {
+                            clearInterval(updateTimer);
                         }
+                    } else {
+                        clearInterval(updateTimer);
                     }
                 }, 30000);
             } else {
                 banner.classList.remove('active');
-                title.textContent = 'HAPPY HOUR INACTIVE';
+                title.textContent = '⚡ HAPPY HOUR ⚡';
+                
                 if (hhData.nextStart) {
-                    const minsUntil = Math.ceil((hhData.nextStart - Date.now()) / 1000 / 60);
-                    info.textContent = `Next Happy Hour in ${minsUntil} minutes`;
+                    const nextTime = new Date(hhData.nextStart);
+                    const now = new Date();
+                    const minsUntil = Math.ceil((nextTime - now) / 60000);
+                    const hoursUntil = Math.floor(minsUntil / 60);
+                    
+                    if (hoursUntil > 0) {
+                        info.innerHTML = `Next event: <strong>${nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong> (in ${hoursUntil}h ${minsUntil % 60}m)`;
+                    } else {
+                        info.innerHTML = `Starting soon at <strong>${nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong> (${minsUntil} minutes!)`;
+                    }
                 } else {
-                    info.textContent = 'Next Happy Hour starts soon!';
+                    info.textContent = 'Check back daily at 6:00 PM!';
                 }
                 hhHud.style.display = 'none';
             }
