@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slither Arena</title>
+    <title>Slither Arena - Happy Hour</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
@@ -187,6 +187,36 @@
             margin-bottom: 30px;
         }
         
+        .happy-hour-banner {
+            background: linear-gradient(145deg, #ff00ff, #cc00cc);
+            border: 3px solid #ffaa00;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .happy-hour-banner.active {
+            background: linear-gradient(145deg, #ffaa00, #ff8800);
+        }
+        
+        .happy-hour-banner h3 {
+            color: #fff;
+            font-size: 1.5em;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .happy-hour-banner p {
+            color: #fff;
+            font-size: 1em;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255,170,0,0.5); }
+            50% { box-shadow: 0 0 40px rgba(255,170,0,0.9); }
+        }
+        
         .menu-buttons {
             display: flex;
             flex-direction: column;
@@ -281,6 +311,24 @@
             justify-content: space-between;
             margin: 8px 0;
             color: #fff;
+        }
+        
+        .happy-hour-hud {
+            background: linear-gradient(145deg, #ffaa00, #ff8800);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            padding: 8px;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 900;
+            color: #000;
+            animation: glow 1.5s infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,170,0,0.6); }
+            50% { box-shadow: 0 0 20px rgba(255,170,0,1); }
         }
         
         .sprint-indicator {
@@ -738,6 +786,10 @@
     <div id="main-menu" class="screen" style="display: none;">
         <div class="menu-container">
             <h1>MAIN MENU</h1>
+            <div class="happy-hour-banner" id="happy-hour-banner">
+                <h3 id="hh-title">HAPPY HOUR INACTIVE</h3>
+                <p id="hh-info">Next Happy Hour starts soon!</p>
+            </div>
             <div class="menu-buttons">
                 <button class="menu-btn" id="play-btn">PLAY</button>
                 <button class="menu-btn shop" id="menu-shop-btn">SHOP</button>
@@ -757,6 +809,9 @@
             <div class="stat"><span>SCORE</span><span id="score">0</span></div>
             <div class="stat"><span>POINTS</span><span id="points">0</span></div>
             <div class="stat"><span>HIGH</span><span id="highscore">0</span></div>
+            <div class="happy-hour-hud" id="hh-hud" style="display: none;">
+                🎉 HAPPY HOUR 2X POINTS! 🎉
+            </div>
             <div class="sprint-indicator" id="sprint-indicator">SHIFT to sprint</div>
         </div>
         
@@ -830,6 +885,8 @@
         let lastInputTime = 0;
         let gameLoopRunning = false;
         let isSprinting = false;
+        let happyHourActive = false;
+        let happyHourEndTime = null;
         
         document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
         document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
@@ -879,6 +936,10 @@
                     skins = msg.skins || [];
                     loadSkinImages();
                     updateLeaderboard(msg.leaderboard || []);
+                    
+                    if (msg.happyHour) {
+                        updateHappyHourStatus(msg.happyHour);
+                    }
                     
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('main-menu').style.display = 'flex';
@@ -934,8 +995,47 @@
                     updateShop();
                 } else if (msg.type === 'leaderboardUpdate') {
                     updateLeaderboard(msg.leaderboard);
+                } else if (msg.type === 'happyHourUpdate') {
+                    updateHappyHourStatus(msg.happyHour);
                 }
             };
+        }
+        
+        function updateHappyHourStatus(hhData) {
+            happyHourActive = hhData.active;
+            happyHourEndTime = hhData.endsAt;
+            
+            const banner = document.getElementById('happy-hour-banner');
+            const title = document.getElementById('hh-title');
+            const info = document.getElementById('hh-info');
+            const hhHud = document.getElementById('hh-hud');
+            
+            if (happyHourActive) {
+                banner.classList.add('active');
+                title.textContent = 'HAPPY HOUR ACTIVE!';
+                const timeLeft = Math.ceil((happyHourEndTime - Date.now()) / 1000 / 60);
+                info.textContent = `2X POINTS! Ends in ${timeLeft} minutes`;
+                hhHud.style.display = 'block';
+                
+                setInterval(() => {
+                    if (happyHourActive && happyHourEndTime) {
+                        const mins = Math.ceil((happyHourEndTime - Date.now()) / 1000 / 60);
+                        if (mins > 0) {
+                            info.textContent = `2X POINTS! Ends in ${mins} minutes`;
+                        }
+                    }
+                }, 30000);
+            } else {
+                banner.classList.remove('active');
+                title.textContent = 'HAPPY HOUR INACTIVE';
+                if (hhData.nextStart) {
+                    const minsUntil = Math.ceil((hhData.nextStart - Date.now()) / 1000 / 60);
+                    info.textContent = `Next Happy Hour in ${minsUntil} minutes`;
+                } else {
+                    info.textContent = 'Next Happy Hour starts soon!';
+                }
+                hhHud.style.display = 'none';
+            }
         }
         
         document.querySelectorAll('.control-card').forEach(card => {
