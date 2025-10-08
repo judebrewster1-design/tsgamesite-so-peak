@@ -1,1150 +1,1048 @@
-const https = require('https');
+const express = require('express');
+const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
-const { exec, spawn } = require('child_process');
+const crypto = require('crypto');
+const https = require('https');
 
-// Configuration
-const TELEGRAM_BOT_TOKEN = '8343783715:AAGDS6aiRPgei9zCLl25EECApgQCasdJzQA';
+const app = express();
+const PORT = 30900;
+const WORLD_WIDTH = 3000;
+const WORLD_HEIGHT = 2000;
+const MAX_BOTS = 20;
+const BALL_COUNT = 60;
+const MAX_BALL_COUNT = 150;
+const BOT_SIZE_LIMIT = 90;
+const TICK_RATE = 30;
+const SAVE_INTERVAL = 30000;
+const SPRINT_BALL_COST = 1;
+const SPRINT_INTERVAL = 1500;
+const STATE_COMPRESSION_THRESHOLD = 50;
+
+// Happy Hour System - 6 PM to 7 PM daily
+const HAPPY_HOUR_START = 18; // 6 PM
+const HAPPY_HOUR_END = 19; // 7 PM
+const HAPPY_HOUR_MULTIPLIER = 3;
+let happyHourActive = false;
+let happyHourEndTime = null;
+let happyHourNextStart = null;
+
+const TELEGRAM_BOT_TOKEN = '8292490263:AAEYk-3nwnFeyxgza6HXSi1DGNlormA3_qQ';
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
-const ADMIN_PASSWORD = 'breakingbad1'; // Change this!
-const SERVER_FILE = 'C:\\jude\\backend\\server.js';
-const BACKUP_DIR = 'C:\\jude\\backend\\backups';
-const LOG_FILE = 'C:\\jude\\backend\\server.log';
-const DEVBOT_FILE = 'C:\\jude\\backend\\devbot.js';
-const HEALTH_CHECK_INTERVAL = 60000; // 1 minute
-const MAX_RESTART_ATTEMPTS = 3;
-const RESTART_COOLDOWN = 300000; // 5 minutes
+const TELEGRAM_PASSWORD = 'breakingbad1';
 
-let authenticatedChatId = null;
-let serverProcess = null;
-let isEditMode = false;
-let editBuffer = '';
-let healthCheckTimer = null;
-let lastHealthCheck = Date.now();
-let crashCount = 0;
-let lastCrashTime = 0;
-let restartAttempts = 0;
-let serverStartTime = null;
-let isShuttingDown = false;
-let errorBuffer = [];
-let lastSuccessfulStart = null;
+let snakes = {};
+let balls = [];
+let accounts = {};
+let bannedIPs = {};
+let chatBannedIPs = {};
+let bannedUsernames = new Set();
+let telegramChatId = null;
+let telegramAuthenticated = false;
+let nextBotId = 1;
+let frameCount = 0;
 
-// Create backup directory
-if (!fs.existsSync(BACKUP_DIR)) {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+const DATA_DIR = path.join(__dirname, 'data');
+const ACCOUNTS_FILE = path.join(DATA_DIR, 'saves.json');
+const BANNED_USERNAMES_FILE = path.join(DATA_DIR, 'banned_usernames.json');
+
+const SKINS = [
+  { id: 'chase', name: 'Chase', cost: 1500, img: 'chase.png' },
+  { id: 'caleb', name: 'Caleb', cost: 1200, img: 'caleb.png' },
+  { id: 'brody', name: 'Brody', cost: 1000, img: 'brody.png' },
+  { id: 'connorV', name: 'Connor', cost: 900, img: 'sixseven.png' },
+  { id: 'jaxon', name: 'Jaxon', cost: 800, img: 'jaxon.png' },
+  { id: 'luca', name: 'Luca', cost: 400, img: 'luca.png' },
+  { id: 'charlie', name: 'Charlie', cost: 300, img: 'charlie.png' },
+  { id: 'harly', name: 'Harly', cost: 250, img: 'harly.png' },
+  { id: 'ollie', name: 'Ollie', cost: 200, img: 'ollie.png' },
+  { id: 'connorD', name: 'connor', cost: 175, img: 'connord.png' },
+  { id: 'jackn', name: 'Jackn', cost: 150, img: 'jackn.png' },
+  { id: 'liam', name: 'Liam', cost: 125, img: 'liam.png' },
+  { id: 'jet', name: 'Jet', cost: 100, img: 'jet.png' },
+  { id: 'gavin', name: 'Gavin', cost: 75, img: 'gavin.png' },
+  { id: 'ginger', name: 'Ginger', cost: 50, img: 'ginger.png' },
+  { id: 'chay', name: 'Chay', cost: 25, img: 'chay.png' },
+  { id: 'jude', name: 'Jude', cost: 0, img: 'jude.png' }
+];
+
+let BANNED_WORDS = [];
+try {
+  BANNED_WORDS = require('./banned-words.js');
+} catch (e) {
+  BANNED_WORDS = [];
 }
 
-// Setup error logging
-process.on('uncaughtException', (error) => {
-  console.error('CRITICAL ERROR:', error);
-  logError('uncaughtException', error);
-  sendTelegramMessage(`🚨 <b>CRITICAL BOT ERROR</b>\n<code>${error.message}</code>\n\nBot still running...`);
-});
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
-  logError('unhandledRejection', reason);
-});
-
-console.log('🤖 Telegram Dev Bot Starting...');
-console.log(`📁 Managing: ${SERVER_FILE}`);
-console.log('🛡️ Safety features enabled');
-console.log('🔐 Waiting for authentication...');
-
-// Error logging
-function logError(type, error) {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    type,
-    message: error.message || String(error),
-    stack: error.stack
+// Happy Hour Functions - NEW
+function getHappyHourStatus() {
+  return {
+    active: happyHourActive,
+    endsAt: happyHourEndTime,
+    nextStart: happyHourNextStart
   };
-  
-  errorBuffer.push(logEntry);
-  if (errorBuffer.length > 50) errorBuffer.shift();
-  
-  const errorLogFile = path.join(BACKUP_DIR, 'error.log');
-  fs.appendFileSync(errorLogFile, JSON.stringify(logEntry) + '\n');
 }
 
-// Telegram API Helper with retry
-function sendTelegramMessage(text, options = {}, retries = 3) {
-  if (!authenticatedChatId) return;
+function broadcastHappyHourUpdate() {
+  const msg = JSON.stringify({
+    type: 'happyHourUpdate',
+    happyHour: getHappyHourStatus()
+  });
   
+  wss.clients.forEach(c => {
+    if (c.readyState === WebSocket.OPEN) {
+      c.send(msg);
+    }
+  });
+}
+
+function startHappyHour() {
+  happyHourActive = true;
+  happyHourEndTime = Date.now() + HAPPY_HOUR_DURATION;
+  happyHourNextStart = null;
+  
+  console.log('🎉 HAPPY HOUR STARTED! 2X POINTS FOR 30 MINUTES');
+  queueTelegramMessage('🎉 <b>HAPPY HOUR STARTED!</b>\n2X Points for 30 minutes!');
+  
+  broadcastHappyHourUpdate();
+  
+  setTimeout(endHappyHour, HAPPY_HOUR_DURATION);
+}
+
+function endHappyHour() {
+  happyHourActive = false;
+  happyHourEndTime = null;
+  happyHourNextStart = Date.now() + HAPPY_HOUR_INTERVAL;
+  
+  console.log('Happy Hour ended. Next one in 2 hours.');
+  queueTelegramMessage('⏰ Happy Hour ended. Next one in 2 hours.');
+  
+  broadcastHappyHourUpdate();
+  
+  setTimeout(startHappyHour, HAPPY_HOUR_INTERVAL);
+}
+
+// Schedule first Happy Hour
+setTimeout(startHappyHour, HAPPY_HOUR_INTERVAL);
+
+let telegramQueue = [];
+let telegramSending = false;
+
+function queueTelegramMessage(text) {
+  if (!telegramChatId || !telegramAuthenticated) return;
+  telegramQueue.push(text);
+  processTelegramQueue();
+}
+
+function processTelegramQueue() {
+  if (telegramSending || telegramQueue.length === 0) return;
+  telegramSending = true;
+  
+  const text = telegramQueue.shift();
   const data = JSON.stringify({
-    chat_id: authenticatedChatId,
-    text: text.substring(0, 4000), // Telegram limit
-    parse_mode: options.parseMode || 'HTML',
-    ...options
+    chat_id: telegramChatId,
+    text: text,
+    parse_mode: 'HTML'
   });
 
-  const attempt = (retriesLeft) => {
-    const req = https.request(`${TELEGRAM_API}/sendMessage`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data)
-      },
-      timeout: 10000
-    }, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
+  const options = {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': data.length
+    }
+  };
+
+  const req = https.request(`${TELEGRAM_API}/sendMessage`, options, (res) => {
+    let body = '';
+    res.on('data', (chunk) => body += chunk);
+    res.on('end', () => {
+      telegramSending = false;
+      setTimeout(processTelegramQueue, 100);
+    });
+  });
+
+  req.on('error', (e) => {
+    console.error('Telegram request error:', e);
+    telegramSending = false;
+  });
+  
+  req.write(data);
+  req.end();
+}
+
+function setupTelegramBot() {
+  function pollUpdates(offset = 0) {
+    https.get(`${TELEGRAM_API}/getUpdates?offset=${offset}&timeout=30`, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
       res.on('end', () => {
-        if (res.statusCode !== 200 && retriesLeft > 0) {
-          setTimeout(() => attempt(retriesLeft - 1), 2000);
+        try {
+          const updates = JSON.parse(data);
+          if (updates.ok && updates.result.length > 0) {
+            updates.result.forEach(update => {
+              if (update.message && update.message.text) {
+                handleTelegramCommand(update.message);
+              }
+              offset = Math.max(offset, update.update_id + 1);
+            });
+          }
+          setTimeout(() => pollUpdates(offset), 100);
+        } catch (e) {
+          console.error('Error parsing Telegram updates:', e);
+          setTimeout(() => pollUpdates(offset), 1000);
         }
       });
+    }).on('error', (e) => {
+      console.error('Telegram polling error:', e);
+      setTimeout(() => pollUpdates(offset), 5000);
     });
+  }
 
-    req.on('error', (e) => {
-      console.error('Telegram request error:', e.message);
-      if (retriesLeft > 0) {
-        setTimeout(() => attempt(retriesLeft - 1), 2000);
-      }
-    });
-
-    req.on('timeout', () => {
-      req.destroy();
-      if (retriesLeft > 0) {
-        setTimeout(() => attempt(retriesLeft - 1), 2000);
-      }
-    });
-    
-    req.write(data);
-    req.end();
-  };
-
-  attempt(retries);
+  pollUpdates();
+  console.log('Telegram bot polling started. Waiting for authentication...');
 }
 
-// Create Backup with error handling
-function createBackup() {
-  if (!fs.existsSync(SERVER_FILE)) {
-    return { success: false, error: 'Server file not found' };
-  }
-  
-  const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
-  const backupFile = path.join(BACKUP_DIR, `server_${timestamp}.js`);
-  
-  try {
-    fs.copyFileSync(SERVER_FILE, backupFile);
-    
-    // Keep only last 20 backups
-    const backups = fs.readdirSync(BACKUP_DIR)
-      .filter(f => f.startsWith('server_') && f.endsWith('.js'))
-      .sort()
-      .reverse();
-    
-    if (backups.length > 20) {
-      backups.slice(20).forEach(f => {
-        try {
-          fs.unlinkSync(path.join(BACKUP_DIR, f));
-        } catch (e) {}
-      });
-    }
-    
-    return { success: true, file: backupFile };
-  } catch (e) {
-    logError('backup', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// List Backups
-function listBackups() {
-  try {
-    const files = fs.readdirSync(BACKUP_DIR)
-      .filter(f => f.endsWith('.js') && f.startsWith('server_'))
-      .sort()
-      .reverse()
-      .slice(0, 10);
-    return files;
-  } catch (e) {
-    return [];
-  }
-}
-
-// Restore Backup
-function restoreBackup(filename) {
-  const backupFile = path.join(BACKUP_DIR, filename);
-  
-  if (!fs.existsSync(backupFile)) {
-    return { success: false, error: 'Backup file not found' };
-  }
-  
-  try {
-    createBackup(); // Backup current before restoring
-    fs.copyFileSync(backupFile, SERVER_FILE);
-    return { success: true };
-  } catch (e) {
-    logError('restore', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// Health Check
-function startHealthCheck() {
-  if (healthCheckTimer) clearInterval(healthCheckTimer);
-  
-  healthCheckTimer = setInterval(() => {
-    if (!serverProcess) return;
-    
-    const now = Date.now();
-    const uptime = (now - serverStartTime) / 1000;
-    
-    // Check if process is still alive
-    try {
-      process.kill(serverProcess.pid, 0);
-      lastHealthCheck = now;
-    } catch (e) {
-      // Process died unexpectedly
-      console.error('Server process died unexpectedly');
-      sendTelegramMessage('🚨 <b>SERVER CRASHED</b>\n\nAttempting auto-restart...');
-      serverProcess = null;
-      handleServerCrash();
-    }
-    
-    // Log health every 5 minutes
-    if (uptime > 0 && uptime % 300 < 1) {
-      const uptimeStr = formatUptime(uptime);
-      console.log(`✅ Health check: Server running for ${uptimeStr}`);
-    }
-  }, HEALTH_CHECK_INTERVAL);
-}
-
-// Handle Server Crash
-function handleServerCrash() {
-  const now = Date.now();
-  
-  // Reset crash count if last crash was over cooldown period
-  if (now - lastCrashTime > RESTART_COOLDOWN) {
-    crashCount = 0;
-  }
-  
-  crashCount++;
-  lastCrashTime = now;
-  
-  if (crashCount > MAX_RESTART_ATTEMPTS) {
-    sendTelegramMessage(
-      `🚨 <b>CRITICAL: Server crashed ${crashCount} times</b>\n\n` +
-      `Auto-restart disabled. Manual intervention required.\n\n` +
-      `Use /forcestart to restart or /logs to check errors.`
-    );
-    return;
-  }
-  
-  sendTelegramMessage(`🔄 Auto-restarting server (attempt ${crashCount}/${MAX_RESTART_ATTEMPTS})...`);
-  
-  setTimeout(() => {
-    const result = startServer();
-    if (!result.success) {
-      sendTelegramMessage(`❌ Auto-restart failed: ${result.error}`);
-    }
-  }, 5000);
-}
-
-// Format uptime
-function formatUptime(seconds) {
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  
-  let result = [];
-  if (days > 0) result.push(`${days}d`);
-  if (hours > 0) result.push(`${hours}h`);
-  if (minutes > 0) result.push(`${minutes}m`);
-  if (secs > 0 || result.length === 0) result.push(`${secs}s`);
-  
-  return result.join(' ');
-}
-
-// Start Server with safety checks
-function startServer() {
-  if (serverProcess) {
-    return { success: false, error: 'Server already running' };
-  }
-  
-  if (isShuttingDown) {
-    return { success: false, error: 'Server is shutting down, please wait' };
-  }
-  
-  // Validate file exists
-  if (!fs.existsSync(SERVER_FILE)) {
-    return { success: false, error: 'server.js not found' };
-  }
-  
-  // Validate syntax before starting
-  try {
-    const content = fs.readFileSync(SERVER_FILE, 'utf8');
-    const validation = validateSyntax(content);
-    if (!validation.valid) {
-      return { success: false, error: `Syntax error: ${validation.error}` };
-    }
-  } catch (e) {
-    return { success: false, error: `Cannot read file: ${e.message}` };
-  }
-  
-  try {
-    const logStream = fs.createWriteStream(LOG_FILE, { flags: 'a' });
-    
-    // Use node server.js directly
-    serverProcess = spawn('node', ['server.js'], {
-      cwd: 'C:\\jude\\backend',
-      stdio: ['ignore', 'pipe', 'pipe'],
-      detached: false,
-      windowsHide: false
-    });
-    
-    serverStartTime = Date.now();
-    restartAttempts = 0;
-    lastSuccessfulStart = Date.now();
-    
-    serverProcess.stdout.pipe(logStream);
-    serverProcess.stderr.pipe(logStream);
-    
-    let startupBuffer = '';
-    const startupTimeout = setTimeout(() => {
-      if (serverProcess && !startupBuffer.includes('Slither Arena Server')) {
-        sendTelegramMessage('⚠️ Server may not have started correctly. Check /logs');
-      }
-    }, 10000);
-    
-    serverProcess.stdout.on('data', (data) => {
-      const msg = data.toString();
-      startupBuffer += msg;
-      console.log('SERVER:', msg);
-      
-      if (msg.includes('Slither Arena Server')) {
-        clearTimeout(startupTimeout);
-        sendTelegramMessage('✅ <b>Server started successfully!</b>');
-      }
-      
-      if (msg.includes('Error') || msg.includes('error')) {
-        sendTelegramMessage(`⚠️ <b>Server Warning:</b>\n<code>${msg.substring(0, 500)}</code>`);
-      }
-    });
-    
-    serverProcess.stderr.on('data', (data) => {
-      const msg = data.toString();
-      console.error('SERVER ERROR:', msg);
-      sendTelegramMessage(`❌ <b>Server Error:</b>\n<code>${msg.substring(0, 500)}</code>`);
-      logError('server_stderr', new Error(msg));
-      
-      // Auto-fix if possible
-      if (!isShuttingDown) {
-        autoFixError(msg);
-      }
-    });
-    
-    serverProcess.on('close', (code) => {
-      clearTimeout(startupTimeout);
-      const uptime = serverStartTime ? formatUptime((Date.now() - serverStartTime) / 1000) : 'N/A';
-      console.log(`Server stopped (code: ${code}, uptime: ${uptime})`);
-      
-      serverProcess = null;
-      serverStartTime = null;
-      
-      if (!isShuttingDown && code !== 0) {
-        sendTelegramMessage(`🛑 <b>Server stopped unexpectedly</b>\nExit code: ${code}\nUptime: ${uptime}`);
-        handleServerCrash();
-      } else if (!isShuttingDown) {
-        sendTelegramMessage(`🛑 <b>Server stopped</b>\nExit code: ${code}\nUptime: ${uptime}`);
-      }
-      
-      isShuttingDown = false;
-    });
-    
-    serverProcess.on('error', (err) => {
-      console.error('Failed to start server:', err);
-      logError('server_start', err);
-      serverProcess = null;
-      sendTelegramMessage(`❌ Failed to start: ${err.message}`);
-    });
-    
-    startHealthCheck();
-    
-    return { success: true };
-  } catch (e) {
-    logError('start_server', e);
-    serverProcess = null;
-    return { success: false, error: e.message };
-  }
-}
-
-// Stop Server safely
-function stopServer(force = false) {
-  if (!serverProcess) {
-    return { success: false, error: 'Server not running' };
-  }
-  
-  isShuttingDown = true;
-  
-  if (healthCheckTimer) {
-    clearInterval(healthCheckTimer);
-    healthCheckTimer = null;
-  }
-  
-  try {
-    if (force) {
-      serverProcess.kill('SIGKILL');
-      serverProcess = null;
-      isShuttingDown = false;
-      return { success: true, forced: true };
-    }
-    
-    serverProcess.kill('SIGTERM');
-    
-    // Force kill after 10 seconds if not stopped
-    const forceKillTimeout = setTimeout(() => {
-      if (serverProcess) {
-        console.log('Force killing server...');
-        serverProcess.kill('SIGKILL');
-        serverProcess = null;
-      }
-      isShuttingDown = false;
-    }, 10000);
-    
-    serverProcess.once('close', () => {
-      clearTimeout(forceKillTimeout);
-      isShuttingDown = false;
-    });
-    
-    return { success: true };
-  } catch (e) {
-    logError('stop_server', e);
-    isShuttingDown = false;
-    return { success: false, error: e.message };
-  }
-}
-
-// Restart Server safely
-function restartServer() {
-  if (isShuttingDown) {
-    return { success: false, error: 'Already restarting, please wait' };
-  }
-  
-  restartAttempts++;
-  
-  if (restartAttempts > 5) {
-    return { success: false, error: 'Too many restart attempts. Use /forcestart if needed.' };
-  }
-  
-  const wasRunning = serverProcess !== null;
-  
-  if (wasRunning) {
-    const stopResult = stopServer();
-    if (!stopResult.success) {
-      return { success: false, error: `Stop failed: ${stopResult.error}` };
-    }
-  }
-  
-  // Wait for graceful shutdown
-  setTimeout(() => {
-    if (serverProcess) {
-      console.log('Force stopping for restart...');
-      stopServer(true);
-    }
-    
-    setTimeout(() => {
-      const startResult = startServer();
-      if (!startResult.success) {
-        sendTelegramMessage(`❌ Restart failed: ${startResult.error}`);
-      }
-    }, 2000);
-  }, wasRunning ? 5000 : 0);
-  
-  return { success: true };
-}
-
-// Restart Bot (self-restart)
-function restartBot() {
-  sendTelegramMessage('🔄 <b>Restarting Dev Bot...</b>\n\nBot will be back online in 5 seconds.');
-  
-  setTimeout(() => {
-    // Create restart script
-    const restartScript = `
-@echo off
-timeout /t 2 /nobreak > nul
-taskkill /F /PID ${process.pid} > nul 2>&1
-timeout /t 1 /nobreak > nul
-cd /d "${path.dirname(DEVBOT_FILE)}"
-start /B node "${DEVBOT_FILE}"
-exit
-`;
-    
-    const scriptPath = path.join(BACKUP_DIR, 'restart_bot.bat');
-    fs.writeFileSync(scriptPath, restartScript);
-    
-    // Execute restart script
-    exec(`start /min cmd /c "${scriptPath}"`, (error) => {
-      if (error) {
-        console.error('Restart error:', error);
-        sendTelegramMessage(`❌ Bot restart failed: ${error.message}`);
-      }
-    });
-    
-    // Exit current process
-    setTimeout(() => {
-      process.exit(0);
-    }, 1000);
-  }, 1000);
-}
-
-// Check Server Status
-function getServerStatus() {
-  const uptime = serverStartTime ? (Date.now() - serverStartTime) / 1000 : 0;
-  const lastStart = lastSuccessfulStart ? new Date(lastSuccessfulStart).toLocaleString() : 'Never';
-  
-  return {
-    running: serverProcess !== null,
-    pid: serverProcess ? serverProcess.pid : null,
-    uptime: uptime,
-    uptimeFormatted: serverProcess ? formatUptime(uptime) : 'N/A',
-    startTime: lastStart,
-    crashes: crashCount,
-    healthy: serverProcess && (Date.now() - lastHealthCheck) < HEALTH_CHECK_INTERVAL * 2
-  };
-}
-
-// Read File
-function readServerFile(lines = 50) {
-  try {
-    const content = fs.readFileSync(SERVER_FILE, 'utf8');
-    const allLines = content.split('\n');
-    const displayLines = allLines.slice(0, lines);
-    return {
-      success: true,
-      content: displayLines.join('\n'),
-      totalLines: allLines.length,
-      size: (content.length / 1024).toFixed(2) + ' KB'
-    };
-  } catch (e) {
-    logError('read_file', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// Write File
-function writeServerFile(content) {
-  try {
-    createBackup(); // Always backup before writing
-    fs.writeFileSync(SERVER_FILE, content, 'utf8');
-    return { success: true };
-  } catch (e) {
-    logError('write_file', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// Clear File Content
-function clearServerFile() {
-  try {
-    createBackup();
-    fs.writeFileSync(SERVER_FILE, '', 'utf8');
-    return { success: true };
-  } catch (e) {
-    logError('clear_file', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// Auto-fix Common Errors
-function autoFixError(errorMsg) {
-  if (isShuttingDown) return;
-  
-  let content;
-  try {
-    content = fs.readFileSync(SERVER_FILE, 'utf8');
-  } catch (e) {
-    return;
-  }
-  
-  let fixed = false;
-  let fixDescription = '';
-  
-  // Fix missing semicolons
-  if (errorMsg.includes('Unexpected token') || errorMsg.includes('expected')) {
-    const lines = content.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line && !line.endsWith(';') && !line.endsWith('{') && 
-          !line.endsWith('}') && !line.endsWith(',') && 
-          !line.startsWith('//') && !line.startsWith('/*')) {
-        lines[i] += ';';
-        fixed = true;
-      }
-    }
-    if (fixed) {
-      content = lines.join('\n');
-      fixDescription = 'Added missing semicolons';
-    }
-  }
-  
-  // Fix missing closing brackets
-  if (errorMsg.includes('Unexpected end of input')) {
-    const openBrackets = (content.match(/{/g) || []).length;
-    const closeBrackets = (content.match(/}/g) || []).length;
-    
-    if (openBrackets > closeBrackets) {
-      content += '\n' + '}'.repeat(openBrackets - closeBrackets);
-      fixed = true;
-      fixDescription = `Added ${openBrackets - closeBrackets} missing closing bracket(s)`;
-    }
-  }
-  
-  // Fix missing closing parentheses
-  if (errorMsg.includes('missing') && errorMsg.includes(')')) {
-    const openParens = (content.match(/\(/g) || []).length;
-    const closeParens = (content.match(/\)/g) || []).length;
-    
-    if (openParens > closeParens) {
-      content += ')'.repeat(openParens - closeParens);
-      fixed = true;
-      fixDescription = `Added ${openParens - closeParens} missing parenthes(es)`;
-    }
-  }
-  
-  if (fixed) {
-    createBackup();
-    fs.writeFileSync(SERVER_FILE, content, 'utf8');
-    sendTelegramMessage(`🔧 <b>Auto-fixed:</b> ${fixDescription}\n\nRestarting server...`);
-    setTimeout(() => restartServer(), 2000);
-  }
-}
-
-// Validate JavaScript Syntax
-function validateSyntax(code) {
-  try {
-    new Function(code);
-    return { valid: true };
-  } catch (e) {
-    return { valid: false, error: e.message };
-  }
-}
-
-// Get Server Logs
-function getServerLogs(lines = 50) {
-  try {
-    if (!fs.existsSync(LOG_FILE)) {
-      return { success: false, error: 'No logs available' };
-    }
-    
-    const content = fs.readFileSync(LOG_FILE, 'utf8');
-    const allLines = content.split('\n').filter(l => l.trim());
-    const lastLines = allLines.slice(-lines);
-    
-    return {
-      success: true,
-      logs: lastLines.join('\n')
-    };
-  } catch (e) {
-    logError('get_logs', e);
-    return { success: false, error: e.message };
-  }
-}
-
-// Handle Telegram Commands
-function handleCommand(message) {
+function handleTelegramCommand(message) {
   const chatId = message.chat.id;
+  telegramChatId = chatId;
+  
   const text = message.text.trim();
   const parts = text.split(' ');
   const command = parts[0].toLowerCase();
-  
-  // Authentication
-  if (!authenticatedChatId) {
-    if (text === ADMIN_PASSWORD) {
-      authenticatedChatId = chatId;
-      sendTelegramMessage('✅ <b>Authentication successful!</b>\n\n🛡️ Bot is secured and stable.\n\nType /help to see all commands.');
-      console.log(`✅ Authenticated chat ID: ${chatId}`);
+
+  if (!telegramAuthenticated) {
+    if (text === TELEGRAM_PASSWORD) {
+      telegramAuthenticated = true;
+      queueTelegramMessage('✅ <b>Authentication successful!</b>\n\nType /help to see available commands.');
+      return;
     } else {
       const authMsg = JSON.stringify({
         chat_id: chatId,
-        text: '🔐 <b>Authentication Required</b>\n\nSend the admin password to use this bot.',
+        text: '🔒 <b>Authentication Required</b>\n\nPlease send the password to use this bot.',
         parse_mode: 'HTML'
       });
       
-      const req = https.request(`${TELEGRAM_API}/sendMessage`, {
+      const options = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': authMsg.length
         }
-      });
+      };
+
+      const req = https.request(`${TELEGRAM_API}/sendMessage`, options);
       req.write(authMsg);
       req.end();
+      return;
     }
-    return;
   }
-  
-  // Exit edit mode
-  if (isEditMode && (command === '/done' || command === '/cancel')) {
-    if (command === '/done' && editBuffer) {
-      const validation = validateSyntax(editBuffer);
-      if (!validation.valid) {
-        sendTelegramMessage(`❌ <b>Syntax Error:</b>\n<code>${validation.error}</code>\n\nUse /cancel to discard or fix and use /done again.`);
-        return;
-      }
-      
-      const result = writeServerFile(editBuffer);
-      if (result.success) {
-        sendTelegramMessage('✅ File saved successfully!\n\n✔️ Backup created\n✔️ Syntax validated\n\nUse /start to run the server.');
-      } else {
-        sendTelegramMessage(`❌ Error saving: ${result.error}`);
-      }
-    } else {
-      sendTelegramMessage('❌ Edit cancelled. No changes saved.');
-    }
-    isEditMode = false;
-    editBuffer = '';
-    return;
-  }
-  
-  // Handle edit mode input
-  if (isEditMode) {
-    editBuffer += text + '\n';
-    const lineCount = editBuffer.split('\n').length;
-    sendTelegramMessage(`📝 <b>Edit Mode</b> (${lineCount} lines)\n\nContinue sending code or:\n/done - Save changes\n/cancel - Discard`);
-    return;
-  }
-  
-  // Commands
+
   switch (command) {
     case '/help':
-      sendTelegramMessage(
-        '📋 <b>Dev Bot Commands</b>\n\n' +
-        '<b>🎮 Server Control (SAFE):</b>\n' +
-        '/start - Start server (with validation)\n' +
-        '/stop - Graceful shutdown (10s timeout)\n' +
-        '/forcestop - Force kill immediately\n' +
-        '/restart - Safe restart (stop + start)\n' +
-        '/forcestart - Start without validation\n' +
-        '/status - Detailed health status\n' +
-        '/health - Quick health check\n\n' +
-        '<b>📝 File Management:</b>\n' +
-        '/read [lines] - View file (default 50)\n' +
-        '/edit - Multi-line edit mode\n' +
-        '/send [code] - Append code\n' +
-        '/delete - Clear content (CONFIRM needed)\n' +
-        '/validate - Check syntax\n\n' +
-        '<b>💾 Backup & Restore:</b>\n' +
-        '/backup - Manual backup\n' +
-        '/backups - List all backups\n' +
-        '/restore [file] - Restore backup\n\n' +
-        '<b>📊 Monitoring:</b>\n' +
-        '/logs [lines] - View logs (default 50)\n' +
-        '/errors - View error log\n' +
-        '/clear logs - Clear log file\n\n' +
-        '<b>🔧 System:</b>\n' +
-        '/info - File information\n' +
-        '/botrestart - Restart this bot\n' +
-        '/ping - Test bot connection'
-      );
+      queueTelegramMessage('📋 <b>Bot Commands:</b>\n\n' +
+        '/ban [username] - Temp ban for 5 min\n' +
+        '/hardban [username] - Delete account permanently\n' +
+        '/give [username] [amount] - Give points\n' +
+        '/banusername [username] - Block username\n' +
+        '/unbanusername [username] - Unblock username\n' +
+        '/stats - Server statistics\n' +
+        '/accounts - List all accounts\n' +
+        '/happyhour - Check Happy Hour status');
       break;
-      
-    case '/start':
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ Server already running.\n\nUse /restart to restart or /status for details.');
-      } else {
-        sendTelegramMessage('🚀 <b>Starting server...</b>\n\n⏳ Validating syntax...');
-        const result = startServer();
-        if (!result.success) {
-          sendTelegramMessage(`❌ Failed to start:\n<code>${result.error}</code>`);
-        }
-      }
-      break;
-      
-    case '/forcestart':
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ Server already running. Use /forcestop first.');
-      } else {
-        sendTelegramMessage('⚡ <b>Force starting server...</b>\n\n⚠️ Skipping validation');
-        // Temporarily disable validation
-        const originalValidate = validateSyntax;
-        global.validateSyntax = () => ({ valid: true });
-        const result = startServer();
-        global.validateSyntax = originalValidate;
-        
-        if (!result.success) {
-          sendTelegramMessage(`❌ Failed: ${result.error}`);
-        }
-      }
-      break;
-      
-    case '/stop':
-      const stopResult = stopServer();
-      if (stopResult.success) {
-        sendTelegramMessage('🛑 <b>Stopping server...</b>\n\n⏳ Graceful shutdown (10s timeout)');
-      } else {
-        sendTelegramMessage(`❌ ${stopResult.error}`);
-      }
-      break;
-      
-    case '/forcestop':
-      const forceResult = stopServer(true);
-      if (forceResult.success) {
-        sendTelegramMessage('⚡ <b>Server force stopped!</b>');
-      } else {
-        sendTelegramMessage(`❌ ${forceResult.error}`);
-      }
-      break;
-      
-    case '/restart':
-      if (isShuttingDown) {
-        sendTelegramMessage('⏳ Restart already in progress...');
+
+    case '/ban':
+      if (parts.length < 2) {
+        queueTelegramMessage('❌ Usage: /ban username');
         return;
       }
-      sendTelegramMessage('🔄 <b>Restarting server...</b>\n\n1️⃣ Stopping gracefully\n2️⃣ Waiting 5 seconds\n3️⃣ Starting fresh');
-      const restartResult = restartServer();
-      if (!restartResult.success) {
-        sendTelegramMessage(`❌ ${restartResult.error}`);
-      }
-      break;
-      
-    case '/status':
-      const status = getServerStatus();
-      const statusIcon = status.running ? '🟢' : '🔴';
-      const healthIcon = status.healthy ? '✅' : '⚠️';
-      
-      sendTelegramMessage(
-        `${statusIcon} <b>Server Status</b>\n\n` +
-        `Running: ${status.running ? 'Yes' : 'No'}\n` +
-        `Health: ${healthIcon} ${status.healthy ? 'Healthy' : 'Warning'}\n` +
-        `PID: ${status.pid || 'N/A'}\n` +
-        `Uptime: ${status.uptimeFormatted}\n` +
-        `Last Start: ${status.startTime}\n` +
-        `Crashes: ${status.crashes}\n` +
-        `Restart Attempts: ${restartAttempts}/5`
-      );
-      break;
-      
-    case '/health':
-      const health = getServerStatus();
-      if (health.running && health.healthy) {
-        sendTelegramMessage(`✅ Server is <b>healthy</b>\n\nUptime: ${health.uptimeFormatted}`);
-      } else if (health.running) {
-        sendTelegramMessage(`⚠️ Server running but <b>unhealthy</b>\n\nConsider /restart`);
-      } else {
-        sendTelegramMessage(`🔴 Server is <b>offline</b>\n\nUse /start to launch`);
-      }
-      break;
-      
-    case '/ping':
-      const pingStart = Date.now();
-      sendTelegramMessage('🏓 Pong!');
-      const pingTime = Date.now() - pingStart;
-      setTimeout(() => {
-        sendTelegramMessage(`⚡ Response time: ${pingTime}ms\n✅ Bot is responsive`);
-      }, 100);
-      break;
-      
-    case '/read':
-      const lines = parseInt(parts[1]) || 50;
-      const readResult = readServerFile(lines);
-      if (readResult.success) {
-        sendTelegramMessage(
-          `📄 <b>server.js</b> (first ${lines} lines)\n` +
-          `Total: ${readResult.totalLines} lines, ${readResult.size}\n\n` +
-          `<code>${readResult.content.substring(0, 3500)}</code>`
-        );
-      } else {
-        sendTelegramMessage(`❌ Error: ${readResult.error}`);
-      }
-      break;
-      
-    case '/edit':
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ <b>SAFETY CHECK:</b> Stop the server first using /stop\n\nThis prevents file corruption.');
+      const banUser = parts[1].toLowerCase();
+      const account = accounts[banUser];
+      if (!account) {
+        queueTelegramMessage(`❌ Account "${parts[1]}" not found`);
         return;
       }
-      isEditMode = true;
-      editBuffer = '';
-      sendTelegramMessage(
-        '📝 <b>Edit Mode Active</b>\n\n' +
-        '✏️ Send your code line by line.\n' +
-        '🔄 The bot will replace the entire file.\n' +
-        '💾 Auto-backup will be created.\n\n' +
-        '<b>Commands:</b>\n' +
-        '/done - Validate & save changes\n' +
-        '/cancel - Discard changes'
-      );
+      account.tempBanned = Date.now() + 300000;
+      saveAccountsAsync();
+      queueTelegramMessage(`⛔ Banned "${parts[1]}" for 5 minutes`);
       break;
-      
-    case '/send':
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ <b>SAFETY CHECK:</b> Stop the server first using /stop');
+
+    case '/hardban':
+      if (parts.length < 2) {
+        queueTelegramMessage('❌ Usage: /hardban username');
         return;
       }
-      const codeToAppend = text.substring(6);
-      if (!codeToAppend) {
-        sendTelegramMessage('❌ No code provided.\n\nUsage: /send [code]');
+      const hardbanUser = parts[1].toLowerCase();
+      if (!accounts[hardbanUser]) {
+        queueTelegramMessage(`❌ Account "${parts[1]}" not found`);
         return;
       }
-      
-      try {
-        const current = fs.readFileSync(SERVER_FILE, 'utf8');
-        const updated = current + '\n' + codeToAppend;
-        const result = writeServerFile(updated);
-        
-        if (result.success) {
-          sendTelegramMessage('✅ Code appended!\n\n💾 Backup created automatically');
-        } else {
-          sendTelegramMessage(`❌ Error: ${result.error}`);
-        }
-      } catch (e) {
-        sendTelegramMessage(`❌ Error: ${e.message}`);
-      }
+      delete accounts[hardbanUser];
+      saveAccountsAsync();
+      queueTelegramMessage(`💀 Hard banned and deleted account "${parts[1]}"`);
       break;
-      
-    case '/delete':
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ <b>SAFETY CHECK:</b> Stop the server first using /stop');
+
+    case '/give':
+      if (parts.length < 3) {
+        queueTelegramMessage('❌ Usage: /give username amount');
         return;
       }
-      sendTelegramMessage(
-        '⚠️ <b>CRITICAL WARNING</b>\n\n' +
-        '🗑️ This will clear ALL content in server.js\n' +
-        '💾 A backup will be created automatically\n' +
-        '📋 You can restore using /backups\n\n' +
-        '⚠️ Reply with "CONFIRM DELETE" to proceed\n' +
-        '✅ Reply with anything else to cancel'
-      );
-      break;
-      
-    case '/validate':
-      try {
-        const content = fs.readFileSync(SERVER_FILE, 'utf8');
-        const validation = validateSyntax(content);
-        
-        if (validation.valid) {
-          sendTelegramMessage('✅ <b>Syntax is valid!</b>\n\n✔️ No errors detected\n✔️ Safe to start server');
-        } else {
-          sendTelegramMessage(`❌ <b>Syntax Error Found:</b>\n\n<code>${validation.error}</code>\n\n⚠️ Fix before starting server`);
-        }
-      } catch (e) {
-        sendTelegramMessage(`❌ Error reading file: ${e.message}`);
-      }
-      break;
-      
-    case '/backup':
-      const backupResult = createBackup();
-      if (backupResult.success) {
-        const filename = path.basename(backupResult.file);
-        sendTelegramMessage(`✅ <b>Backup created successfully!</b>\n\n📦 <code>${filename}</code>\n\n💾 Stored in backups folder`);
-      } else {
-        sendTelegramMessage(`❌ Backup failed: ${backupResult.error}`);
-      }
-      break;
-      
-    case '/backups':
-      const backups = listBackups();
-      if (backups.length === 0) {
-        sendTelegramMessage('📦 No backups found.\n\nUse /backup to create one.');
-      } else {
-        const list = backups.map((f, i) => `${i + 1}. ${f}`).join('\n');
-        sendTelegramMessage(
-          `📦 <b>Available Backups:</b>\n\n<code>${list}</code>\n\n` +
-          `💡 Use /restore [filename] to restore\n` +
-          `📊 Showing latest ${backups.length} backups`
-        );
-      }
-      break;
-      
-    case '/restore':
-      if (!parts[1]) {
-        sendTelegramMessage('❌ Missing filename.\n\nUsage: /restore [filename]\n\nUse /backups to see available files.');
+      const giveUser = parts[1].toLowerCase();
+      const amount = parseInt(parts[2]);
+      if (isNaN(amount)) {
+        queueTelegramMessage('❌ Invalid amount');
         return;
       }
-      if (serverProcess) {
-        sendTelegramMessage('⚠️ <b>SAFETY CHECK:</b> Stop the server first using /stop');
+      const giveAccount = accounts[giveUser];
+      if (!giveAccount) {
+        queueTelegramMessage(`❌ Account "${parts[1]}" not found`);
         return;
       }
-      
-      const restoreResult = restoreBackup(parts[1]);
-      if (restoreResult.success) {
-        sendTelegramMessage(
-          `✅ <b>Restored successfully!</b>\n\n` +
-          `📦 From: <code>${parts[1]}</code>\n` +
-          `💾 Current version backed up\n\n` +
-          `✔️ Use /start to run restored version`
-        );
+      giveAccount.points += amount;
+      saveAccountsAsync();
+      queueTelegramMessage(`💰 Gave ${amount} points to "${parts[1]}"\nNew balance: ${giveAccount.points}`);
+      break;
+
+    case '/banusername':
+      if (parts.length < 2) {
+        queueTelegramMessage('❌ Usage: /banusername username');
+        return;
+      }
+      bannedUsernames.add(parts[1].toLowerCase());
+      saveBannedUsernamesAsync();
+      queueTelegramMessage(`🚫 Username "${parts[1]}" is now blocked`);
+      break;
+
+    case '/unbanusername':
+      if (parts.length < 2) {
+        queueTelegramMessage('❌ Usage: /unbanusername username');
+        return;
+      }
+      bannedUsernames.delete(parts[1].toLowerCase());
+      saveBannedUsernamesAsync();
+      queueTelegramMessage(`✅ Username "${parts[1]}" is now unblocked`);
+      break;
+
+    case '/stats':
+      const playerCount = Object.keys(snakes).filter(id => !snakes[id].isBot).length;
+      const totalAccounts = Object.keys(accounts).length;
+      const hhStatus = happyHourActive ? ' 🎉 HAPPY HOUR ACTIVE (2X POINTS)' : '';
+      const hhNext = happyHourNextStart ? `\n⏰ Next HH: ${Math.round((happyHourNextStart - Date.now()) / 60000)} min` : '';
+      queueTelegramMessage(`📊 <b>Server Stats</b>${hhStatus}\n\n` +
+        `👥 Active Players: ${playerCount}\n` +
+        `🤖 Bots: ${Object.keys(snakes).filter(id => snakes[id].isBot).length}\n` +
+        `📝 Total Accounts: ${totalAccounts}\n` +
+        `⚽ Balls: ${balls.length}${hhNext}`);
+      break;
+
+    case '/accounts':
+      const accountList = Object.values(accounts)
+        .sort((a, b) => b.points - a.points)
+        .slice(0, 10)
+        .map((a, i) => `${i + 1}. ${a.username} - ${a.points} pts`)
+        .join('\n');
+      queueTelegramMessage(`👥 <b>Top Accounts:</b>\n\n${accountList}`);
+      break;
+
+    case '/happyhour':
+      if (happyHourActive) {
+        const minsLeft = Math.round((happyHourEndTime - Date.now()) / 60000);
+        queueTelegramMessage(`🎉 <b>HAPPY HOUR ACTIVE!</b>\n\n2X Points\nEnds in: ${minsLeft} minutes`);
       } else {
-        sendTelegramMessage(`❌ Restore failed: ${restoreResult.error}`);
+        const minsUntil = Math.round((happyHourNextStart - Date.now()) / 60000);
+        queueTelegramMessage(`⏰ Happy Hour inactive\n\nNext one starts in: ${minsUntil} minutes`);
       }
       break;
-      
-    case '/logs':
-      const logLines = parseInt(parts[1]) || 50;
-      const logsResult = getServerLogs(logLines);
-      
-      if (logsResult.success) {
-        sendTelegramMessage(
-          `📜 <b>Server Logs</b> (last ${logLines} lines)\n\n` +
-          `<code>${logsResult.logs.substring(0, 3500)}</code>\n\n` +
-          `💡 Use /logs [number] for more lines`
-        );
-      } else {
-        sendTelegramMessage(`❌ ${logsResult.error}`);
-      }
-      break;
-      
-    case '/errors':
-      if (errorBuffer.length === 0) {
-        sendTelegramMessage('✅ No errors logged!\n\nServer is running clean.');
-      } else {
-        const recentErrors = errorBuffer.slice(-5).map(e => 
-          `[${new Date(e.timestamp).toLocaleTimeString()}] ${e.type}: ${e.message}`
-        ).join('\n\n');
-        sendTelegramMessage(
-          `⚠️ <b>Recent Errors (last 5):</b>\n\n` +
-          `<code>${recentErrors.substring(0, 3500)}</code>\n\n` +
-          `📊 Total errors logged: ${errorBuffer.length}`
-        );
-      }
-      break;
-      
-    case '/clear':
-      if (parts[1] === 'logs') {
-        try {
-          fs.writeFileSync(LOG_FILE, '');
-          sendTelegramMessage('✅ Logs cleared successfully!');
-        } catch (e) {
-          sendTelegramMessage(`❌ Error clearing logs: ${e.message}`);
-        }
-      } else {
-        sendTelegramMessage('❌ Invalid usage.\n\nUse: /clear logs');
-      }
-      break;
-      
-    case '/info':
-      const info = readServerFile(1);
-      if (info.success) {
-        const backupCount = listBackups().length;
-        sendTelegramMessage(
-          `📊 <b>File Information</b>\n\n` +
-          `📄 File: server.js\n` +
-          `📏 Lines: ${info.totalLines}\n` +
-          `💾 Size: ${info.size}\n` +
-          `📂 Location: ${SERVER_FILE}\n` +
-          `📦 Backups: ${backupCount}\n` +
-          `🔐 Bot uptime: ${formatUptime(process.uptime())}`
-        );
-      } else {
-        sendTelegramMessage(`❌ Error: ${info.error}`);
-      }
-      break;
-      
-    case '/botrestart':
-      sendTelegramMessage(
-        '⚠️ <b>BOT RESTART REQUESTED</b>\n\n' +
-        '🔄 This will restart the management bot (not the game server)\n' +
-        '⏱️ Bot will be offline for ~5 seconds\n\n' +
-        '✅ Reply with "CONFIRM BOTRESTART" to proceed'
-      );
-      break;
-      
+
     default:
-      if (text === 'CONFIRM DELETE') {
-        const delResult = clearServerFile();
-        if (delResult.success) {
-          sendTelegramMessage('✅ File content cleared.\n\n💾 Backup created before deletion\n📋 Use /backups to restore if needed');
-        } else {
-          sendTelegramMessage(`❌ Error: ${delResult.error}`);
-        }
-      } else if (text === 'CONFIRM BOTRESTART') {
-        restartBot();
-      } else {
-        sendTelegramMessage('❓ Unknown command.\n\nType /help for available commands.');
-      }
+      queueTelegramMessage('❓ Unknown command. Type /help for commands.');
   }
 }
 
-// Telegram Polling with reconnection
-function pollUpdates(offset = 0) {
-  https.get(`${TELEGRAM_API}/getUpdates?offset=${offset}&timeout=30`, (res) => {
-    let data = '';
-    res.on('data', chunk => data += chunk);
-    res.on('end', () => {
-      try {
-        const updates = JSON.parse(data);
-        if (updates.ok && updates.result.length > 0) {
-          updates.result.forEach(update => {
-            if (update.message && update.message.text) {
-              try {
-                handleCommand(update.message);
-              } catch (e) {
-                console.error('Command error:', e);
-                logError('command_handler', e);
-              }
-            }
-            offset = Math.max(offset, update.update_id + 1);
-          });
-        }
-        setTimeout(() => pollUpdates(offset), 100);
-      } catch (e) {
-        console.error('Error parsing updates:', e);
-        logError('polling', e);
-        setTimeout(() => pollUpdates(offset), 2000);
+function loadAccounts() {
+  if (fs.existsSync(ACCOUNTS_FILE)) {
+    try {
+      accounts = JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8'));
+      console.log(`Loaded ${Object.keys(accounts).length} accounts`);
+    } catch (e) {
+      console.error('Error loading accounts:', e);
+      accounts = {};
+    }
+  }
+}
+
+let saveTimeout = null;
+function saveAccountsAsync() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    try {
+      fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2));
+    } catch (e) {
+      console.error('Error saving accounts:', e);
+    }
+  }, 1000);
+}
+
+function loadBannedUsernames() {
+  if (fs.existsSync(BANNED_USERNAMES_FILE)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(BANNED_USERNAMES_FILE, 'utf8'));
+      bannedUsernames = new Set(data);
+    } catch (e) {
+      console.error('Error loading banned usernames:', e);
+      bannedUsernames = new Set();
+    }
+  }
+}
+
+function saveBannedUsernamesAsync() {
+  setTimeout(() => {
+    try {
+      fs.writeFileSync(BANNED_USERNAMES_FILE, JSON.stringify([...bannedUsernames], null, 2));
+    } catch (e) {
+      console.error('Error saving banned usernames:', e);
+    }
+  }, 1000);
+}
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+function createAccount(username, password) {
+  const hash = hashPassword(password);
+  accounts[username.toLowerCase()] = {
+    username: username,
+    passwordHash: hash,
+    points: 0,
+    highScore: 0,
+    ownedSkins: ['jude'],
+    currentSkin: 'jude',
+    createdAt: Date.now()
+  };
+  saveAccountsAsync();
+  return accounts[username.toLowerCase()];
+}
+
+function verifyAccount(username, password) {
+  const account = accounts[username.toLowerCase()];
+  if (!account) return null;
+  
+  if (account.tempBanned && Date.now() < account.tempBanned) {
+    return { error: 'Account temporarily banned' };
+  }
+  
+  const hash = hashPassword(password);
+  if (account.passwordHash === hash) {
+    return account;
+  }
+  return null;
+}
+
+function getLeaderboard() {
+  return Object.values(accounts)
+    .filter(a => a.highScore > 0)
+    .sort((a, b) => b.highScore - a.highScore)
+    .slice(0, 10)
+    .map(a => ({ username: a.username, highScore: a.highScore }));
+}
+
+function containsBannedWord(text) {
+  if (!BANNED_WORDS || BANNED_WORDS.length === 0) return false;
+  const clean = text.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return BANNED_WORDS.some(w => clean.includes(w.toLowerCase().replace(/[^a-z0-9]/g, '')));
+}
+
+function isPlayerBanned(ip) {
+  if (bannedIPs[ip] && Date.now() < bannedIPs[ip]) return true;
+  delete bannedIPs[ip];
+  return false;
+}
+
+function isChatBanned(ip) {
+  if (chatBannedIPs[ip] && Date.now() < chatBannedIPs[ip]) return true;
+  delete chatBannedIPs[ip];
+  return false;
+}
+
+const randomPos = () => ({
+  x: Math.random() * (WORLD_WIDTH - 200) + 100,
+  y: Math.random() * (WORLD_HEIGHT - 200) + 100
+});
+
+function createSnake(id, isBot = false, username = null, skinId = 'jude') {
+  const pos = randomPos();
+  return {
+    id,
+    body: [pos, { x: pos.x - 10, y: pos.y }, { x: pos.x - 20, y: pos.y }],
+    direction: { x: 1, y: 0 },
+    score: 0,
+    points: 0,
+    isBot,
+    speed: 4,
+    targetBall: null,
+    username: username || (isBot ? `Bot${id.substring(3)}` : `Player`),
+    skinId: skinId,
+    lastUpdate: Date.now(),
+    accountUsername: username,
+    isSprinting: false,
+    lastSprintDrop: 0
+  };
+}
+
+const spawnBall = () => ({
+  x: Math.random() * WORLD_WIDTH,
+  y: Math.random() * WORLD_HEIGHT,
+  radius: 6
+});
+
+function initBalls() {
+  balls = Array.from({ length: BALL_COUNT }, spawnBall);
+}
+
+function maintainBallCount() {
+  if (balls.length > MAX_BALL_COUNT) balls.length = MAX_BALL_COUNT;
+  while (balls.length < BALL_COUNT) balls.push(spawnBall());
+}
+
+function initBots() {
+  for (let i = 0; i < MAX_BOTS; i++) {
+    const botId = `bot${nextBotId++}`;
+    snakes[botId] = createSnake(botId, true);
+  }
+}
+
+const distanceSq = (a, b) => {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  return dx * dx + dy * dy;
+};
+
+function updateBot(bot) {
+  if (bot.score >= BOT_SIZE_LIMIT) {
+    Object.assign(bot, createSnake(bot.id, true));
+    return;
+  }
+
+  if (Math.random() < 0.015) {
+    const angle = Math.random() * Math.PI * 2;
+    bot.direction = { x: Math.cos(angle), y: Math.sin(angle) };
+    bot.targetBall = null;
+  }
+
+  if (!bot.targetBall || Math.random() < 0.03) {
+    const head = bot.body[0];
+    let nearest = null;
+    let minDistSq = 160000;
+    
+    for (const ball of balls) {
+      const distSq = distanceSq(head, ball);
+      if (distSq < minDistSq) {
+        minDistSq = distSq;
+        nearest = ball;
       }
-    });
-  }).on('error', (e) => {
-    console.error('Polling error:', e);
-    logError('polling_connection', e);
-    setTimeout(() => pollUpdates(offset), 5000);
+    }
+    
+    if (nearest) {
+      bot.targetBall = nearest;
+      const dx = nearest.x - head.x;
+      const dy = nearest.y - head.y;
+      const dist = Math.sqrt(minDistSq);
+      bot.direction = { x: dx / dist, y: dy / dist };
+    }
+  }
+
+  moveSnake(bot);
+}
+
+function moveSnake(snake) {
+  if (!snake?.body?.length) return;
+  
+  const head = snake.body[0];
+  const speedMultiplier = snake.isSprinting ? 1.5 : 1;
+  const newHead = {
+    x: Math.max(10, Math.min(WORLD_WIDTH - 10, head.x + snake.direction.x * snake.speed * speedMultiplier)),
+    y: Math.max(10, Math.min(WORLD_HEIGHT - 10, head.y + snake.direction.y * snake.speed * speedMultiplier))
+  };
+
+  snake.body.unshift(newHead);
+  snake.body.pop();
+
+  for (let i = balls.length - 1; i >= 0; i--) {
+    if (distanceSq(newHead, balls[i]) < 225) {
+      const multiplier = happyHourActive ? HAPPY_HOUR_MULTIPLIER : 1;
+      const scoreGain = 1 * multiplier;
+      snake.score += scoreGain;
+      snake.points += scoreGain;
+      snake.body.push({ ...snake.body[snake.body.length - 1] });
+      balls[i] = spawnBall();
+      break;
+    }
+  }
+  
+  snake.lastUpdate = Date.now();
+}
+
+function checkCollisions() {
+  const ids = Object.keys(snakes);
+  const dead = [];
+
+  for (let i = 0; i < ids.length; i++) {
+    const snake = snakes[ids[i]];
+    if (!snake?.body?.length) continue;
+
+    const head = snake.body[0];
+    let isDead = false;
+
+    for (let j = 0; j < ids.length && !isDead; j++) {
+      if (i === j) continue;
+      const other = snakes[ids[j]];
+      if (!other?.body) continue;
+
+      for (const part of other.body) {
+        if (distanceSq(head, part) < 100) {
+          dead.push(ids[i]);
+          isDead = true;
+          break;
+        }
+      }
+    }
+  }
+
+  dead.forEach(id => {
+    const snake = snakes[id];
+    if (!snake) return;
+
+    const ballsToSpawn = Math.min(Math.floor(snake.score / 2), 30);
+    for (let i = 0; i < ballsToSpawn && balls.length < MAX_BALL_COUNT; i++) {
+      const seg = snake.body[Math.floor(i * snake.body.length / ballsToSpawn) % snake.body.length];
+      balls.push({
+        x: seg.x + (Math.random() - 0.5) * 50,
+        y: seg.y + (Math.random() - 0.5) * 50,
+        radius: 6
+      });
+    }
+
+    if (snake.accountUsername && accounts[snake.accountUsername.toLowerCase()]) {
+      const account = accounts[snake.accountUsername.toLowerCase()];
+      account.points += snake.points;
+      
+      if (snake.score > account.highScore) {
+        account.highScore = snake.score;
+        const hhLabel = happyHourActive ? ' 🎉 (HAPPY HOUR)' : '';
+        queueTelegramMessage(`🏆 <b>NEW HIGH SCORE!</b>\n${snake.username}: ${snake.score}${hhLabel}`);
+      }
+      
+      saveAccountsAsync();
+      const hhLabel = happyHourActive ? ' 🎉' : '';
+      queueTelegramMessage(`💀 ${snake.username} died${hhLabel} | Score: ${snake.score} | Total: ${account.points}`);
+      
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN && client.playerId === id) {
+          client.send(JSON.stringify({
+            type: 'death',
+            score: snake.score,
+            points: snake.points,
+            highScore: account.highScore,
+            totalPoints: account.points
+          }));
+        }
+      });
+      
+      broadcastLeaderboard();
+    }
+
+    delete snakes[id];
+    
+    if (snake.isBot) {
+      snakes[id] = createSnake(id, true);
+    }
   });
 }
 
-// Graceful shutdown
+function broadcastLeaderboard() {
+  const leaderboard = getLeaderboard();
+  const msg = JSON.stringify({
+    type: 'leaderboardUpdate',
+    leaderboard: leaderboard
+  });
+  
+  wss.clients.forEach(c => {
+    if (c.readyState === WebSocket.OPEN) {
+      c.send(msg);
+    }
+  });
+}
+
+function gameLoop() {
+  frameCount++;
+
+  const now = Date.now();
+  for (const id in snakes) {
+    const snake = snakes[id];
+    if (!snake) continue;
+    
+    if (snake.isSprinting && snake.score > 0 && now - snake.lastSprintDrop >= SPRINT_INTERVAL) {
+      snake.score--;
+      if (snake.body.length > 3) {
+        const tail = snake.body.pop();
+        if (balls.length < MAX_BALL_COUNT) {
+          balls.push({
+            x: tail.x + (Math.random() - 0.5) * 20,
+            y: tail.y + (Math.random() - 0.5) * 20,
+            radius: 6
+          });
+        }
+      }
+      snake.lastSprintDrop = now;
+      
+      if (snake.score <= 0) {
+        snake.isSprinting = false;
+      }
+    }
+    
+    if (snake.isBot) {
+      updateBot(snake);
+    } else {
+      if (now - snake.lastUpdate < 5000) {
+        moveSnake(snake);
+      }
+    }
+  }
+
+  checkCollisions();
+  if (frameCount % 60 === 0) maintainBallCount();
+
+  broadcastState();
+}
+
+function broadcastState() {
+  const state = {
+    type: 'state',
+    snakes: {},
+    balls: balls.map(b => ({ x: b.x | 0, y: b.y | 0 }))
+  };
+
+  for (const id in snakes) {
+    const s = snakes[id];
+    if (!s?.body) continue;
+    
+    state.snakes[id] = {
+      b: s.body.map(p => [p.x | 0, p.y | 0]),
+      s: s.score,
+      i: s.isBot,
+      u: s.username,
+      sk: s.skinId
+    };
+  }
+
+  const msg = JSON.stringify(state);
+  
+  wss.clients.forEach(c => {
+    if (c.readyState === WebSocket.OPEN) {
+      c.send(msg, { binary: false });
+    }
+  });
+}
+
+const server = app.listen(PORT, () => {
+  console.log(`=================================`);
+  console.log(`Slither Arena Server (OPTIMIZED)`);
+  console.log(`Port: ${PORT}`);
+  console.log(`Tick Rate: ${TICK_RATE}fps`);
+  console.log(`Max Bots: ${MAX_BOTS}`);
+  console.log(`Happy Hour: Every 2h for 30min (${HAPPY_HOUR_MULTIPLIER}x points)`);
+  console.log(`Next Happy Hour: ${Math.round((happyHourNextStart - Date.now()) / 60000)} minutes`);
+  console.log(`=================================`);
+  
+  loadAccounts();
+  loadBannedUsernames();
+  initBalls();
+  initBots();
+  setInterval(gameLoop, 1000 / TICK_RATE);
+  setInterval(saveAccountsAsync, SAVE_INTERVAL);
+  setupTelegramBot();
+});
+
+const wss = new WebSocket.Server({ 
+  server,
+  perMessageDeflate: false
+});
+
+wss.on('connection', (ws, req) => {
+  const playerIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  
+  if (isPlayerBanned(playerIP)) {
+    ws.send(JSON.stringify({
+      type: 'banned',
+      message: 'You are temporarily banned'
+    }));
+    ws.close();
+    return;
+  }
+
+  ws.once('message', (data) => {
+    try {
+      const msg = JSON.parse(data);
+      
+      if (msg.type === 'register') {
+        const username = msg.username.trim();
+        const password = msg.password.trim();
+        
+        if (username.length < 3) {
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: 'Username must be 3+ characters'
+          }));
+          return;
+        }
+        
+        if (bannedUsernames.has(username.toLowerCase())) {
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: 'This username is not allowed'
+          }));
+          return;
+        }
+        
+        if (containsBannedWord(username)) {
+          bannedIPs[playerIP] = Date.now() + 300000;
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: 'Username contains inappropriate content'
+          }));
+          ws.close();
+          queueTelegramMessage(`🚫 Blocked registration | Username: ${username} | IP: ${playerIP}`);
+          return;
+        }
+        
+        if (accounts[username.toLowerCase()]) {
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: 'Username already taken'
+          }));
+          return;
+        }
+        
+        const account = createAccount(username, password);
+        queueTelegramMessage(`✅ New registration: ${username}`);
+        
+        ws.send(JSON.stringify({
+          type: 'authSuccess',
+          playerData: {
+            points: account.points,
+            highScore: account.highScore,
+            ownedSkins: account.ownedSkins
+          },
+          currentSkin: account.currentSkin,
+          skins: SKINS,
+          leaderboard: getLeaderboard(),
+          happyHour: getHappyHourStatus()
+        }));
+        
+        setupGameHandlers(ws, username, playerIP);
+        
+      } else if (msg.type === 'login') {
+        const username = msg.username.trim();
+        const password = msg.password.trim();
+        
+        const account = verifyAccount(username, password);
+        if (!account) {
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: 'Invalid username or password'
+          }));
+          return;
+        }
+        
+        if (account.error) {
+          ws.send(JSON.stringify({
+            type: 'authError',
+            message: account.error
+          }));
+          return;
+        }
+        
+        queueTelegramMessage(`🔑 Login: ${username}`);
+        
+        ws.send(JSON.stringify({
+          type: 'authSuccess',
+          playerData: {
+            points: account.points,
+            highScore: account.highScore,
+            ownedSkins: account.ownedSkins
+          },
+          currentSkin: account.currentSkin,
+          skins: SKINS,
+          leaderboard: getLeaderboard(),
+          happyHour: getHappyHourStatus()
+        }));
+        
+        setupGameHandlers(ws, username, playerIP);
+      }
+    } catch (e) {
+      console.error('Auth error:', e);
+      ws.close();
+    }
+  });
+});
+
+function setupGameHandlers(ws, accountUsername, playerIP) {
+  let playerId = null;
+  
+  ws.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data);
+      
+      if (msg.type === 'spawn') {
+        playerId = `p${Date.now()}${Math.random() * 1000 | 0}`;
+        const account = accounts[accountUsername.toLowerCase()];
+        const skinId = msg.skinId || account.currentSkin || 'jude';
+        
+        snakes[playerId] = createSnake(playerId, false, accountUsername, skinId);
+        ws.playerId = playerId;
+        
+        ws.send(JSON.stringify({
+          type: 'welcome',
+          id: playerId,
+          playerData: {
+            points: account.points,
+            highScore: account.highScore,
+            ownedSkins: account.ownedSkins
+          }
+        }));
+        
+        const hhLabel = happyHourActive ? ' 🎉' : '';
+        queueTelegramMessage(`🎮 ${accountUsername} spawned${hhLabel}`);
+        
+      } else if (msg.type === 'input' && playerId && snakes[playerId]) {
+        const snake = snakes[playerId];
+        const dir = msg.direction;
+        
+        if (dir?.x !== undefined && dir?.y !== undefined) {
+          const len = Math.sqrt(dir.x * dir.x + dir.y * dir.y);
+          if (len > 0) {
+            snake.direction = { x: dir.x / len, y: dir.y / len };
+            snake.lastUpdate = Date.now();
+          }
+        }
+        
+        if (msg.sprinting !== undefined) {
+          if (msg.sprinting && snake.score > 0) {
+            snake.isSprinting = true;
+          } else {
+            snake.isSprinting = false;
+          }
+        }
+        
+      } else if (msg.type === 'chatMessage' && playerId && snakes[playerId]) {
+        if (isChatBanned(playerIP)) {
+          ws.send(JSON.stringify({
+            type: 'chatBanned',
+            message: 'You are chat banned'
+          }));
+          return;
+        }
+        
+        if (containsBannedWord(msg.message)) {
+          chatBannedIPs[playerIP] = Date.now() + 600000;
+          const account = accounts[accountUsername.toLowerCase()];
+          account.points = 0;
+          account.highScore = 0;
+          account.ownedSkins = ['jude'];
+          account.currentSkin = 'jude';
+          saveAccountsAsync();
+          
+          ws.send(JSON.stringify({
+            type: 'chatBanned',
+            message: 'Banned for inappropriate language. Progress reset.'
+          }));
+          
+          if (snakes[playerId]) delete snakes[playerId];
+          queueTelegramMessage(`⚠️ Chat ban: ${accountUsername} | Progress reset`);
+          return;
+        }
+        
+        const chatMsg = {
+          type: 'chatMessage',
+          username: accountUsername,
+          message: msg.message.substring(0, 200)
+        };
+        
+        wss.clients.forEach(c => {
+          if (c.readyState === WebSocket.OPEN) {
+            c.send(JSON.stringify(chatMsg));
+          }
+        });
+        
+        queueTelegramMessage(`💬 ${accountUsername}: ${msg.message.substring(0, 100)}`);
+        
+      } else if (msg.type === 'buySkin') {
+        const account = accounts[accountUsername.toLowerCase()];
+        const skin = SKINS.find(s => s.id === msg.skinId);
+        
+        if (account && skin && account.points >= skin.cost && !account.ownedSkins.includes(msg.skinId)) {
+          account.points -= skin.cost;
+          account.ownedSkins.push(msg.skinId);
+          saveAccountsAsync();
+          
+          ws.send(JSON.stringify({
+            type: 'skinPurchased',
+            skinId: msg.skinId,
+            points: account.points
+          }));
+          
+          queueTelegramMessage(`🛍️ ${accountUsername} bought ${skin.name} for ${skin.cost} pts`);
+        }
+        
+      } else if (msg.type === 'selectSkin') {
+        const account = accounts[accountUsername.toLowerCase()];
+        
+        if (account && account.ownedSkins.includes(msg.skinId)) {
+          account.currentSkin = msg.skinId;
+          saveAccountsAsync();
+          
+          if (snakes[playerId]) {
+            snakes[playerId].skinId = msg.skinId;
+          }
+        }
+        
+      } else if (msg.type === 'getLeaderboard') {
+        ws.send(JSON.stringify({
+          type: 'leaderboardUpdate',
+          leaderboard: getLeaderboard()
+        }));
+      }
+      
+    } catch (e) {
+      console.error('Message error:', e);
+    }
+  });
+  
+  ws.on('close', () => {
+    if (playerId && snakes[playerId]) {
+      const snake = snakes[playerId];
+      const account = accounts[accountUsername.toLowerCase()];
+      
+      if (account) {
+        account.points += snake.points;
+        account.highScore = Math.max(account.highScore, snake.score);
+        saveAccountsAsync();
+      }
+      
+      delete snakes[playerId];
+      queueTelegramMessage(`👋 ${accountUsername} disconnected`);
+    }
+  });
+}
+
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down bot gracefully...');
-  sendTelegramMessage('🛑 <b>Bot shutting down</b>\n\nManual shutdown requested.');
-  
-  if (serverProcess) {
-    console.log('Stopping game server...');
-    stopServer();
-  }
-  
-  if (healthCheckTimer) {
-    clearInterval(healthCheckTimer);
-  }
-  
-  setTimeout(() => {
-    console.log('✅ Shutdown complete');
-    process.exit(0);
-  }, 2000);
+  console.log('\nShutting down...');
+  saveAccountsAsync();
+  saveBannedUsernamesAsync();
+  queueTelegramMessage('🛑 Server shutting down...');
+  setTimeout(() => process.exit(0), 2000);
 });
-
-process.on('SIGTERM', () => {
-  console.log('🛑 Received SIGTERM, shutting down...');
-  sendTelegramMessage('🛑 <b>Bot shutting down</b>\n\nSystem shutdown requested.');
-  
-  if (serverProcess) {
-    stopServer(true);
-  }
-  
-  setTimeout(() => {
-    process.exit(0);
-  }, 1000);
-});
-
-// Startup notification
-setTimeout(() => {
-  if (authenticatedChatId) {
-    sendTelegramMessage(
-      '🤖 <b>Dev Bot Started</b>\n\n' +
-      `✅ Monitoring: server.js\n` +
-      `🛡️ Safety features: Enabled\n` +
-      `🔧 Auto-fix: Enabled\n` +
-      `📊 Health checks: Every 1 minute\n\n` +
-      `Type /status to check server`
-    );
-  }
-}, 5000);
-
-// Start bot
-pollUpdates();
-console.log('✅ Bot is running!');
-console.log('💬 Send the password to your bot to authenticate.');
-console.log('🛡️ Safety features active');
-console.log('📊 Health monitoring enabled');
