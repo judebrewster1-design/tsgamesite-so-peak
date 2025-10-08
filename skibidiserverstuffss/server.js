@@ -19,12 +19,10 @@ const SPRINT_BALL_COST = 1;
 const SPRINT_INTERVAL = 1500;
 const STATE_COMPRESSION_THRESHOLD = 50;
 
-// Happy Hour System
+// Happy Hour System - 6 PM to 7 PM daily
 const HAPPY_HOUR_START = 18; // 6 PM
 const HAPPY_HOUR_END = 19; // 7 PM
 const HAPPY_HOUR_MULTIPLIER = 3;
-const HAPPY_HOUR_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-const HAPPY_HOUR_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
 let happyHourActive = false;
 let happyHourEndTime = null;
 let happyHourNextStart = null;
@@ -103,32 +101,70 @@ function broadcastHappyHourUpdate() {
 
 function startHappyHour() {
   happyHourActive = true;
-  happyHourEndTime = Date.now() + HAPPY_HOUR_DURATION;
+  const now = new Date();
+  const endTime = new Date(now);
+  endTime.setHours(HAPPY_HOUR_END, 0, 0, 0);
+  happyHourEndTime = endTime.getTime();
   happyHourNextStart = null;
   
-  console.log('🎉 HAPPY HOUR STARTED! 3X POINTS FOR 30 MINUTES');
-  queueTelegramMessage('🎉 <b>HAPPY HOUR STARTED!</b>\n3X Points for 30 minutes!');
+  console.log('🎉 HAPPY HOUR STARTED! 3X POINTS UNTIL 7 PM');
+  queueTelegramMessage('🎉 <b>HAPPY HOUR STARTED!</b>\n3X Points until 7 PM!');
   
   broadcastHappyHourUpdate();
   
-  setTimeout(endHappyHour, HAPPY_HOUR_DURATION);
+  // Schedule end at 7 PM
+  const timeUntilEnd = happyHourEndTime - Date.now();
+  setTimeout(endHappyHour, timeUntilEnd);
 }
 
 function endHappyHour() {
   happyHourActive = false;
   happyHourEndTime = null;
-  happyHourNextStart = Date.now() + HAPPY_HOUR_INTERVAL;
   
-  console.log('Happy Hour ended. Next one in 2 hours.');
-  queueTelegramMessage('⏰ Happy Hour ended. Next one in 2 hours.');
+  // Calculate next 6 PM
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(HAPPY_HOUR_START, 0, 0, 0);
+  happyHourNextStart = tomorrow.getTime();
+  
+  console.log('Happy Hour ended. Next one tomorrow at 6 PM.');
+  queueTelegramMessage('⏰ Happy Hour ended. Next one tomorrow at 6 PM.');
   
   broadcastHappyHourUpdate();
   
-  setTimeout(startHappyHour, HAPPY_HOUR_INTERVAL);
+  // Schedule next Happy Hour at 6 PM tomorrow
+  const timeUntilNext = happyHourNextStart - Date.now();
+  setTimeout(startHappyHour, timeUntilNext);
 }
 
 // Initialize Happy Hour schedule
-happyHourNextStart = Date.now() + HAPPY_HOUR_INTERVAL;
+function initHappyHour() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  if (currentHour >= HAPPY_HOUR_START && currentHour < HAPPY_HOUR_END) {
+    // We're currently in Happy Hour - start it
+    startHappyHour();
+  } else if (currentHour < HAPPY_HOUR_START) {
+    // Happy Hour is later today
+    const today = new Date(now);
+    today.setHours(HAPPY_HOUR_START, 0, 0, 0);
+    happyHourNextStart = today.getTime();
+    const timeUntilNext = happyHourNextStart - Date.now();
+    console.log(`Happy Hour starts today at 6 PM (in ${Math.round(timeUntilNext / 60000)} minutes)`);
+    setTimeout(startHappyHour, timeUntilNext);
+  } else {
+    // Happy Hour is tomorrow
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(HAPPY_HOUR_START, 0, 0, 0);
+    happyHourNextStart = tomorrow.getTime();
+    const timeUntilNext = happyHourNextStart - Date.now();
+    console.log(`Happy Hour starts tomorrow at 6 PM (in ${Math.round(timeUntilNext / 60000)} minutes)`);
+    setTimeout(startHappyHour, timeUntilNext);
+  }
+}
 
 let telegramQueue = [];
 let telegramSending = false;
@@ -332,7 +368,12 @@ function handleTelegramCommand(message) {
       const playerCount = Object.keys(snakes).filter(id => !snakes[id].isBot).length;
       const totalAccounts = Object.keys(accounts).length;
       const hhStatus = happyHourActive ? ' 🎉 HAPPY HOUR ACTIVE (3X POINTS)' : '';
-      const hhNext = happyHourNextStart ? `\n⏰ Next HH: ${Math.round((happyHourNextStart - Date.now()) / 60000)} min` : '';
+      let hhNext = '';
+      if (happyHourNextStart) {
+        const hoursUntil = Math.floor((happyHourNextStart - Date.now()) / 3600000);
+        const minsUntil = Math.round(((happyHourNextStart - Date.now()) % 3600000) / 60000);
+        hhNext = `\n⏰ Next HH: ${hoursUntil}h ${minsUntil}m (6 PM)`;
+      }
       queueTelegramMessage(`📊 <b>Server Stats</b>${hhStatus}\n\n` +
         `👥 Active Players: ${playerCount}\n` +
         `🤖 Bots: ${Object.keys(snakes).filter(id => snakes[id].isBot).length}\n` +
@@ -351,11 +392,15 @@ function handleTelegramCommand(message) {
 
     case '/happyhour':
       if (happyHourActive) {
+        const now = new Date();
+        const endTime = new Date(happyHourEndTime);
         const minsLeft = Math.round((happyHourEndTime - Date.now()) / 60000);
-        queueTelegramMessage(`🎉 <b>HAPPY HOUR ACTIVE!</b>\n\n3X Points\nEnds in: ${minsLeft} minutes`);
+        queueTelegramMessage(`🎉 <b>HAPPY HOUR ACTIVE!</b>\n\n3X Points\nEnds at: 7:00 PM\nTime left: ${minsLeft} minutes`);
       } else {
-        const minsUntil = Math.round((happyHourNextStart - Date.now()) / 60000);
-        queueTelegramMessage(`⏰ Happy Hour inactive\n\nNext one starts in: ${minsUntil} minutes`);
+        const nextTime = new Date(happyHourNextStart);
+        const hoursUntil = Math.floor((happyHourNextStart - Date.now()) / 3600000);
+        const minsUntil = Math.round(((happyHourNextStart - Date.now()) % 3600000) / 60000);
+        queueTelegramMessage(`⏰ Happy Hour inactive\n\nNext Happy Hour: 6:00 PM\nStarts in: ${hoursUntil}h ${minsUntil}m`);
       }
       break;
 
@@ -756,8 +801,7 @@ const server = app.listen(PORT, () => {
   console.log(`Port: ${PORT}`);
   console.log(`Tick Rate: ${TICK_RATE}fps`);
   console.log(`Max Bots: ${MAX_BOTS}`);
-  console.log(`Happy Hour: Every 2h for 30min (${HAPPY_HOUR_MULTIPLIER}x points)`);
-  console.log(`Next Happy Hour: ${Math.round((happyHourNextStart - Date.now()) / 60000)} minutes`);
+  console.log(`Happy Hour: Daily 6-7 PM (${HAPPY_HOUR_MULTIPLIER}x points)`);
   console.log(`=================================`);
   
   loadAccounts();
@@ -768,8 +812,8 @@ const server = app.listen(PORT, () => {
   setInterval(saveAccountsAsync, SAVE_INTERVAL);
   setupTelegramBot();
   
-  // Start first Happy Hour after interval
-  setTimeout(startHappyHour, HAPPY_HOUR_INTERVAL);
+  // Initialize Happy Hour schedule
+  initHappyHour();
 });
 
 const wss = new WebSocket.Server({ 
