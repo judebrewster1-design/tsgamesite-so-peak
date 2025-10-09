@@ -15,20 +15,18 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0a0e14;
             color: #fff;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            min-height: 100vh;
         }
 
         .menu {
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             background: linear-gradient(135deg, #1a1f2e 0%, #0a0e14 100%);
         }
 
@@ -70,9 +68,13 @@
 
         .game-area {
             display: none;
-            height: 100vh;
+            min-height: 100vh;
             flex-direction: column;
             background: #0a0e14;
+        }
+
+        .game-area.active {
+            display: flex;
         }
 
         .game-header {
@@ -110,7 +112,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            overflow: hidden;
+            overflow: auto;
             padding: 20px;
         }
 
@@ -519,23 +521,23 @@
     <div class="container">
         <div id="menu" class="menu">
             <div class="game-grid">
-                <div class="game-tile" id="plinko-tile">
+                <div class="game-tile" onclick="openGame('plinko')">
                     <div class="game-icon">🎯</div>
                     <div class="game-name">Plinko</div>
                 </div>
-                <div class="game-tile" id="mines-tile">
+                <div class="game-tile" onclick="openGame('mines')">
                     <div class="game-icon">💣</div>
                     <div class="game-name">Mines</div>
                 </div>
-                <div class="game-tile" id="blackjack-tile">
+                <div class="game-tile" onclick="openGame('blackjack')">
                     <div class="game-icon">🃏</div>
                     <div class="game-name">Blackjack</div>
                 </div>
-                <div class="game-tile" id="roulette-tile">
+                <div class="game-tile" onclick="openGame('roulette')">
                     <div class="game-icon">🎰</div>
                     <div class="game-name">Roulette</div>
                 </div>
-                <div class="game-tile" id="poker-tile">
+                <div class="game-tile" onclick="openGame('poker')">
                     <div class="game-icon">🎲</div>
                     <div class="game-name">Poker</div>
                 </div>
@@ -545,10 +547,10 @@
         <div id="plinko-game" class="game-area">
             <div class="game-header">
                 <div class="game-title">Plinko</div>
-                <button class="close-btn" id="plinko-close">×</button>
+                <button class="close-btn" onclick="closeGame()">×</button>
             </div>
             <div class="game-content">
-                <div class="stats" id="plinko-stats">
+                <div class="stats">
                     <div class="stat-row">
                         <span class="stat-label">Dropped:</span>
                         <span class="stat-value" id="balls-dropped">0</span>
@@ -567,10 +569,10 @@
                 <div class="balance">$<span id="balance">1000</span></div>
                 <div class="bet-section">
                     <input type="number" class="bet-input" id="plinko-bet" value="10" min="1">
-                    <button class="btn" id="plinko-bet-10">$10</button>
-                    <button class="btn" id="plinko-bet-50">$50</button>
-                    <button class="btn" id="plinko-bet-100">$100</button>
-                    <button class="btn btn-play" id="drop-ball">Drop Ball</button>
+                    <button class="btn" onclick="document.getElementById('plinko-bet').value = 10">$10</button>
+                    <button class="btn" onclick="document.getElementById('plinko-bet').value = 50">$50</button>
+                    <button class="btn" onclick="document.getElementById('plinko-bet').value = 100">$100</button>
+                    <button class="btn btn-play" onclick="dropBall()">Drop Ball</button>
                 </div>
             </div>
         </div>
@@ -578,7 +580,7 @@
         <div id="mines-game" class="game-area">
             <div class="game-header">
                 <div class="game-title">Mines</div>
-                <button class="close-btn" id="mines-close">×</button>
+                <button class="close-btn" onclick="closeGame()">×</button>
             </div>
             <div class="game-content">
                 <div class="stats">
@@ -598,8 +600,8 @@
                             <option value="5" selected>5 Mines</option>
                             <option value="10">10 Mines</option>
                         </select>
-                        <button class="btn" id="start-mines">New Game</button>
-                        <button class="btn btn-play" id="cashout-btn" disabled>Cashout</button>
+                        <button class="btn" onclick="startMines()">New Game</button>
+                        <button class="btn btn-play" id="cashout-btn" disabled onclick="cashout()">Cashout</button>
                     </div>
                     <div class="mines-grid" id="mines-grid"></div>
                 </div>
@@ -608,9 +610,9 @@
                 <div class="balance">$<span class="balance-display">1000</span></div>
                 <div class="bet-section">
                     <input type="number" class="bet-input" id="mines-bet" value="10" min="1">
-                    <button class="btn" id="mines-bet-10">$10</button>
-                    <button class="btn" id="mines-bet-50">$50</button>
-                    <button class="btn" id="mines-bet-100">$100</button>
+                    <button class="btn" onclick="document.getElementById('mines-bet').value = 10">$10</button>
+                    <button class="btn" onclick="document.getElementById('mines-bet').value = 50">$50</button>
+                    <button class="btn" onclick="document.getElementById('mines-bet').value = 100">$100</button>
                 </div>
             </div>
         </div>
@@ -618,7 +620,7 @@
         <div id="blackjack-game" class="game-area">
             <div class="game-header">
                 <div class="game-title">Blackjack</div>
-                <button class="close-btn" id="blackjack-close">×</button>
+                <button class="close-btn" onclick="closeGame()">×</button>
             </div>
             <div class="game-content">
                 <div class="blackjack-wrapper">
@@ -627,9 +629,9 @@
                         <div class="cards" id="dealer-cards"></div>
                     </div>
                     <div class="game-actions">
-                        <button class="btn" id="deal-blackjack">Deal</button>
-                        <button class="btn" id="hit-btn" disabled>Hit</button>
-                        <button class="btn" id="stand-btn" disabled>Stand</button>
+                        <button class="btn" onclick="dealBlackjack()">Deal</button>
+                        <button class="btn" id="hit-btn" disabled onclick="hit()">Hit</button>
+                        <button class="btn" id="stand-btn" disabled onclick="stand()">Stand</button>
                     </div>
                     <div class="hand-area">
                         <div class="hand-title">You (<span id="player-score">0</span>)</div>
@@ -641,9 +643,9 @@
                 <div class="balance">$<span class="balance-display">1000</span></div>
                 <div class="bet-section">
                     <input type="number" class="bet-input" id="blackjack-bet" value="10" min="1">
-                    <button class="btn" id="blackjack-bet-10">$10</button>
-                    <button class="btn" id="blackjack-bet-50">$50</button>
-                    <button class="btn" id="blackjack-bet-100">$100</button>
+                    <button class="btn" onclick="document.getElementById('blackjack-bet').value = 10">$10</button>
+                    <button class="btn" onclick="document.getElementById('blackjack-bet').value = 50">$50</button>
+                    <button class="btn" onclick="document.getElementById('blackjack-bet').value = 100">$100</button>
                 </div>
             </div>
         </div>
@@ -651,7 +653,7 @@
         <div id="roulette-game" class="game-area">
             <div class="game-header">
                 <div class="game-title">Roulette</div>
-                <button class="close-btn" id="roulette-close">×</button>
+                <button class="close-btn" onclick="closeGame()">×</button>
             </div>
             <div class="game-content">
                 <div class="roulette-wrapper">
@@ -661,20 +663,20 @@
                         </div>
                     </div>
                     <div class="roulette-bets">
-                        <button class="bet-btn bet-red" id="bet-red">Red 2x</button>
-                        <button class="bet-btn bet-black" id="bet-black">Black 2x</button>
-                        <button class="bet-btn bet-green" id="bet-green">Green 35x</button>
+                        <button class="bet-btn bet-red" onclick="selectBet('red')">Red 2x</button>
+                        <button class="bet-btn bet-black" onclick="selectBet('black')">Black 2x</button>
+                        <button class="bet-btn bet-green" onclick="selectBet('green')">Green 35x</button>
                     </div>
-                    <button class="btn btn-play" style="padding: 16px 48px; font-size: 18px;" id="spin-btn">SPIN</button>
+                    <button class="btn btn-play" style="padding: 16px 48px; font-size: 18px;" onclick="spinWheel()">SPIN</button>
                 </div>
             </div>
             <div class="controls">
                 <div class="balance">$<span class="balance-display">1000</span></div>
                 <div class="bet-section">
                     <input type="number" class="bet-input" id="roulette-bet" value="10" min="1">
-                    <button class="btn" id="roulette-bet-10">$10</button>
-                    <button class="btn" id="roulette-bet-50">$50</button>
-                    <button class="btn" id="roulette-bet-100">$100</button>
+                    <button class="btn" onclick="document.getElementById('roulette-bet').value = 10">$10</button>
+                    <button class="btn" onclick="document.getElementById('roulette-bet').value = 50">$50</button>
+                    <button class="btn" onclick="document.getElementById('roulette-bet').value = 100">$100</button>
                 </div>
             </div>
         </div>
@@ -682,7 +684,7 @@
         <div id="poker-game" class="game-area">
             <div class="game-header">
                 <div class="game-title">Video Poker</div>
-                <button class="close-btn" id="poker-close">×</button>
+                <button class="close-btn" onclick="closeGame()">×</button>
             </div>
             <div class="game-content">
                 <div class="poker-wrapper">
@@ -691,8 +693,8 @@
                     </div>
                     <div class="poker-hand" id="poker-hand"></div>
                     <div class="game-actions">
-                        <button class="btn" id="deal-poker">Deal</button>
-                        <button class="btn btn-play" id="draw-btn" disabled>Draw</button>
+                        <button class="btn" onclick="dealPoker()">Deal</button>
+                        <button class="btn btn-play" id="draw-btn" disabled onclick="draw()">Draw</button>
                     </div>
                 </div>
             </div>
@@ -700,9 +702,9 @@
                 <div class="balance">$<span class="balance-display">1000</span></div>
                 <div class="bet-section">
                     <input type="number" class="bet-input" id="poker-bet" value="10" min="1">
-                    <button class="btn" id="poker-bet-10">$10</button>
-                    <button class="btn" id="poker-bet-50">$50</button>
-                    <button class="btn" id="poker-bet-100">$100</button>
+                    <button class="btn" onclick="document.getElementById('poker-bet').value = 10">$10</button>
+                    <button class="btn" onclick="document.getElementById('poker-bet').value = 50">$50</button>
+                    <button class="btn" onclick="document.getElementById('poker-bet').value = 100">$100</button>
                 </div>
             </div>
         </div>
@@ -717,7 +719,6 @@
         let state = {
             balance: 1000,
             currentGame: null,
-            currentBet: 10,
             plinko: {
                 balls: [],
                 pegs: [],
@@ -765,7 +766,7 @@
 
         function openGame(game) {
             document.getElementById('menu').classList.add('hidden');
-            document.getElementById(game + '-game').style.display = 'flex';
+            document.getElementById(game + '-game').classList.add('active');
             state.currentGame = game;
             
             if (game === 'plinko') initPlinko();
@@ -776,7 +777,7 @@
 
         function closeGame() {
             if (state.currentGame) {
-                document.getElementById(state.currentGame + '-game').style.display = 'none';
+                document.getElementById(state.currentGame + '-game').classList.remove('active');
             }
             document.getElementById('menu').classList.remove('hidden');
             state.currentGame = null;
@@ -913,6 +914,7 @@
                 const tile = document.createElement('div');
                 tile.className = 'mine-tile';
                 tile.dataset.index = i;
+                tile.onclick = function() { clickTile(parseInt(this.dataset.index)); };
                 grid.appendChild(tile);
             }
         }
@@ -938,10 +940,7 @@
                 }
             }
             
-            document.querySelectorAll('.mine-tile').forEach(tile => {
-                tile.className = 'mine-tile';
-                tile.innerHTML = '';
-            });
+            createMinesGrid();
             
             document.getElementById('cashout-btn').disabled = true;
             document.getElementById('mines-multi').textContent = '1.00x';
@@ -1075,7 +1074,7 @@
             updateBlackjack();
             
             const val = handValue(state.blackjack.player);
-            if (val > 21) endBlackjack('Bust!');
+            if (val > 21) endBlackjack();
             else if (val === 21) stand();
         }
 
@@ -1094,19 +1093,16 @@
             if (d > 21) {
                 const win = state.blackjack.bet * 2;
                 state.balance += win;
-                endBlackjack('You win!');
                 showWin(win);
             } else if (p > d) {
                 const win = state.blackjack.bet * 2;
                 state.balance += win;
-                endBlackjack('You win!');
                 showWin(win);
             } else if (p === d) {
                 state.balance += state.blackjack.bet;
-                endBlackjack('Push!');
-            } else {
-                endBlackjack('Dealer wins!');
             }
+            
+            endBlackjack();
         }
 
         function updateBlackjack(showDealer = false) {
@@ -1127,7 +1123,7 @@
                 : cardValue(state.blackjack.dealer[0]);
         }
 
-        function endBlackjack(msg) {
+        function endBlackjack() {
             state.blackjack.active = false;
             document.getElementById('hit-btn').disabled = true;
             document.getElementById('stand-btn').disabled = true;
@@ -1152,7 +1148,6 @@
             updateBalance();
             
             state.roulette.spinning = true;
-            document.getElementById('spin-btn').disabled = true;
             
             const outcomes = [...Array(5).fill('red'), ...Array(5).fill('black'), 'green'];
             const result = outcomes[Math.floor(Math.random() * outcomes.length)];
@@ -1174,7 +1169,6 @@
                 
                 updateBalance();
                 state.roulette.spinning = false;
-                document.getElementById('spin-btn').disabled = false;
                 
                 setTimeout(() => {
                     wheel.style.transition = 'none';
@@ -1288,59 +1282,7 @@
             return { rank: 0, name: 'No Win', payout: 0 };
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateBalance();
-            
-            document.getElementById('plinko-tile').addEventListener('click', () => openGame('plinko'));
-            document.getElementById('mines-tile').addEventListener('click', () => openGame('mines'));
-            document.getElementById('blackjack-tile').addEventListener('click', () => openGame('blackjack'));
-            document.getElementById('roulette-tile').addEventListener('click', () => openGame('roulette'));
-            document.getElementById('poker-tile').addEventListener('click', () => openGame('poker'));
-            
-            document.getElementById('plinko-close').addEventListener('click', closeGame);
-            document.getElementById('mines-close').addEventListener('click', closeGame);
-            document.getElementById('blackjack-close').addEventListener('click', closeGame);
-            document.getElementById('roulette-close').addEventListener('click', closeGame);
-            document.getElementById('poker-close').addEventListener('click', closeGame);
-            
-            document.getElementById('drop-ball').addEventListener('click', dropBall);
-            document.getElementById('plinko-bet-10').addEventListener('click', () => document.getElementById('plinko-bet').value = 10);
-            document.getElementById('plinko-bet-50').addEventListener('click', () => document.getElementById('plinko-bet').value = 50);
-            document.getElementById('plinko-bet-100').addEventListener('click', () => document.getElementById('plinko-bet').value = 100);
-            
-            document.getElementById('start-mines').addEventListener('click', startMines);
-            document.getElementById('cashout-btn').addEventListener('click', cashout);
-            document.getElementById('mines-bet-10').addEventListener('click', () => document.getElementById('mines-bet').value = 10);
-            document.getElementById('mines-bet-50').addEventListener('click', () => document.getElementById('mines-bet').value = 50);
-            document.getElementById('mines-bet-100').addEventListener('click', () => document.getElementById('mines-bet').value = 100);
-            
-            document.getElementById('mines-grid').addEventListener('click', (e) => {
-                if (e.target.classList.contains('mine-tile')) {
-                    clickTile(parseInt(e.target.dataset.index));
-                }
-            });
-            
-            document.getElementById('deal-blackjack').addEventListener('click', dealBlackjack);
-            document.getElementById('hit-btn').addEventListener('click', hit);
-            document.getElementById('stand-btn').addEventListener('click', stand);
-            document.getElementById('blackjack-bet-10').addEventListener('click', () => document.getElementById('blackjack-bet').value = 10);
-            document.getElementById('blackjack-bet-50').addEventListener('click', () => document.getElementById('blackjack-bet').value = 50);
-            document.getElementById('blackjack-bet-100').addEventListener('click', () => document.getElementById('blackjack-bet').value = 100);
-            
-            document.getElementById('bet-red').addEventListener('click', () => selectBet('red'));
-            document.getElementById('bet-black').addEventListener('click', () => selectBet('black'));
-            document.getElementById('bet-green').addEventListener('click', () => selectBet('green'));
-            document.getElementById('spin-btn').addEventListener('click', spinWheel);
-            document.getElementById('roulette-bet-10').addEventListener('click', () => document.getElementById('roulette-bet').value = 10);
-            document.getElementById('roulette-bet-50').addEventListener('click', () => document.getElementById('roulette-bet').value = 50);
-            document.getElementById('roulette-bet-100').addEventListener('click', () => document.getElementById('roulette-bet').value = 100);
-            
-            document.getElementById('deal-poker').addEventListener('click', dealPoker);
-            document.getElementById('draw-btn').addEventListener('click', draw);
-            document.getElementById('poker-bet-10').addEventListener('click', () => document.getElementById('poker-bet').value = 10);
-            document.getElementById('poker-bet-50').addEventListener('click', () => document.getElementById('poker-bet').value = 50);
-            document.getElementById('poker-bet-100').addEventListener('click', () => document.getElementById('poker-bet').value = 100);
-        });
+        updateBalance();
     </script>
 </body>
 </html>
