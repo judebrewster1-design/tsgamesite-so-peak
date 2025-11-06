@@ -1,1661 +1,1925 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slither Arena - Happy Hour</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        
-        body {
-            font-family: 'Orbitron', sans-serif;
-            background: radial-gradient(circle at 50% 50%, #1a0033, #000000);
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-        }
-        
-        .screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            display: none;
-            z-index: 2000;
-        }
-        
-        #auth-screen {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .auth-container {
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 4px solid #00ff88;
-            padding: 40px;
-            border-radius: 25px;
-            max-width: 450px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
-        }
-        
-        .auth-container h1 {
-            font-size: 2.8em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-        
-        .auth-container .warning {
-            color: #ffaa00;
-            font-size: 0.85em;
-            text-align: center;
-            margin-bottom: 25px;
-            opacity: 0.9;
-        }
-        
-        .auth-container input {
-            width: 100%;
-            padding: 15px;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #00ff88;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .auth-container button {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            color: #000;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
-            transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-            margin-bottom: 10px;
-        }
-        
-        .auth-container button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,255,136,0.8);
-        }
-        
-        .register-link {
-            text-align: center;
-            color: #00ffff;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 0.9em;
-            padding: 10px;
-        }
-        
-        .register-link:hover {
-            text-decoration: underline;
-        }
-        
-        #control-select {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow-y: auto;
-            padding: 30px 20px;
-        }
-        
-        #control-select h1 {
-            font-size: 3em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
-            margin-bottom: 20px;
-        }
-        
-        .control-options {
-            display: flex;
-            gap: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        
-        .control-card {
-            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
-            border: 3px solid #00ff88;
-            border-radius: 20px;
-            padding: 30px;
-            width: 280px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(0,255,136,0.3);
-        }
-        
-        .control-card:hover {
-            transform: translateY(-10px) scale(1.05);
-            box-shadow: 0 20px 50px rgba(0,255,136,0.6);
-        }
-        
-        .control-card .icon {
-            font-size: 4em;
-            margin-bottom: 15px;
-        }
-        
-        .control-card h3 {
-            font-size: 1.6em;
-            color: #00ff88;
-            margin-bottom: 12px;
-        }
-        
-        #main-menu {
-            background: radial-gradient(circle at 50% 50%, #2d1b4e, #0a0015);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        .menu-container {
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 4px solid #00ff88;
-            padding: 40px;
-            border-radius: 25px;
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,255,136,0.5);
-        }
-        
-        .menu-container h1 {
-            font-size: 3em;
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
-            margin-bottom: 30px;
-        }
-        
-        .happy-hour-banner {
-            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
-            border: 4px solid #ffaa00;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .happy-hour-banner::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255,170,0,0.1) 10px,
-                rgba(255,170,0,0.1) 20px
-            );
-            animation: slide 20s linear infinite;
-        }
-        
-        @keyframes slide {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-        
-        .happy-hour-banner.active {
-            background: linear-gradient(145deg, #ffaa00, #ff8800);
-            border-color: #fff;
-            animation: pulse 2s infinite;
-        }
-        
-        .happy-hour-banner.active::before {
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255,255,255,0.2) 10px,
-                rgba(255,255,255,0.2) 20px
-            );
-        }
-        
-        .happy-hour-content {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .happy-hour-banner h3 {
-            color: #fff;
-            font-size: 2em;
-            margin-bottom: 12px;
-            text-shadow: 0 0 15px rgba(0,0,0,0.8);
-            letter-spacing: 2px;
-        }
-        
-        .happy-hour-banner.active h3 {
-            color: #000;
-            text-shadow: 0 0 20px rgba(255,255,255,0.8);
-        }
-        
-        .happy-hour-schedule {
-            background: rgba(0,0,0,0.4);
-            border: 2px solid rgba(255,170,0,0.5);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
-            font-size: 1.1em;
-        }
-        
-        .happy-hour-banner.active .happy-hour-schedule {
-            background: rgba(0,0,0,0.3);
-            border-color: rgba(255,255,255,0.6);
-        }
-        
-        .schedule-line {
-            color: #00ff88;
-            font-weight: 700;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .happy-hour-banner.active .schedule-line {
-            color: #fff;
-        }
-        
-        .schedule-icon {
-            font-size: 1.3em;
-        }
-        
-        .happy-hour-banner p {
-            color: #fff;
-            font-size: 1em;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
-        
-        .happy-hour-banner.active p {
-            color: #000;
-            font-weight: 700;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { 
-                box-shadow: 0 0 30px rgba(255,170,0,0.6), 0 0 60px rgba(255,170,0,0.3);
-                transform: scale(1);
-            }
-            50% { 
-                box-shadow: 0 0 50px rgba(255,170,0,0.9), 0 0 100px rgba(255,170,0,0.5);
-                transform: scale(1.02);
-            }
-        }
-        
-        .menu-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .menu-btn {
-            padding: 20px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            color: #000;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 20px;
-            font-weight: 900;
-            font-family: 'Orbitron', sans-serif;
-            transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-        }
-        
-        .menu-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(0,255,136,0.8);
-        }
-        
-        .menu-btn.shop {
-            background: linear-gradient(145deg, #ff00ff, #cc00cc);
-            box-shadow: 0 5px 20px rgba(255,0,255,0.5);
-        }
-        
-        .leaderboard {
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #00ff88;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .leaderboard h2 {
-            color: #00ff88;
-            margin-bottom: 15px;
-            font-size: 1.8em;
-        }
-        
-        .leader-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px;
-            margin: 8px 0;
-            background: rgba(0,255,136,0.1);
-            border-radius: 10px;
-            color: #fff;
-        }
-        
-        .leader-item.top1 { border: 2px solid gold; }
-        .leader-item.top2 { border: 2px solid silver; }
-        .leader-item.top3 { border: 2px solid #cd7f32; }
-        
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            display: none;
-        }
-        
-        #game {
-            display: block;
-            background: #000;
-        }
-        
-        .hud-panel {
-            position: fixed;
-            background: rgba(10, 0, 30, 0.9);
-            border: 2px solid #00ff88;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.4);
-        }
-        
-        #main-hud {
-            top: 10px;
-            left: 10px;
-            min-width: 180px;
-            font-size: 12px;
-        }
-        
-        #main-hud .stat {
-            display: flex;
-            justify-content: space-between;
-            margin: 8px 0;
-            color: #fff;
-        }
-        
-        .happy-hour-hud {
-            background: linear-gradient(145deg, #ffaa00, #ff8800);
-            border: 3px solid #fff;
-            border-radius: 12px;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 900;
-            color: #000;
-            animation: glow 1.5s infinite;
-            box-shadow: 0 0 20px rgba(255,170,0,0.8);
-        }
-        
-        @keyframes glow {
-            0%, 100% { 
-                box-shadow: 0 0 15px rgba(255,170,0,0.6);
-                transform: scale(1);
-            }
-            50% { 
-                box-shadow: 0 0 30px rgba(255,170,0,1);
-                transform: scale(1.05);
-            }
-        }
-        
-        .sprint-indicator {
-            color: #ffaa00;
-            font-size: 11px;
-            margin-top: 8px;
-            text-align: center;
-        }
-        
-        .sprint-indicator.active {
-            color: #00ff88;
-            font-weight: 900;
-        }
-        
-        #player-list {
-            top: 10px;
-            right: 180px;
-            min-width: 150px;
-            max-height: 225px;
-            overflow-y: auto;
-            font-size: 11px;
-        }
-        
-        #player-list h3 {
-            color: #00ff88;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(0,255,136,0.2);
-            color: #fff;
-        }
-        
-        #minimap {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            width: 140px;
-            height: 93px;
-            border: 3px solid #00ff88;
-            border-radius: 15px;
-            background: rgba(0,0,0,0.8);
-            box-shadow: 0 5px 20px rgba(0,255,136,0.4);
-        }
-        
-        #chat-box {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            width: 350px;
-            max-height: 200px;
-            background: rgba(10, 0, 30, 0.95);
-            border: 2px solid #00ff88;
-            border-radius: 15px;
-            padding: 12px;
-            display: none;
-        }
-        
-        #chat-messages {
-            height: 120px;
-            overflow-y: auto;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-        
-        .chat-msg {
-            color: #fff;
-            margin: 4px 0;
-        }
-        
-        .chat-msg .user {
-            color: #00ff88;
-            font-weight: 700;
-        }
-        
-        #chat-input {
-            flex: 1;
-            padding: 8px;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #00ff88;
-            border-radius: 8px;
-            color: #fff;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 12px;
-        }
-        
-        #chat-send {
-            padding: 8px 16px;
-            background: #00ff88;
-            color: #000;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-        }
-        
-        #chat-toggle {
-            position: fixed;
-            bottom: 220px;
-            left: 10px;
-            padding: 12px 20px;
-            background: rgba(0,255,136,0.9);
-            color: #000;
-            border: 2px solid #00ff88;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            display: none;
-            font-size: 13px;
-        }
-        
-        #death-screen {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 5px solid #ff0055;
-            padding: 50px;
-            border-radius: 25px;
-            text-align: center;
-            z-index: 3000;
-            display: none;
-            box-shadow: 0 20px 60px rgba(255,0,85,0.6);
-            min-width: 400px;
-        }
-        
-        #death-screen h2 {
-            color: #ff0055;
-            font-size: 3.5em;
-            margin-bottom: 25px;
-            text-shadow: 0 0 20px #ff0055;
-        }
-        
-        #death-screen .stat-line {
-            font-size: 1.3em;
-            margin: 12px 0;
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        #death-screen .stat-line .label {
-            color: #00ff88;
-        }
-        
-        #death-screen .stat-line .value {
-            color: #00ffff;
-            font-weight: 900;
-        }
-        
-        #death-screen .death-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        #death-screen button {
-            flex: 1;
-            padding: 18px;
-            border: none;
-            border-radius: 15px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-        
-        #respawn-btn {
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            color: #000;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-        }
-        
-        #respawn-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,255,136,0.8);
-        }
-        
-        #menu-btn {
-            background: linear-gradient(145deg, #0099ff, #0066cc);
-            color: #fff;
-            box-shadow: 0 5px 20px rgba(0,153,255,0.5);
-        }
-        
-        #menu-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,153,255,0.8);
-        }
-        
-        #shop-panel {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(145deg, #1a0033, #0a001a);
-            border: 4px solid #ff00ff;
-            padding: 30px;
-            border-radius: 25px;
-            max-width: 90vw;
-            max-height: 85vh;
-            overflow-y: auto;
-            z-index: 3000;
-            display: none;
-            box-shadow: 0 20px 60px rgba(255,0,255,0.5);
-        }
-        
-        #shop-panel h2 {
-            color: #ff00ff;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2em;
-        }
-        
-        .shop-info {
-            text-align: center;
-            color: #00ffff;
-            margin-bottom: 20px;
-            font-size: 1.2em;
-        }
-        
-        .skin-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .skin-card {
-            background: linear-gradient(145deg, #2a1a4d, #1a0a3d);
-            border: 3px solid #ff00ff;
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .skin-preview {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            border: 3px solid #00ff88;
-            background: #000;
-            overflow: hidden;
-        }
-        
-        .skin-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .skin-card h4 {
-            color: #00ff88;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }
-        
-        .skin-card button {
-            padding: 10px 20px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            color: #000;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 13px;
-            margin: 4px;
-        }
-        
-        #close-shop {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(145deg, #ff0055, #cc0044);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        
-        #mobile-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: none;
-            gap: 40px;
-            align-items: center;
-        }
-        
-        .joystick {
-            width: 130px;
-            height: 130px;
-            background: rgba(0,255,136,0.3);
-            border: 3px solid #00ff88;
-            border-radius: 50%;
-            position: relative;
-        }
-        
-        .joystick-handle {
-            width: 55px;
-            height: 55px;
-            background: #00ff88;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        #mobile-sprint-btn {
-            width: 90px;
-            height: 90px;
-            background: linear-gradient(145deg, #00ff88, #00cc66);
-            border: 4px solid #00ff88;
-            border-radius: 50%;
-            color: #000;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 900;
-            font-size: 14px;
-            box-shadow: 0 5px 20px rgba(0,255,136,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        #mobile-sprint-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 3px 15px rgba(0,255,136,0.7);
-            background: linear-gradient(145deg, #00cc66, #00aa55);
-        }
-        
-        #mobile-sprint-btn.sprinting {
-            background: linear-gradient(145deg, #ffaa00, #ff8800);
-            border-color: #ffaa00;
-            box-shadow: 0 5px 20px rgba(255,170,0,0.7);
-        }
-        
-        @media (max-width: 768px) {
-            .auth-container {
-                padding: 25px;
-            }
-            
-            .auth-container h1 {
-                font-size: 2.2em;
-            }
-            
-            #main-hud {
-                padding: 6px 8px;
-                min-width: 140px;
-                font-size: 9px;
-            }
-            
-            #player-list {
-                right: 120px;
-                min-width: 120px;
-                max-height: 170px;
-                padding: 10px;
-                font-size: 9px;
-            }
-            
-            #minimap {
-                width: 105px;
-                height: 70px;
-            }
-            
-            #chat-box {
-                width: calc(100vw - 20px);
-                max-height: 180px;
-            }
-            
-            .menu-container {
-                padding: 25px;
-            }
-            
-            .menu-container h1 {
-                font-size: 2.2em;
-            }
-            
-            #death-screen {
-                min-width: 90vw;
-                padding: 30px 20px;
-            }
-            
-            #death-screen h2 {
-                font-size: 2.5em;
-            }
-            
-            .skin-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 15px;
-            }
-        }
-        
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #00ff88;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-    <div id="auth-screen" class="screen" style="display: flex;">
-        <div class="auth-container">
-            <h1>SLITHER ARENA</h1>
-            <p class="warning">⚠️ Do NOT use your email or Google login!</p>
-            <input type="text" id="auth-username" placeholder="Username" maxlength="20" />
-            <input type="password" id="auth-password" placeholder="Password" maxlength="50" />
-            <button id="login-btn">LOGIN</button>
-            <div class="register-link" id="register-link">Create New Account</div>
-            <p id="auth-status" style="color: #ffaa00; text-align: center; margin-top: 15px;"></p>
-        </div>
-    </div>
-    
-    <div id="control-select" class="screen" style="display: none;">
-        <h1>CHOOSE CONTROLS</h1>
-        <div class="control-options">
-            <div class="control-card" data-mode="wasd">
-                <div class="icon">⌨️</div>
-                <h3>WASD</h3>
-                <p>Keyboard controls<br>SHIFT to sprint (-1 ball/sec)</p>
-            </div>
-            <div class="control-card" data-mode="cursor">
-                <div class="icon">🖱️</div>
-                <h3>CURSOR</h3>
-                <p>Follow mouse<br>SHIFT to sprint (-1 ball/sec)</p>
-            </div>
-            <div class="control-card" data-mode="mobile">
-                <div class="icon">📱</div>
-                <h3>MOBILE</h3>
-                <p>Touch joystick<br>Tap button to sprint</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="main-menu" class="screen" style="display: none;">
-        <div class="menu-container">
-            <h1>MAIN MENU</h1>
-            <div class="happy-hour-banner" id="happy-hour-banner">
-                <div class="happy-hour-content">
-                    <h3 id="hh-title">⚡ HAPPY HOUR ⚡</h3>
-                    <div class="happy-hour-schedule">
-                        <div class="schedule-line">
-                            <span class="schedule-icon">🕕</span>
-                            <span>DAILY: 6:00 PM - 7:00 PM</span>
-                        </div>
-                        <div class="schedule-line">
-                            <span class="schedule-icon">🎁</span>
-                            <span>3X POINTS MULTIPLIER</span>
-                        </div>
-                    </div>
-                    <p id="hh-info">Loading status...</p>
-                </div>
-            </div>
-            <div class="menu-buttons">
-                <button class="menu-btn" id="play-btn">PLAY</button>
-                <button class="menu-btn shop" id="menu-shop-btn">SHOP</button>
-                <button class="menu-btn" id="logout-btn">LOGOUT</button>
-            </div>
-            <div class="leaderboard">
-                <h2>TOP 10 PLAYERS</h2>
-                <div id="leaderboard-list"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="game-container" style="display: none;">
-        <canvas id="game"></canvas>
-        
-        <div id="main-hud" class="hud-panel">
-            <div class="stat"><span>SCORE</span><span id="score">0</span></div>
-            <div class="stat"><span>POINTS</span><span id="points">0</span></div>
-            <div class="stat"><span>HIGH</span><span id="highscore">0</span></div>
-            <div class="happy-hour-hud" id="hh-hud" style="display: none;">
-                🎉 HAPPY HOUR 2X POINTS! 🎉
-            </div>
-            <div class="sprint-indicator" id="sprint-indicator">SHIFT to sprint</div>
-        </div>
-        
-        <div id="player-list" class="hud-panel">
-            <h3>PLAYERS</h3>
-            <div id="players-container"></div>
-        </div>
-        
-        <canvas id="minimap"></canvas>
-        
-        <button id="chat-toggle">CHAT</button>
-        <div id="chat-box">
-            <div id="chat-messages"></div>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="chat-input" placeholder="Message..." maxlength="200" />
-                <button id="chat-send">SEND</button>
-            </div>
-        </div>
-        
-        <div id="death-screen">
-            <h2>ELIMINATED</h2>
-            <div class="stat-line"><span class="label">SCORE:</span> <span class="value" id="death-score">0</span></div>
-            <div class="stat-line"><span class="label">EARNED:</span> <span class="value" id="death-points">0</span></div>
-            <div class="stat-line"><span class="label">TOTAL:</span> <span class="value" id="death-total">0</span></div>
-            <div class="stat-line"><span class="label">BEST:</span> <span class="value" id="death-high">0</span></div>
-            <div class="death-buttons">
-                <button id="respawn-btn">RESPAWN</button>
-                <button id="menu-btn">MAIN MENU</button>
-            </div>
-        </div>
-        
-        <div id="mobile-controls">
-            <button id="mobile-sprint-btn">SPRINT</button>
-            <div class="joystick" id="joystick">
-                <div class="joystick-handle" id="joystick-handle"></div>
-            </div>
-        </div>
-    </div>
-    
-    <div id="shop-panel">
-        <h2>SKIN SHOP</h2>
-        <div class="shop-info">Your Points: <span id="shop-points">0</span></div>
-        <div class="skin-grid" id="skins-grid"></div>
-        <button id="close-shop">CLOSE</button>
-    </div>
-    
-    <script>
-        const WORLD_WIDTH = 3000;
-        const WORLD_HEIGHT = 2000;
-const WS_URL = 'wss://counseling-historic-newsletter-supplied.trycloudflare.com';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Crosshair, Volume2, VolumeX, Trophy, Settings, Play, Users, Zap, LogIn, UserPlus, LogOut, Crown, Star, Award } from 'lucide-react';
 
-        
-        let controlMode = null;
-        let ws = null;
-        let playerId = null;
-        let gameState = { snakes: {}, balls: [] };
-        let playerData = { points: 0, highScore: 0, ownedSkins: ['jude'] };
-        let camera = { x: 0, y: 0 };
-        let direction = { x: 1, y: 0 };
-        let isDead = false;
-        let currentUsername = '';
-        let currentPassword = '';
-        let currentSkinId = 'jude';
-        let chatUnlocked = false;
-        let mouseX = 0, mouseY = 0;
-        let joystickActive = false;
-        let skins = [
-            { id: 'jude', name: 'Jude', img: 'jude.png', cost: 0 },
-            { id: 'connor', name: 'Connor', img: 'connor.png', cost: 100 }
-        ];
-        let skinImages = {};
-        let lastInputTime = 0;
-        let gameLoopRunning = false;
-        let isSprinting = false;
-        let happyHourActive = false;
-        let happyHourEndTime = null;
-        
-        document.getElementById('login-btn').addEventListener('click', () => handleAuth(false));
-        document.getElementById('register-link').addEventListener('click', () => handleAuth(true));
-        document.getElementById('auth-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleAuth(false);
+const GAME_WIDTH = 6000;
+const GAME_HEIGHT = 4500;
+const VIEWPORT_WIDTH = 1400;
+const VIEWPORT_HEIGHT = 900;
+const PLAYER_SIZE = 30;
+const BULLET_SIZE = 8;
+const WEAPON_SIZE = 20;
+const HOUSE_SIZE = 140;
+const OBSTACLE_SIZE = 40;
+const MAX_PLAYERS = 15;
+const LOBBY_TIME = 15;
+const MINIMAP_SIZE = 220;
+const STORM_DAMAGE = 5;
+const STORM_TICK_RATE = 1000;
+const HEALTH_PACK_SIZE = 25;
+const HEALTH_PACK_HEAL = 30;
+
+const WEAPONS = [
+  { id: 1, name: 'Plasma Rifle', damage: 35, fireRate: 400, range: 350, speed: 12, color: '#00ffff', bullets: 30, style: 'plasma', icon: '🔫', rarity: 'common' },
+  { id: 2, name: 'Shotgun', damage: 60, fireRate: 800, range: 200, speed: 8, color: '#ff6600', bullets: 8, spread: 5, style: 'shotgun', icon: '💥', rarity: 'uncommon' },
+  { id: 3, name: 'Sniper', damage: 90, fireRate: 1500, range: 600, speed: 20, color: '#ff0000', bullets: 5, style: 'sniper', icon: '🎯', rarity: 'rare' },
+  { id: 4, name: 'Machine Gun', damage: 20, fireRate: 100, range: 300, speed: 15, color: '#ffff00', bullets: 100, style: 'machinegun', icon: '⚡', rarity: 'common' },
+  { id: 5, name: 'Rocket', damage: 100, fireRate: 2000, range: 400, speed: 6, color: '#ff00ff', bullets: 4, explosive: true, style: 'rocket', icon: '🚀', rarity: 'legendary' },
+  { id: 6, name: 'Laser Beam', damage: 15, fireRate: 50, range: 500, speed: 25, color: '#00ff00', bullets: 200, style: 'laser', icon: '✨', rarity: 'epic' },
+  { id: 7, name: 'Freeze Ray', damage: 25, fireRate: 600, range: 280, speed: 10, color: '#aaffff', bullets: 20, freeze: true, style: 'freeze', icon: '❄️', rarity: 'rare' },
+  { id: 8, name: 'Flamethrower', damage: 30, fireRate: 80, range: 180, speed: 7, color: '#ff4400', bullets: 50, style: 'flame', icon: '🔥', rarity: 'uncommon' },
+  { id: 9, name: 'Railgun', damage: 120, fireRate: 2500, range: 700, speed: 30, color: '#ffffff', bullets: 3, pierce: true, style: 'rail', icon: '⚔️', rarity: 'legendary' },
+  { id: 10, name: 'Grenade', damage: 80, fireRate: 1200, range: 350, speed: 5, color: '#88ff00', bullets: 10, arc: true, style: 'grenade', icon: '💣', rarity: 'epic' }
+];
+
+const SKINS = [
+  { id: 'chase', name: 'Chase', cost: 1500, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chase.png', color: '#ff1744', rarity: 'legendary' },
+  { id: 'caleb', name: 'Caleb', cost: 1200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/caleb.png', color: '#7c4dff', rarity: 'epic' },
+  { id: 'brody', name: 'Brody', cost: 1000, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/brody.png', color: '#00e676', rarity: 'epic' },
+  { id: 'connorV', name: 'Connor', cost: 900, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/sixseven.png', color: '#ffc400', rarity: 'rare' },
+  { id: 'jaxon', name: 'Jaxon', cost: 800, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jaxon.png', color: '#00b0ff', rarity: 'rare' },
+  { id: 'luca', name: 'Luca', cost: 400, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/luca.png', color: '#d500f9', rarity: 'uncommon' },
+  { id: 'charlie', name: 'Charlie', cost: 300, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/charlie.png', color: '#ff6d00', rarity: 'uncommon' },
+  { id: 'harly', name: 'Harly', cost: 250, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/harly.png', color: '#76ff03', rarity: 'common' },
+  { id: 'ollie', name: 'Ollie', cost: 200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ollie.png', color: '#18ffff', rarity: 'common' },
+  { id: 'connorD', name: 'Connor', cost: 175, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/connord.png', color: '#ff3d00', rarity: 'common' },
+  { id: 'jackn', name: 'Jackn', cost: 150, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jackn.png', color: '#651fff', rarity: 'common' },
+  { id: 'liam', name: 'Liam', cost: 125, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/liam.png', color: '#00e5ff', rarity: 'common' },
+  { id: 'jet', name: 'Jet', cost: 100, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jet.png', color: '#ffea00', rarity: 'common' },
+  { id: 'gavin', name: 'Gavin', cost: 75, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/gavin.png', color: '#ff1744', rarity: 'common' },
+  { id: 'ginger', name: 'Ginger', cost: 50, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ginger.png', color: '#ff9100', rarity: 'common' },
+  { id: 'chay', name: 'Chay', cost: 25, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chay.png', color: '#00e676', rarity: 'common' },
+  { id: 'jude', name: 'Jude', cost: 0, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jude.png', color: '#2979ff', rarity: 'starter' }
+];
+
+const generateMap = () => {
+  const houses = [];
+  const spacing = 500;
+  const margin = 400;
+  
+  for (let x = margin; x < GAME_WIDTH - margin; x += spacing) {
+    for (let y = margin; y < GAME_HEIGHT - margin; y += spacing) {
+      houses.push({
+        x: x + (Math.random() - 0.5) * 150,
+        y: y + (Math.random() - 0.5) * 150,
+        width: HOUSE_SIZE,
+        height: HOUSE_SIZE
+      });
+    }
+  }
+  
+  const obstacles = [];
+  for (let i = 0; i < 120; i++) {
+    obstacles.push({
+      x: Math.random() * GAME_WIDTH,
+      y: Math.random() * GAME_HEIGHT,
+      type: Math.random() > 0.5 ? 'tree' : 'rock'
+    });
+  }
+  
+  return { houses, obstacles };
+};
+
+const MAP_DATA = generateMap();
+
+const JudeleRoyal = () => {
+  const [gameState, setGameState] = useState('menu');
+  const [menuScreen, setMenuScreen] = useState('main');
+  const [playerName, setPlayerName] = useState('');
+  const [selectedSkin, setSelectedSkin] = useState('jude');
+  const [ownedSkins, setOwnedSkins] = useState(['jude']);
+  const [points, setPoints] = useState(0);
+  const [totalKills, setTotalKills] = useState(0);
+  const [totalWins, setTotalWins] = useState(0);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [leaderboard, setLeaderboard] = useState([]);
+  
+  const [lobbyTimer, setLobbyTimer] = useState(LOBBY_TIME);
+  const [players, setPlayers] = useState([]);
+  const [bullets, setBullets] = useState([]);
+  const [effects, setEffects] = useState([]);
+  const [pickups, setPickups] = useState([]);
+  const [keys, setKeys] = useState({});
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [worldMousePos, setWorldMousePos] = useState({ x: 0, y: 0 });
+  const [camera, setCamera] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(0.7);
+  const [showMinimap, setShowMinimap] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [stormRadius, setStormRadius] = useState(Math.max(GAME_WIDTH, GAME_HEIGHT));
+  const [stormCenter] = useState({ x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 });
+  const [wonGame, setWonGame] = useState(false);
+  const [killFeed, setKillFeed] = useState([]);
+
+  const canvasRef = useRef(null);
+  const gameLoopRef = useRef(null);
+  const stormTickRef = useRef(null);
+  const playerId = useRef(Math.random().toString(36).substr(2, 9));
+  const skinImages = useRef({});
+
+  // Load skin images
+  useEffect(() => {
+    SKINS.forEach(skin => {
+      const img = new Image();
+      img.src = skin.img;
+      img.onload = () => {
+        skinImages.current[skin.id] = img;
+      };
+    });
+  }, []);
+
+  // Load data from memory (simulated account system)
+  useEffect(() => {
+    const userData = JSON.parse(sessionStorage.getItem('judeleRoyalUser') || 'null');
+    if (userData) {
+      setIsLoggedIn(true);
+      setCurrentUser(userData);
+      setPoints(userData.points || 0);
+      setOwnedSkins(userData.ownedSkins || ['jude']);
+      setSelectedSkin(userData.selectedSkin || 'jude');
+      setTotalKills(userData.totalKills || 0);
+      setTotalWins(userData.totalWins || 0);
+      setGamesPlayed(userData.gamesPlayed || 0);
+      setPlayerName(userData.username || '');
+    }
+
+    // Load leaderboard
+    const storedLeaderboard = JSON.parse(sessionStorage.getItem('judeleRoyalLeaderboard') || '[]');
+    setLeaderboard(storedLeaderboard);
+  }, []);
+
+  // Save user data
+  const saveUserData = useCallback(() => {
+    if (isLoggedIn && currentUser) {
+      const userData = {
+        ...currentUser,
+        points,
+        ownedSkins,
+        selectedSkin,
+        totalKills,
+        totalWins,
+        gamesPlayed,
+        username: playerName
+      };
+      sessionStorage.setItem('judeleRoyalUser', JSON.stringify(userData));
+      
+      // Update leaderboard
+      let lb = [...leaderboard];
+      const userIndex = lb.findIndex(u => u.email === currentUser.email);
+      if (userIndex >= 0) {
+        lb[userIndex] = { ...lb[userIndex], ...userData };
+      } else {
+        lb.push(userData);
+      }
+      lb.sort((a, b) => (b.points || 0) - (a.points || 0));
+      setLeaderboard(lb);
+      sessionStorage.setItem('judeleRoyalLeaderboard', JSON.stringify(lb));
+    }
+  }, [isLoggedIn, currentUser, points, ownedSkins, selectedSkin, totalKills, totalWins, gamesPlayed, playerName, leaderboard]);
+
+  useEffect(() => {
+    saveUserData();
+  }, [points, ownedSkins, selectedSkin, totalKills, totalWins, gamesPlayed]);
+
+  // Authentication functions
+  const handleLogin = () => {
+    if (!authEmail || !authPassword) {
+      alert('Please enter email and password');
+      return;
+    }
+    
+    const users = JSON.parse(sessionStorage.getItem('judeleRoyalUsers') || '{}');
+    const user = users[authEmail];
+    
+    if (user && user.password === authPassword) {
+      setIsLoggedIn(true);
+      setCurrentUser(user);
+      setPoints(user.points || 0);
+      setOwnedSkins(user.ownedSkins || ['jude']);
+      setSelectedSkin(user.selectedSkin || 'jude');
+      setTotalKills(user.totalKills || 0);
+      setTotalWins(user.totalWins || 0);
+      setGamesPlayed(user.gamesPlayed || 0);
+      setPlayerName(user.username || authEmail.split('@')[0]);
+      sessionStorage.setItem('judeleRoyalUser', JSON.stringify(user));
+      setShowAuthModal(false);
+      setAuthEmail('');
+      setAuthPassword('');
+    } else {
+      alert('Invalid credentials');
+    }
+  };
+
+  const handleSignup = () => {
+    if (!authEmail || !authPassword) {
+      alert('Please enter email and password');
+      return;
+    }
+    
+    const users = JSON.parse(sessionStorage.getItem('judeleRoyalUsers') || '{}');
+    
+    if (users[authEmail]) {
+      alert('User already exists');
+      return;
+    }
+    
+    const newUser = {
+      email: authEmail,
+      password: authPassword,
+      username: authEmail.split('@')[0],
+      points: 0,
+      ownedSkins: ['jude'],
+      selectedSkin: 'jude',
+      totalKills: 0,
+      totalWins: 0,
+      gamesPlayed: 0,
+      createdAt: new Date().toISOString()
+    };
+    
+    users[authEmail] = newUser;
+    sessionStorage.setItem('judeleRoyalUsers', JSON.stringify(users));
+    
+    setIsLoggedIn(true);
+    setCurrentUser(newUser);
+    setPlayerName(newUser.username);
+    sessionStorage.setItem('judeleRoyalUser', JSON.stringify(newUser));
+    setShowAuthModal(false);
+    setAuthEmail('');
+    setAuthPassword('');
+  };
+
+  const handleLogout = () => {
+    saveUserData();
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    sessionStorage.removeItem('judeleRoyalUser');
+    setPoints(0);
+    setOwnedSkins(['jude']);
+    setSelectedSkin('jude');
+    setTotalKills(0);
+    setTotalWins(0);
+    setGamesPlayed(0);
+    setPlayerName('');
+  };
+
+  const playSound = useCallback((type) => {
+    if (!soundEnabled) return;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    switch(type) {
+      case 'shoot':
+        oscillator.frequency.value = 800;
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.1);
+        break;
+      case 'hit':
+        oscillator.frequency.value = 200;
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.15);
+        break;
+      case 'kill':
+        oscillator.frequency.value = 400;
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.3);
+        break;
+    }
+  }, [soundEnabled]);
+
+  const addKillFeed = useCallback((killerName, victimName, weapon) => {
+    const feed = {
+      id: Math.random(),
+      killer: killerName,
+      victim: victimName,
+      weapon: weapon.icon,
+      time: Date.now()
+    };
+    setKillFeed(prev => [feed, ...prev].slice(0, 5));
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      setKeys(prev => ({ ...prev, [e.key.toLowerCase()]: true }));
+      if (e.key >= '1' && e.key <= '3') {
+        const slot = parseInt(e.key) - 1;
+        setPlayers(prev => prev.map(p => 
+          p.id === playerId.current ? { ...p, currentWeaponSlot: slot } : p
+        ));
+      }
+      if (e.key === 'm' || e.key === 'M') setShowMinimap(prev => !prev);
+    };
+
+    const handleKeyUp = (e) => {
+      setKeys(prev => ({ ...prev, [e.key.toLowerCase()]: false }));
+    };
+
+    const handleMouseMove = (e) => {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+        setMousePos({ x: screenX, y: screenY });
+        setWorldMousePos({
+          x: camera.x + screenX / zoom,
+          y: camera.y + screenY / zoom
         });
-        
-        async function handleAuth(isRegister) {
-            const username = document.getElementById('auth-username').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
-            const status = document.getElementById('auth-status');
+      }
+    };
+
+    const handleMouseDown = (e) => {
+      if (gameState === 'playing' && e.button === 0) {
+        setKeys(prev => ({ ...prev, mouse: true }));
+      }
+    };
+
+    const handleMouseUp = (e) => {
+      if (e.button === 0) {
+        setKeys(prev => ({ ...prev, mouse: false }));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [gameState, camera, zoom]);
+
+  const startGame = () => {
+    if (!playerName.trim()) {
+      alert('Please enter your name!');
+      return;
+    }
+
+    setGameState('lobby');
+    setLobbyTimer(LOBBY_TIME);
+    setWonGame(false);
+    setStormRadius(Math.max(GAME_WIDTH, GAME_HEIGHT));
+    setKillFeed([]);
+
+    const newPlayer = {
+      id: playerId.current,
+      name: playerName,
+      skin: selectedSkin,
+      x: GAME_WIDTH / 2,
+      y: GAME_HEIGHT / 2,
+      health: 100,
+      maxHealth: 100,
+      weapons: [null, null, null],
+      currentWeaponSlot: 0,
+      angle: 0,
+      isPlayer: true,
+      kills: 0,
+      lastShot: 0,
+      speed: 5,
+      frozen: false,
+      frozenUntil: 0,
+      isDead: false
+    };
+
+    setPlayers([newPlayer]);
+
+    const initialPickups = [];
+    MAP_DATA.houses.forEach(house => {
+      const numPickups = Math.floor(Math.random() * 3) + 3;
+      for (let i = 0; i < numPickups; i++) {
+        if (Math.random() < 0.75) {
+          initialPickups.push({
+            id: Math.random(),
+            type: 'weapon',
+            item: WEAPONS[Math.floor(Math.random() * WEAPONS.length)],
+            x: house.x + Math.random() * (house.width - 40) + 20,
+            y: house.y + Math.random() * (house.height - 40) + 20
+          });
+        } else {
+          initialPickups.push({
+            id: Math.random(),
+            type: 'health',
+            x: house.x + Math.random() * (house.width - 40) + 20,
+            y: house.y + Math.random() * (house.height - 40) + 20
+          });
+        }
+      }
+    });
+
+    setPickups(initialPickups);
+    setBullets([]);
+    setEffects([]);
+  };
+
+  useEffect(() => {
+    if (gameState === 'lobby') {
+      const timer = setInterval(() => {
+        setLobbyTimer(prev => {
+          if (prev <= 1) {
+            const aiCount = MAX_PLAYERS - players.length;
+            const aiBots = [];
             
-            if (!username || !password) {
-                status.textContent = 'Enter username and password';
-                return;
+            for (let i = 0; i < aiCount; i++) {
+              const randomSkin = SKINS[Math.floor(Math.random() * SKINS.length)];
+              aiBots.push({
+                id: `ai_${i}`,
+                name: `Bot ${i + 1}`,
+                skin: randomSkin.id,
+                x: Math.random() * (GAME_WIDTH - 400) + 200,
+                y: Math.random() * (GAME_HEIGHT - 400) + 200,
+                health: 100,
+                maxHealth: 100,
+                weapons: [null, null, null],
+                currentWeaponSlot: 0,
+                angle: 0,
+                isAI: true,
+                kills: 0,
+                lastShot: 0,
+                speed: 4,
+                aiState: 'roam',
+                aiTarget: null,
+                aiDestination: {
+                  x: Math.random() * GAME_WIDTH,
+                  y: Math.random() * GAME_HEIGHT
+                },
+                frozen: false,
+                frozenUntil: 0,
+                isDead: false
+              });
             }
             
-            if (username.length < 3) {
-                status.textContent = 'Username must be 3+ characters';
-                return;
+            setPlayers(prev => [...prev, ...aiBots]);
+            setGameState('playing');
+            setGamesPlayed(prev => prev + 1);
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [gameState, players.length]);
+
+  useEffect(() => {
+    if (gameState === 'playing') {
+      stormTickRef.current = setInterval(() => {
+        setStormRadius(prev => Math.max(300, prev - 30));
+        
+        setPlayers(prevPlayers => prevPlayers.map(player => {
+          if (player.isDead) return player;
+          
+          const distFromCenter = Math.hypot(
+            player.x - stormCenter.x,
+            player.y - stormCenter.y
+          );
+          
+          if (distFromCenter > stormRadius) {
+            const newHealth = Math.max(0, player.health - STORM_DAMAGE);
+            if (newHealth === 0 && player.health > 0) {
+              playSound('kill');
+              addKillFeed('⚡ Storm', player.name, { icon: '💀' });
+              return { ...player, health: newHealth, isDead: true };
             }
-            
-            currentUsername = username;
-            currentPassword = password;
-            
-            status.textContent = isRegister ? 'Creating account...' : 'Logging in...';
-            connectForAuth(isRegister);
+            return { ...player, health: newHealth };
+          }
+          
+          return player;
+        }));
+      }, STORM_TICK_RATE);
+      
+      return () => clearInterval(stormTickRef.current);
+    }
+  }, [gameState, stormRadius, stormCenter, playSound, addKillFeed]);
+
+  const shootBullet = useCallback((player, weapon, angle) => {
+    if (player.isDead) return;
+    
+    playSound('shoot');
+    
+    setEffects(prev => [...prev, {
+      id: Math.random(),
+      type: 'muzzle',
+      x: player.x,
+      y: player.y,
+      color: weapon.color,
+      angle: angle,
+      life: 0,
+      maxLife: 8
+    }]);
+
+    const spreadCount = weapon.spread || 1;
+    let newBullets = [];
+    
+    for (let i = 0; i < spreadCount; i++) {
+      const bulletAngle = angle + (i - Math.floor(spreadCount / 2)) * 0.2;
+      newBullets.push({
+        id: Math.random(),
+        x: player.x,
+        y: player.y,
+        angle: bulletAngle,
+        speed: weapon.speed,
+        weapon: weapon,
+        ownerId: player.id,
+        distance: 0
+      });
+    }
+    
+    setBullets(prev => [...prev, ...newBullets]);
+    
+    setPlayers(prev => prev.map(p => {
+      if (p.id === player.id) {
+        const newWeapons = [...p.weapons];
+        if (newWeapons[p.currentWeaponSlot]) {
+          newWeapons[p.currentWeaponSlot] = {
+            ...newWeapons[p.currentWeaponSlot],
+            ammo: Math.max(0, newWeapons[p.currentWeaponSlot].ammo - 1)
+          };
         }
-        
-        function connectForAuth(isRegister) {
-            ws = new WebSocket(WS_URL);
-            
-            ws.onopen = () => {
-                ws.send(JSON.stringify({
-                    type: isRegister ? 'register' : 'login',
-                    username: currentUsername,
-                    password: currentPassword
-                }));
-            };
-            
-            ws.onmessage = (e) => {
-                const msg = JSON.parse(e.data);
-                
-                if (msg.type === 'authSuccess') {
-                    playerData = msg.playerData;
-                    currentSkinId = msg.currentSkin || 'jude';
-                    skins = msg.skins || [];
-                    loadSkinImages();
-                    updateLeaderboard(msg.leaderboard || []);
-                    
-                    if (msg.happyHour) {
-                        updateHappyHourStatus(msg.happyHour);
-                    }
-                    
-                    document.getElementById('auth-screen').style.display = 'none';
-                    document.getElementById('main-menu').style.display = 'flex';
-                    setupGameHandlers();
-                } else if (msg.type === 'authError') {
-                    document.getElementById('auth-status').textContent = msg.message;
+        return { ...p, weapons: newWeapons, lastShot: Date.now() };
+      }
+      return p;
+    }));
+  }, [playSound]);
+
+  useEffect(() => {
+    if (gameState === 'playing') {
+      gameLoopRef.current = setInterval(() => {
+        setEffects(prev => 
+          prev.map(e => ({ ...e, life: e.life + 1 }))
+              .filter(e => e.life < e.maxLife)
+        );
+
+        setPlayers(prev => {
+          const currentTime = Date.now();
+          
+          return prev.map(player => {
+            if (player.isDead) return player;
+
+            let newX = player.x;
+            let newY = player.y;
+            let newAngle = player.angle;
+            let newWeapons = [...player.weapons];
+            let newFrozen = player.frozen;
+
+            if (player.frozen && currentTime > player.frozenUntil) {
+              newFrozen = false;
+            }
+
+            if (player.isPlayer && !newFrozen) {
+              let currentSpeed = player.speed;
+              if (keys.shift) currentSpeed *= 1.5;
+              
+              if (keys.w) newY -= currentSpeed;
+              if (keys.s) newY += currentSpeed;
+              if (keys.a) newX -= currentSpeed;
+              if (keys.d) newX += currentSpeed;
+
+              newAngle = Math.atan2(
+                worldMousePos.y - player.y,
+                worldMousePos.x - player.x
+              );
+
+              const weapon = player.weapons[player.currentWeaponSlot];
+              if (keys.mouse && weapon && weapon.ammo > 0 && 
+                  currentTime - player.lastShot > weapon.fireRate) {
+                shootBullet(player, weapon, newAngle);
+              }
+            } else if (player.isAI && !newFrozen) {
+              const aliveOpponents = prev.filter(p => 
+                p.id !== player.id && p.health > 0 && !p.isDead
+              );
+              
+              const closestPlayer = aliveOpponents
+                .map(p => ({
+                  ...p,
+                  dist: Math.hypot(p.x - player.x, p.y - player.y)
+                }))
+                .sort((a, b) => a.dist - b.dist)[0];
+
+              const needsWeapon = player.weapons.every(w => !w || w.ammo <= 0);
+
+              if (needsWeapon) {
+                const nearestPickup = pickups
+                  .filter(p => p.type === 'weapon')
+                  .map(pickup => ({
+                    ...pickup,
+                    dist: Math.hypot(pickup.x - player.x, pickup.y - player.y)
+                  }))
+                  .sort((a, b) => a.dist - b.dist)[0];
+
+                if (nearestPickup) {
+                  newAngle = Math.atan2(
+                    nearestPickup.y - player.y,
+                    nearestPickup.x - player.x
+                  );
+                  newX += Math.cos(newAngle) * player.speed;
+                  newY += Math.sin(newAngle) * player.speed;
                 }
-            };
-            
-            ws.onerror = () => {
-                document.getElementById('auth-status').textContent = 'Connection error';
-            };
-        }
-        
-        function setupGameHandlers() {
-            ws.onmessage = (e) => {
-                const msg = JSON.parse(e.data);
-                
-                if (msg.type === 'welcome') {
-                    playerId = msg.id;
-                    playerData = msg.playerData;
-                } else if (msg.type === 'death') {
-                    isDead = true;
-                    isSprinting = false;
-                    playerData.points = msg.totalPoints;
-                    playerData.highScore = msg.highScore;
-                    
-                    document.getElementById('death-score').textContent = msg.score;
-                    document.getElementById('death-points').textContent = msg.points;
-                    document.getElementById('death-total').textContent = msg.totalPoints;
-                    document.getElementById('death-high').textContent = msg.highScore;
-                    document.getElementById('death-screen').style.display = 'block';
-                    updateSprintIndicator();
-                } else if (msg.type === 'state') {
-                    gameState.snakes = {};
-                    for (const id in msg.snakes) {
-                        const s = msg.snakes[id];
-                        gameState.snakes[id] = {
-                            body: s.b.map(p => ({ x: p[0], y: p[1] })),
-                            score: s.s,
-                            isBot: s.i,
-                            username: s.u,
-                            skinId: s.sk || 'jude'
-                        };
-                    }
-                    gameState.balls = msg.balls;
-                    updateHUD();
-                } else if (msg.type === 'chatMessage') {
-                    addChat(msg.username, msg.message);
-                } else if (msg.type === 'skinPurchased') {
-                    playerData.ownedSkins.push(msg.skinId);
-                    playerData.points = msg.points;
-                    updateShop();
-                } else if (msg.type === 'leaderboardUpdate') {
-                    updateLeaderboard(msg.leaderboard);
-                } else if (msg.type === 'happyHourUpdate') {
-                    updateHappyHourStatus(msg.happyHour);
+              } else if (closestPlayer && closestPlayer.dist < 500) {
+                newAngle = Math.atan2(
+                  closestPlayer.y - player.y,
+                  closestPlayer.x - player.x
+                );
+
+                if (closestPlayer.dist > 200) {
+                  newX += Math.cos(newAngle) * player.speed;
+                  newY += Math.sin(newAngle) * player.speed;
                 }
-            };
-        }
-        
-        function updateHappyHourStatus(hhData) {
-            happyHourActive = hhData.active;
-            happyHourEndTime = hhData.endsAt;
-            
-            const banner = document.getElementById('happy-hour-banner');
-            const title = document.getElementById('hh-title');
-            const info = document.getElementById('hh-info');
-            const hhHud = document.getElementById('hh-hud');
-            
-            if (happyHourActive) {
-                banner.classList.add('active');
-                title.textContent = '🔥 HAPPY HOUR ACTIVE NOW! 🔥';
-                
-                const now = new Date();
-                const endTime = new Date(happyHourEndTime);
-                const minsLeft = Math.ceil((endTime - now) / 60000);
-                
-                info.innerHTML = `<strong>GET IN NOW!</strong> Ends at ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} (${minsLeft} min left)`;
-                hhHud.style.display = 'block';
-                hhHud.textContent = '🎉 3X POINTS ACTIVE! 🎉';
-                
-                const updateTimer = setInterval(() => {
-                    if (happyHourActive && happyHourEndTime) {
-                        const now = new Date();
-                        const endTime = new Date(happyHourEndTime);
-                        const mins = Math.ceil((endTime - now) / 60000);
-                        if (mins > 0) {
-                            info.innerHTML = `<strong>GET IN NOW!</strong> Ends at ${endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} (${mins} min left)`;
-                        } else {
-                            clearInterval(updateTimer);
-                        }
-                    } else {
-                        clearInterval(updateTimer);
+
+                const weapon = player.weapons[player.currentWeaponSlot];
+                if (weapon && weapon.ammo > 0 && 
+                    currentTime - player.lastShot > weapon.fireRate &&
+                    closestPlayer.dist < weapon.range) {
+                  shootBullet(player, weapon, newAngle + (Math.random() - 0.5) * 0.15);
+                }
+              } else {
+                const distToDest = Math.hypot(
+                  player.aiDestination.x - player.x,
+                  player.aiDestination.y - player.y
+                );
+
+                if (distToDest < 50 || Math.random() < 0.01) {
+                  player.aiDestination = {
+                    x: Math.random() * GAME_WIDTH,
+                    y: Math.random() * GAME_HEIGHT
+                  };
+                }
+
+                newAngle = Math.atan2(
+                  player.aiDestination.y - player.y,
+                  player.aiDestination.x - player.x
+                );
+                newX += Math.cos(newAngle) * player.speed * 0.6;
+                newY += Math.sin(newAngle) * player.speed * 0.6;
+              }
+            }
+
+            newX = Math.max(PLAYER_SIZE, Math.min(GAME_WIDTH - PLAYER_SIZE, newX));
+            newY = Math.max(PLAYER_SIZE, Math.min(GAME_HEIGHT - PLAYER_SIZE, newY));
+
+            MAP_DATA.obstacles.forEach(obs => {
+              const dist = Math.hypot(newX - obs.x, newY - obs.y);
+              if (dist < OBSTACLE_SIZE) {
+                const pushAngle = Math.atan2(newY - obs.y, newX - obs.x);
+                newX = obs.x + Math.cos(pushAngle) * OBSTACLE_SIZE;
+                newY = obs.y + Math.sin(pushAngle) * OBSTACLE_SIZE;
+              }
+            });
+
+            setPickups(prevPickups => {
+              return prevPickups.filter(pickup => {
+                const dist = Math.hypot(pickup.x - newX, pickup.y - newY);
+                if (dist < PLAYER_SIZE / 2 + WEAPON_SIZE / 2) {
+                  if (pickup.type === 'weapon') {
+                    const emptySlot = newWeapons.findIndex(w => !w || w.ammo <= 0);
+                    if (emptySlot !== -1) {
+                      newWeapons[emptySlot] = { ...pickup.item, ammo: pickup.item.bullets };
+                      playSound('hit');
+                      return false;
                     }
-                }, 30000);
+                  } else if (pickup.type === 'health' && player.health < player.maxHealth) {
+                    player.health = Math.min(player.maxHealth, player.health + HEALTH_PACK_HEAL);
+                    playSound('hit');
+                    return false;
+                  }
+                }
+                return true;
+              });
+            });
+
+            return {
+              ...player,
+              x: newX,
+              y: newY,
+              angle: newAngle,
+              weapons: newWeapons,
+              frozen: newFrozen
+            };
+          });
+        });
+
+        setBullets(prevBullets => {
+          let updatedBullets = prevBullets.map(bullet => {
+            let newX = bullet.x + Math.cos(bullet.angle) * bullet.speed;
+            let newY = bullet.y + Math.sin(bullet.angle) * bullet.speed;
+            
+            return {
+              ...bullet,
+              x: newX,
+              y: newY,
+              distance: bullet.distance + bullet.speed
+            };
+          });
+
+          const bulletsToRemove = new Set();
+
+          updatedBullets.forEach((bullet, bulletIdx) => {
+            if (bullet.distance > bullet.weapon.range ||
+                bullet.x < 0 || bullet.x > GAME_WIDTH ||
+                bullet.y < 0 || bullet.y > GAME_HEIGHT) {
+              bulletsToRemove.add(bulletIdx);
+              return;
+            }
+
+            MAP_DATA.obstacles.forEach(obs => {
+              const dist = Math.hypot(bullet.x - obs.x, bullet.y - obs.y);
+              if (dist < OBSTACLE_SIZE && !bullet.weapon.pierce) {
+                bulletsToRemove.add(bulletIdx);
+                setEffects(prev => [...prev, {
+                  id: Math.random(),
+                  type: 'hit',
+                  x: bullet.x,
+                  y: bullet.y,
+                  color: bullet.weapon.color,
+                  life: 0,
+                  maxLife: 20
+                }]);
+              }
+            });
+
+            setPlayers(prevPlayers => prevPlayers.map(player => {
+              if (player.id !== bullet.ownerId && player.health > 0 && !player.isDead) {
+                const dist = Math.hypot(bullet.x - player.x, bullet.y - player.y);
+                if (dist < PLAYER_SIZE / 2) {
+                  if (!bullet.weapon.pierce) {
+                    bulletsToRemove.add(bulletIdx);
+                  }
+
+                  setEffects(prev => [...prev, {
+                    id: Math.random(),
+                    type: 'hit',
+                    x: player.x,
+                    y: player.y,
+                    color: bullet.weapon.color,
+                    life: 0,
+                    maxLife: 20
+                  }]);
+
+                  playSound('hit');
+
+                  if (bullet.weapon.explosive) {
+                    setEffects(prev => [...prev, {
+                      id: Math.random(),
+                      type: 'explosion',
+                      x: bullet.x,
+                      y: bullet.y,
+                      color: bullet.weapon.color,
+                      life: 0,
+                      maxLife: 30
+                    }]);
+                  }
+
+                  const newHealth = Math.max(0, player.health - bullet.weapon.damage);
+                  let frozen = player.frozen;
+                  let frozenUntil = player.frozenUntil;
+
+                  if (bullet.weapon.freeze) {
+                    frozen = true;
+                    frozenUntil = Date.now() + 2500;
+                  }
+
+                  if (newHealth === 0 && player.health > 0) {
+                    playSound('kill');
+                    
+                    const killer = prevPlayers.find(p => p.id === bullet.ownerId);
+                    if (killer) {
+                      addKillFeed(killer.name, player.name, bullet.weapon);
+                    }
+                    
+                    if (bullet.ownerId === playerId.current) {
+                      setPoints(prev => prev + 10);
+                      setTotalKills(prev => prev + 1);
+                    }
+                    
+                    setPlayers(prev2 => prev2.map(p2 => 
+                      p2.id === bullet.ownerId ? { ...p2, kills: p2.kills + 1 } : p2
+                    ));
+                    
+                    return { ...player, health: newHealth, isDead: true };
+                  }
+
+                  return { ...player, health: newHealth, frozen, frozenUntil };
+                }
+              }
+              return player;
+            }));
+          });
+
+          return updatedBullets.filter((_, idx) => !bulletsToRemove.has(idx));
+        });
+
+        const alivePlayers = players.filter(p => p.health > 0 && !p.isDead);
+        if (alivePlayers.length === 1) {
+          const winner = alivePlayers[0];
+          if (winner.id === playerId.current && !wonGame) {
+            setWonGame(true);
+            setPoints(prev => prev + 100);
+            setTotalWins(prev => prev + 1);
+            playSound('kill');
+          }
+          setTimeout(() => {
+            setGameState('gameover');
+          }, 2000);
+        }
+      }, 1000 / 60);
+
+      return () => clearInterval(gameLoopRef.current);
+    }
+  }, [gameState, keys, worldMousePos, players, pickups, wonGame, shootBullet, playSound, addKillFeed]);
+
+  useEffect(() => {
+    if (gameState === 'playing') {
+      const player = players.find(p => p.id === playerId.current);
+      if (player && !player.isDead) {
+        const targetX = player.x - VIEWPORT_WIDTH / (2 * zoom);
+        const targetY = player.y - VIEWPORT_HEIGHT / (2 * zoom);
+        setCamera({
+          x: Math.max(0, Math.min(GAME_WIDTH - VIEWPORT_WIDTH / zoom, targetX)),
+          y: Math.max(0, Math.min(GAME_HEIGHT - VIEWPORT_HEIGHT / zoom, targetY))
+        });
+      }
+    }
+  }, [players, gameState, zoom]);
+
+  const buySkin = (skin) => {
+    if (points >= skin.cost && !ownedSkins.includes(skin.id)) {
+      setPoints(prev => prev - skin.cost);
+      setOwnedSkins(prev => [...prev, skin.id]);
+      setSelectedSkin(skin.id);
+      playSound('hit');
+    }
+  };
+
+  const getRarityColor = (rarity) => {
+    switch(rarity) {
+      case 'legendary': return 'from-yellow-500 to-orange-500';
+      case 'epic': return 'from-purple-500 to-pink-500';
+      case 'rare': return 'from-blue-500 to-cyan-500';
+      case 'uncommon': return 'from-green-500 to-emerald-500';
+      default: return 'from-gray-500 to-gray-600';
+    }
+  };
+
+  const drawWeapon = (ctx, weapon, x, y, size, angle) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    const style = weapon.style;
+    ctx.fillStyle = weapon.color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = weapon.color;
+
+    if (style === 'plasma') {
+      ctx.fillRect(-size / 2, -size / 8, size * 0.8, size / 4);
+      ctx.fillRect(size / 4, -size / 6, size / 8, size / 3);
+    } else if (style === 'shotgun') {
+      ctx.fillRect(-size / 2, -size / 6, size * 0.7, size / 3);
+      ctx.fillRect(size / 6, -size / 4, size / 10, size / 2);
+    } else if (style === 'sniper') {
+      ctx.strokeStyle = weapon.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-size / 2, 0);
+      ctx.lineTo(size / 2, 0);
+      ctx.stroke();
+      ctx.fillRect(size / 3, -size / 6, size / 6, size / 3);
+    } else if (style === 'rocket') {
+      ctx.beginPath();
+      ctx.moveTo(size / 2, 0);
+      ctx.lineTo(-size / 3, -size / 4);
+      ctx.lineTo(-size / 2, 0);
+      ctx.lineTo(-size / 3, size / 4);
+      ctx.closePath();
+      ctx.fill();
+    } else if (style === 'laser') {
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-size / 2, 0);
+      ctx.lineTo(size / 2, 0);
+      ctx.stroke();
+    } else if (style === 'freeze') {
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI * 2 / 6) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * size / 2, Math.sin(a) * size / 2);
+        ctx.stroke();
+      }
+    } else if (style === 'flame') {
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(i * size / 4 - size / 4, 0, size / 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (style === 'rail') {
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-size / 2, 0);
+      ctx.lineTo(size / 2, 0);
+      ctx.stroke();
+    } else if (style === 'grenade') {
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(-size / 10, -size / 2, size / 5, size / 4);
+    } else {
+      ctx.fillRect(-size / 2, -size / 8, size * 0.7, size / 4);
+      ctx.fillRect(size / 6, -size / 6, size / 8, size / 3);
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+
+    ctx.save();
+    ctx.scale(zoom, zoom);
+    ctx.translate(-camera.x, -camera.y);
+
+    ctx.fillStyle = '#2a5a2a';
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    ctx.strokeStyle = '#1a4a1a';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < GAME_WIDTH; i += 50) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, GAME_HEIGHT);
+      ctx.stroke();
+    }
+    for (let i = 0; i < GAME_HEIGHT; i += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(GAME_WIDTH, i);
+      ctx.stroke();
+    }
+
+    MAP_DATA.houses.forEach(house => {
+      ctx.fillStyle = '#8b4513';
+      ctx.fillRect(house.x, house.y, house.width, house.height);
+      ctx.strokeStyle = '#654321';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(house.x, house.y, house.width, house.height);
+      
+      ctx.fillStyle = '#333';
+      ctx.fillRect(house.x + house.width / 2 - 18, house.y + house.height - 35, 36, 35);
+      
+      ctx.fillStyle = '#87ceeb';
+      ctx.fillRect(house.x + 25, house.y + 25, 30, 30);
+      ctx.fillRect(house.x + house.width - 55, house.y + 25, 30, 30);
+      
+      ctx.fillStyle = '#a0522d';
+      ctx.beginPath();
+      ctx.moveTo(house.x, house.y);
+      ctx.lineTo(house.x + house.width / 2, house.y - 35);
+      ctx.lineTo(house.x + house.width, house.y);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    MAP_DATA.obstacles.forEach(obs => {
+      if (obs.type === 'tree') {
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(obs.x - 6, obs.y - 6, 12, 24);
+        ctx.fillStyle = '#228b22';
+        ctx.beginPath();
+        ctx.arc(obs.x, obs.y - 12, 22, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#808080';
+        ctx.beginPath();
+        ctx.arc(obs.x, obs.y, 22, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    ctx.strokeStyle = '#ff00ff';
+    ctx.lineWidth = 8;
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = '#ff00ff';
+    ctx.beginPath();
+    ctx.arc(stormCenter.x, stormCenter.y, stormRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    pickups.forEach(pickup => {
+      ctx.save();
+      ctx.shadowBlur = 20;
+      if (pickup.type === 'weapon') {
+        ctx.shadowColor = pickup.item.color;
+        ctx.strokeStyle = pickup.item.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(pickup.x, pickup.y, WEAPON_SIZE, 0, Math.PI * 2);
+        ctx.stroke();
+        drawWeapon(ctx, pickup.item, pickup.x, pickup.y, 18, 0);
+      } else {
+        ctx.shadowColor = '#00ff00';
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(pickup.x, pickup.y, HEALTH_PACK_SIZE, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(pickup.x - 3, pickup.y - 10, 6, 20);
+        ctx.fillRect(pickup.x - 10, pickup.y - 3, 20, 6);
+      }
+      ctx.restore();
+    });
+
+    players.forEach(player => {
+      if (player.isDead) return;
+
+      const skinColor = SKINS.find(s => s.id === player.skin)?.color || '#ffffff';
+      const skinImage = skinImages.current[player.skin];
+
+      ctx.save();
+      ctx.translate(player.x, player.y);
+
+      if (skinImage && skinImage.complete && skinImage.naturalWidth > 0) {
+        ctx.save();
+        ctx.rotate(player.angle + Math.PI / 2);
+        ctx.drawImage(skinImage, -PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = skinColor;
+        ctx.beginPath();
+        ctx.arc(0, 0, PLAYER_SIZE / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      const weapon = player.weapons[player.currentWeaponSlot];
+      if (weapon) {
+        ctx.save();
+        ctx.rotate(player.angle);
+        ctx.translate(PLAYER_SIZE / 2, 0);
+        drawWeapon(ctx, weapon, 0, 0, WEAPON_SIZE, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      if (player.frozen) {
+        ctx.fillStyle = 'rgba(170, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, PLAYER_SIZE / 2 + 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#333';
+      ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, 40, 5);
+      ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
+      ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, (player.health / player.maxHealth) * 40, 5);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.strokeText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
+      ctx.fillText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
+    });
+
+    bullets.forEach(bullet => {
+      ctx.fillStyle = bullet.weapon.color;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = bullet.weapon.color;
+      ctx.beginPath();
+      ctx.arc(bullet.x, bullet.y, BULLET_SIZE / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+
+    effects.forEach(effect => {
+      const progress = effect.life / effect.maxLife;
+      ctx.globalAlpha = 1 - progress;
+
+      if (effect.type === 'muzzle') {
+        ctx.fillStyle = effect.color;
+        ctx.shadowBlur = 25;
+        ctx.shadowColor = effect.color;
+        ctx.beginPath();
+        ctx.arc(
+          effect.x + Math.cos(effect.angle) * 20,
+          effect.y + Math.sin(effect.angle) * 20,
+          15 * (1 - progress),
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      } else if (effect.type === 'explosion') {
+        ctx.strokeStyle = effect.color;
+        ctx.lineWidth = 6;
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = effect.color;
+        ctx.beginPath();
+        ctx.arc(effect.x, effect.y, 60 * progress, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (effect.type === 'hit') {
+        ctx.strokeStyle = effect.color;
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = effect.color;
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI * 2 / 6) * i;
+          ctx.beginPath();
+          ctx.moveTo(effect.x, effect.y);
+          ctx.lineTo(
+            effect.x + Math.cos(angle) * 20 * progress,
+            effect.y + Math.sin(angle) * 20 * progress
+          );
+          ctx.stroke();
+        }
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    });
+
+    ctx.restore();
+
+    if (gameState === 'playing') {
+      const player = players.find(p => p.id === playerId.current);
+      
+      if (player && !player.isDead) {
+        const weapon = player.weapons[player.currentWeaponSlot];
+        if (weapon) {
+          ctx.fillStyle = 'rgba(0,0,0,0.8)';
+          ctx.fillRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
+          ctx.strokeStyle = weapon.color;
+          ctx.lineWidth = 3;
+          ctx.strokeRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
+          
+          drawWeapon(ctx, weapon, VIEWPORT_WIDTH / 2 - 70, VIEWPORT_HEIGHT - 40, 35, 0);
+          
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 18px Arial';
+          ctx.textAlign = 'left';
+          ctx.fillText(weapon.name, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 50);
+          ctx.font = 'bold 14px Arial';
+          ctx.fillText(`${weapon.ammo}/${weapon.bullets}`, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 28);
+        }
+
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(20, VIEWPORT_HEIGHT - 70, 180, 60);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(`HP: ${player.health}`, 30, VIEWPORT_HEIGHT - 40);
+        ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
+        ctx.fillRect(30, VIEWPORT_HEIGHT - 25, (player.health / player.maxHealth) * 150, 15);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(VIEWPORT_WIDTH - 200, VIEWPORT_HEIGHT - 70, 180, 60);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH - 30, VIEWPORT_HEIGHT - 40);
+
+        const aliveCount = players.filter(p => !p.isDead).length;
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(VIEWPORT_WIDTH / 2 - 100, 20, 200, 50);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 26px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Alive: ${aliveCount}/${MAX_PLAYERS}`, VIEWPORT_WIDTH / 2, 52);
+
+        if (killFeed.length > 0) {
+          killFeed.slice(0, 5).forEach((feed, index) => {
+            const age = Date.now() - feed.time;
+            if (age < 5000) {
+              ctx.globalAlpha = Math.max(0, 1 - age / 5000);
+              ctx.fillStyle = 'rgba(0,0,0,0.7)';
+              ctx.fillRect(VIEWPORT_WIDTH - 320, 80 + index * 35, 300, 30);
+              ctx.fillStyle = '#fff';
+              ctx.font = 'bold 14px Arial';
+              ctx.textAlign = 'right';
+              ctx.fillText(`${feed.killer} ${feed.weapon} ${feed.victim}`, VIEWPORT_WIDTH - 30, 100 + index * 35);
+              ctx.globalAlpha = 1;
+            }
+          });
+        }
+
+        if (showMinimap) {
+          ctx.fillStyle = 'rgba(0,0,0,0.8)';
+          ctx.fillRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
+
+          const scaleX = MINIMAP_SIZE / GAME_WIDTH;
+          const scaleY = MINIMAP_SIZE / GAME_HEIGHT;
+
+          ctx.strokeStyle = '#ff00ff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(
+            VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + stormCenter.x * scaleX,
+            20 + stormCenter.y * scaleY,
+            stormRadius * scaleX,
+            0,
+            Math.PI * 2
+          );
+          ctx.stroke();
+
+          players.forEach(p => {
+            if (p.isDead) return;
+            if (p.id === playerId.current) {
+              ctx.fillStyle = '#00f';
             } else {
-                banner.classList.remove('active');
-                title.textContent = '⚡ HAPPY HOUR ⚡';
-                
-                if (hhData.nextStart) {
-                    const nextTime = new Date(hhData.nextStart);
-                    const now = new Date();
-                    const minsUntil = Math.ceil((nextTime - now) / 60000);
-                    const hoursUntil = Math.floor(minsUntil / 60);
-                    
-                    if (hoursUntil > 0) {
-                        info.innerHTML = `Next event: <strong>${nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong> (in ${hoursUntil}h ${minsUntil % 60}m)`;
-                    } else {
-                        info.innerHTML = `Starting soon at <strong>${nextTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</strong> (${minsUntil} minutes!)`;
-                    }
-                } else {
-                    info.textContent = 'Check back daily at 6:00 PM!';
-                }
-                hhHud.style.display = 'none';
+              ctx.fillStyle = '#f00';
             }
+            ctx.beginPath();
+            ctx.arc(
+              VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + p.x * scaleX,
+              20 + p.y * scaleY,
+              4,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          });
         }
-        
-        document.querySelectorAll('.control-card').forEach(card => {
-            card.addEventListener('click', () => {
-                controlMode = card.dataset.mode;
-                document.getElementById('control-select').style.display = 'none';
-                document.getElementById('game-container').style.display = 'block';
+      } else if (player && player.isDead) {
+        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+        ctx.fillStyle = '#ff0000';
+        ctx.font = 'bold 72px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.strokeText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
+        ctx.fillText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 32px Arial';
+        ctx.strokeText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
+        ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
+      }
+    }
+  }, [players, camera, zoom, gameState, pickups, effects, bullets, showMinimap, stormRadius, stormCenter, killFeed]);
+
+  const renderMenu = () => {
+    if (menuScreen === 'leaderboard') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-yellow-900 via-orange-900 to-black text-white p-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-6xl font-black text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-600">
+              🏆 LEADERBOARD 🏆
+            </h1>
+            
+            <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border-4 border-yellow-500 mb-8">
+              {leaderboard.slice(0, 10).map((user, index) => (
+                <div
+                  key={user.email}
+                  className={`flex items-center justify-between p-4 mb-3 rounded-xl ${
+                    index === 0 ? 'bg-gradient-to-r from-yellow-600 to-orange-600' :
+                    index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                    index === 2 ? 'bg-gradient-to-r from-orange-700 to-yellow-700' :
+                    'bg-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-3xl font-black w-12 text-center">
+                      {index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                    </div>
+                    <div>
+                      <div className="text-xl font-bold">{user.username || user.email}</div>
+                      <div className="text-sm text-gray-300">
+                        {user.totalWins || 0} Wins • {user.totalKills || 0} Kills
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-yellow-300">
+                    {user.points || 0} pts
+                  </div>
+                </div>
+              ))}
+              
+              {leaderboard.length === 0 && (
+                <div className="text-center text-gray-400 text-xl py-12">
+                  No players yet. Be the first!
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => setMenuScreen('main')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (menuScreen === 'locker') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white p-8">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600">
+              LOCKER
+            </h1>
+            <p className="text-center text-2xl mb-8 text-cyan-300">Equip Your Skins</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
+              {SKINS.filter(skin => ownedSkins.includes(skin.id)).map(skin => (
+                <div
+                  key={skin.id}
+                  onClick={() => setSelectedSkin(skin.id)}
+                  className={`relative bg-gray-800 bg-opacity-60 backdrop-blur-sm p-6 rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+                    selectedSkin === skin.id ? 'ring-4 ring-cyan-400 scale-105' : 'hover:ring-2 hover:ring-purple-400'
+                  }`}
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-2xl bg-gradient-to-r ${getRarityColor(skin.rarity)}`} />
+                  
+                  {skinImages.current[skin.id] ? (
+                    <img
+                      src={skin.img}
+                      alt={skin.name}
+                      className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl"
+                      style={{ backgroundColor: skin.color }}
+                    />
+                  )}
+                  
+                  <h3 className="text-lg font-bold text-center">{skin.name}</h3>
+                  <p className="text-xs text-center text-gray-400 capitalize">{skin.rarity}</p>
+                  
+                  {selectedSkin === skin.id && (
+                    <div className="absolute top-2 right-2 bg-cyan-400 text-black rounded-full w-8 h-8 flex items-center justify-center">
+                      ✓
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setMenuScreen('main')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (menuScreen === 'store') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-900 to-black text-white p-8">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600">
+              ITEM SHOP
+            </h1>
+            
+            <div className="text-center mb-8">
+              <span className="text-3xl font-bold text-yellow-400">💰 {points} Points</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
+              {SKINS.map(skin => {
+                const owned = ownedSkins.includes(skin.id);
+                const canBuy = points >= skin.cost;
                 
-                if (controlMode === 'mobile') {
-                    document.getElementById('mobile-controls').style.display = 'flex';
-                }
-                
-                if (!gameLoopRunning) {
-                    setupGame();
-                    gameLoopRunning = true;
-                }
-                
-                spawnPlayer();
-            });
-        });
-        
-        document.getElementById('play-btn').addEventListener('click', () => {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('control-select').style.display = 'flex';
-        });
-        
-        document.getElementById('menu-shop-btn').addEventListener('click', () => {
-            document.getElementById('shop-panel').style.display = 'block';
-            updateShop();
-        });
-        
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            if (ws) ws.close();
-            location.reload();
-        });
-        
-        document.getElementById('respawn-btn').addEventListener('click', () => {
-            document.getElementById('death-screen').style.display = 'none';
-            isDead = false;
-            spawnPlayer();
-        });
-        
-        document.getElementById('menu-btn').addEventListener('click', () => {
-            document.getElementById('death-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'none';
-            document.getElementById('main-menu').style.display = 'flex';
-            isDead = false;
-            
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'getLeaderboard' }));
-            }
-        });
-        
-        document.getElementById('close-shop').addEventListener('click', () => {
-            document.getElementById('shop-panel').style.display = 'none';
-        });
-        
-        document.getElementById('chat-toggle').addEventListener('click', () => {
-            const chat = document.getElementById('chat-box');
-            chat.style.display = chat.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        document.getElementById('chat-send').addEventListener('click', sendChat);
-        document.getElementById('chat-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendChat();
-        });
-        
-        function spawnPlayer() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'spawn',
-                    skinId: currentSkinId
-                }));
-            }
-        }
-        
-        function updateLeaderboard(leaderboard) {
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = '';
-            
-            leaderboard.slice(0, 10).forEach((player, i) => {
-                const div = document.createElement('div');
-                div.className = 'leader-item';
-                if (i === 0) div.classList.add('top1');
-                else if (i === 1) div.classList.add('top2');
-                else if (i === 2) div.classList.add('top3');
-                
-                div.innerHTML = `<span>${i + 1}. ${player.username}</span><span>${player.highScore}</span>`;
-                list.appendChild(div);
-            });
-        }
-        
-        function loadSkinImages() {
-            skins.forEach(skin => {
-                const img = new Image();
-                img.src = skin.img;
-                skinImages[skin.id] = img;
-            });
-        }
-        
-        function updateSprintIndicator() {
-            const indicator = document.getElementById('sprint-indicator');
-            const player = gameState.snakes[playerId];
-            
-            if (!player || player.score === 0) {
-                indicator.textContent = 'Need score > 0 to sprint';
-                indicator.classList.remove('active');
-            } else if (isSprinting) {
-                indicator.textContent = 'SPRINTING (-1 ball/sec)';
-                indicator.classList.add('active');
-            } else {
-                indicator.textContent = 'SHIFT to sprint';
-                indicator.classList.remove('active');
-            }
-        }
-        
-        function setupGame() {
-            const canvas = document.getElementById('game');
-            const ctx = canvas.getContext('2d');
-            const minimap = document.getElementById('minimap');
-            const mmCtx = minimap.getContext('2d');
-            
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
-            
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Shift' && !isDead) {
-                    const player = gameState.snakes[playerId];
-                    if (player && player.score > 0) {
-                        isSprinting = true;
-                        sendDirection();
-                        updateSprintIndicator();
-                    }
-                }
-                
-                if (controlMode === 'wasd' && !isDead) {
-                    let newDir = null;
-                    if (e.key.toLowerCase() === 'w') newDir = { x: 0, y: -1 };
-                    else if (e.key.toLowerCase() === 's') newDir = { x: 0, y: 1 };
-                    else if (e.key.toLowerCase() === 'a') newDir = { x: -1, y: 0 };
-                    else if (e.key.toLowerCase() === 'd') newDir = { x: 1, y: 0 };
+                return (
+                  <div
+                    key={skin.id}
+                    className={`relative bg-gray-800 bg-opacity-60 backdrop-blur-sm p-6 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                      owned ? 'ring-2 ring-green-500' : canBuy ? 'ring-2 ring-yellow-500' : 'opacity-70'
+                    }`}
+                  >
+                    <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-2xl bg-gradient-to-r ${getRarityColor(skin.rarity)}`} />
                     
-                    if (newDir) {
-                        direction = newDir;
-                        sendDirection();
-                    }
-                }
-            });
-            
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'Shift') {
-                    isSprinting = false;
-                    sendDirection();
-                    updateSprintIndicator();
-                }
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                if (controlMode === 'cursor') {
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                }
-            });
-            
-            const joystick = document.getElementById('joystick');
-            const handle = document.getElementById('joystick-handle');
-            
-            joystick.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                joystickActive = true;
-            }, { passive: false });
-            
-            document.addEventListener('touchmove', (e) => {
-                if (!joystickActive || controlMode !== 'mobile') return;
-                
-                const touch = Array.from(e.touches).find(t => {
-                    const rect = joystick.getBoundingClientRect();
-                    return t.clientX >= rect.left && t.clientX <= rect.right &&
-                           t.clientY >= rect.top && t.clientY <= rect.bottom;
-                });
-                
-                if (!touch) return;
-                e.preventDefault();
-                
-                const rect = joystick.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const dx = touch.clientX - centerX;
-                const dy = touch.clientY - centerY;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                const maxDist = 40;
-                
-                if (dist > 0) {
-                    const angle = Math.atan2(dy, dx);
-                    const limitedDist = Math.min(dist, maxDist);
-                    handle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * limitedDist}px), calc(-50% + ${Math.sin(angle) * limitedDist}px))`;
-                    direction = { x: dx / dist, y: dy / dist };
-                    sendDirection();
-                }
-            }, { passive: false });
-            
-            document.addEventListener('touchend', (e) => {
-                if (controlMode === 'mobile') {
-                    const touchStillOnJoystick = Array.from(e.touches).some(t => {
-                        const rect = joystick.getBoundingClientRect();
-                        return t.clientX >= rect.left && t.clientX <= rect.right &&
-                               t.clientY >= rect.top && t.clientY <= rect.bottom;
-                    });
+                    {skinImages.current[skin.id] ? (
+                      <img
+                        src={skin.img}
+                        alt={skin.name}
+                        className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl"
+                        style={{ backgroundColor: skin.color }}
+                      />
+                    )}
                     
-                    if (!touchStillOnJoystick) {
-                        joystickActive = false;
-                        handle.style.transform = 'translate(-50%, -50%)';
-                    }
-                }
-            });
-            
-            const sprintBtn = document.getElementById('mobile-sprint-btn');
-            if (sprintBtn) {
-                sprintBtn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const player = gameState.snakes[playerId];
-                    if (player && player.score > 0 && !isDead) {
-                        isSprinting = true;
-                        sprintBtn.classList.add('sprinting');
-                        sendDirection();
-                        updateSprintIndicator();
-                    }
-                });
-                sprintBtn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    isSprinting = false;
-                    sprintBtn.classList.remove('sprinting');
-                    sendDirection();
-                    updateSprintIndicator();
-                });
-            }
-            
-            function gameLoop() {
-                if (!playerId || isDead || !gameState.snakes[playerId]) {
-                    requestAnimationFrame(gameLoop);
-                    return;
-                }
-                
-                const player = gameState.snakes[playerId];
-                if (player && player.body && player.body.length > 0) {
-                    camera.x = player.body[0].x - canvas.width / 2;
-                    camera.y = player.body[0].y - canvas.height / 2;
+                    <h3 className="text-lg font-bold text-center mb-2">{skin.name}</h3>
+                    <p className="text-xs text-center text-gray-400 capitalize mb-3">{skin.rarity}</p>
                     
-                    if (controlMode === 'cursor' && !isDead) {
-                        const worldX = camera.x + mouseX;
-                        const worldY = camera.y + mouseY;
-                        const dx = worldX - player.body[0].x;
-                        const dy = worldY - player.body[0].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist > 10) {
-                            direction = { x: dx / dist, y: dy / dist };
-                            sendDirection();
-                        }
-                    }
-                }
-                
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.save();
-                ctx.translate(-camera.x, -camera.y);
-                
-                ctx.strokeStyle = 'rgba(0,255,136,0.1)';
-                ctx.lineWidth = 1;
-                for (let x = 0; x < WORLD_WIDTH; x += 100) {
-                    ctx.beginPath();
-                    ctx.moveTo(x, 0);
-                    ctx.lineTo(x, WORLD_HEIGHT);
-                    ctx.stroke();
-                }
-                for (let y = 0; y < WORLD_HEIGHT; y += 100) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, y);
-                    ctx.lineTo(WORLD_WIDTH, y);
-                    ctx.stroke();
-                }
-                
-                gameState.balls.forEach(ball => {
-                    const grad = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, 8);
-                    grad.addColorStop(0, '#00ffff');
-                    grad.addColorStop(1, '#00ff88');
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                });
-                
-                Object.values(gameState.snakes).forEach(snake => {
-                    if (!snake || !snake.body || snake.body.length === 0) return;
-                    
-                    const hue = (snake.username.charCodeAt(0) * 10) % 360;
-                    const snakeColor = `hsl(${hue}, 70%, 50%)`;
-                    
-                    ctx.strokeStyle = snakeColor;
-                    ctx.lineWidth = 14;
-                    ctx.lineCap = 'round';
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = snakeColor;
-                    
-                    if (snake.body.length > 1) {
-                        ctx.beginPath();
-                        ctx.moveTo(snake.body[1].x, snake.body[1].y);
-                        for (let i = 2; i < snake.body.length; i++) {
-                            ctx.lineTo(snake.body[i].x, snake.body[i].y);
-                        }
-                        ctx.stroke();
-                    }
-                    
-                    ctx.shadowBlur = 0;
-                    
-                    const head = snake.body[0];
-                    const img = skinImages[snake.skinId];
-                    if (img && img.complete && img.naturalWidth > 0) {
-                        const next = snake.body[1] || head;
-                        const angle = Math.atan2(head.y - next.y, head.x - next.x);
-                        ctx.save();
-                        ctx.translate(head.x, head.y);
-                        ctx.rotate(angle);
-                        ctx.drawImage(img, -25, -25, 50, 50);
-                        ctx.restore();
-                    } else {
-                        ctx.fillStyle = snakeColor;
-                        ctx.beginPath();
-                        ctx.arc(head.x, head.y, 15, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    
-                    ctx.fillStyle = '#00ffff';
-                    ctx.font = 'bold 13px Orbitron';
-                    ctx.textAlign = 'center';
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 3;
-                    const text = `${snake.username} [${snake.score}]`;
-                    ctx.strokeText(text, head.x, head.y - 30);
-                    ctx.fillText(text, head.x, head.y - 30);
-                });
-                
-                ctx.restore();
-                drawMinimap(mmCtx);
-                updatePlayerList();
-                requestAnimationFrame(gameLoop);
-            }
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        function drawMinimap(ctx) {
-            const mm = document.getElementById('minimap');
-            const sx = mm.width / WORLD_WIDTH;
-            const sy = mm.height / WORLD_HEIGHT;
-            ctx.fillStyle = 'rgba(0,0,0,0.9)';
-            ctx.fillRect(0, 0, mm.width, mm.height);
-            
-            Object.entries(gameState.snakes).forEach(([id, snake]) => {
-                if (!snake.isBot && snake.body && snake.body[0]) {
-                    const hue = (snake.username.charCodeAt(0) * 10) % 360;
-                    ctx.fillStyle = id === playerId ? '#ffff00' : `hsl(${hue}, 70%, 50%)`;
-                    ctx.shadowBlur = 4;
-                    ctx.shadowColor = ctx.fillStyle;
-                    ctx.beginPath();
-                    ctx.arc(snake.body[0].x * sx, snake.body[0].y * sy, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-            });
-        }
-        
-        function updateHUD() {
-            if (playerId && gameState.snakes[playerId]) {
-                const p = gameState.snakes[playerId];
-                document.getElementById('score').textContent = p.score;
-                document.getElementById('points').textContent = playerData.points + p.score;
-                document.getElementById('highscore').textContent = playerData.highScore;
-                updateSprintIndicator();
-                if (playerData.points + p.score >= 50) checkChatUnlock();
-            }
-        }
-        
-        function updatePlayerList() {
-            const container = document.getElementById('players-container');
-            container.innerHTML = '';
-            const players = Object.values(gameState.snakes).filter(s => !s.isBot && s.body);
-            players.sort((a, b) => b.score - a.score);
-            players.slice(0, 8).forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'player-item';
-                div.innerHTML = `<span>${p.username}</span><span>${p.score}</span>`;
-                container.appendChild(div);
-            });
-        }
-        
-        function checkChatUnlock() {
-            if (!chatUnlocked && playerData.points >= 50) {
-                chatUnlocked = true;
-                document.getElementById('chat-toggle').style.display = 'block';
-            }
-        }
-        
-        function sendDirection() {
-            const now = Date.now();
-            if (now - lastInputTime < 50) return;
-            lastInputTime = now;
-            
-            if (ws && ws.readyState === WebSocket.OPEN && !isDead) {
-                ws.send(JSON.stringify({ type: 'input', direction, sprinting: isSprinting }));
-            }
-        }
-        
-        function sendChat() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message || !chatUnlocked) return;
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'chatMessage', message }));
-                input.value = '';
-            }
-        }
-        
-        function addChat(user, msg) {
-            const chat = document.getElementById('chat-messages');
-            const div = document.createElement('div');
-            div.className = 'chat-msg';
-            div.innerHTML = `<span class="user">${user}:</span> ${msg}`;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-            while (chat.children.length > 50) chat.removeChild(chat.firstChild);
-        }
-        
-        function updateShop() {
-            document.getElementById('shop-points').textContent = playerData.points;
-            const grid = document.getElementById('skins-grid');
-            grid.innerHTML = '';
-            skins.forEach(skin => {
-                const card = document.createElement('div');
-                card.className = 'skin-card';
-                const owned = playerData.ownedSkins.includes(skin.id);
-                
-                const preview = document.createElement('div');
-                preview.className = 'skin-preview';
-                const img = document.createElement('img');
-                img.src = skin.img;
-                preview.appendChild(img);
-                
-                const title = document.createElement('h4');
-                title.textContent = skin.name;
-                
-                const cost = document.createElement('div');
-                cost.style.cssText = 'color: #ffaa00; margin: 8px 0; font-weight: 700;';
-                cost.textContent = skin.cost === 0 ? 'FREE' : `${skin.cost} pts`;
-                
-                card.appendChild(preview);
-                card.appendChild(title);
-                card.appendChild(cost);
-                
-                if (owned) {
-                    const selectBtn = document.createElement('button');
-                    selectBtn.textContent = currentSkinId === skin.id ? 'SELECTED' : 'SELECT';
-                    selectBtn.disabled = currentSkinId === skin.id;
-                    selectBtn.onclick = () => {
-                        currentSkinId = skin.id;
-                        if (ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({ type: 'selectSkin', skinId: skin.id }));
-                        }
-                        updateShop();
-                    };
-                    card.appendChild(selectBtn);
-                } else {
-                    const buyBtn = document.createElement('button');
-                    buyBtn.textContent = 'BUY';
-                    buyBtn.disabled = playerData.points < skin.cost;
-                    buyBtn.onclick = () => {
-                        if (ws && ws.readyState === WebSocket.OPEN) {
-                            ws.send(JSON.stringify({ type: 'buySkin', skinId: skin.id, cost: skin.cost }));
-                        }
-                    };
-                    card.appendChild(buyBtn);
-                }
-                
-                grid.appendChild(card);
-            });
-        }
-    </script>
-</body>
-</html>
+                    {owned ? (
+                      <div className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-center">
+                        OWNED
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => buySkin(skin)}
+                        disabled={!canBuy}
+                        className={`w-full font-bold py-2 px-4 rounded-lg transition-all duration-300 ${
+                          canBuy
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        💰 {skin.cost}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setMenuScreen('main')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (menuScreen === 'modes') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-orange-900 via-red-900 to-black text-white p-8">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-6xl font-black text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600">
+              GAME MODES
+            </h1>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 rounded-3xl cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                <h2 className="text-4xl font-bold mb-4">🔫 Battle Royale</h2>
+                <p className="text-xl mb-4">Classic last-man-standing action!</p>
+                <button
+                  onClick={() => setMenuScreen('main')}
+                  className="bg-white text-blue-600 font-bold py-3 px-8 rounded-xl hover:bg-gray-200 transition-all"
+                >
+                  SELECT
+                </button>
+              </div>
+
+              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
+                </div>
+                <h2 className="text-4xl font-bold mb-4">👥 Team Deathmatch</h2>
+                <p className="text-xl mb-4">Work together to dominate!</p>
+              </div>
+
+              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
+                </div>
+                <h2 className="text-4xl font-bold mb-4">⚡ Lightning Round</h2>
+                <p className="text-xl mb-4">Fast-paced 5-minute matches!</p>
+              </div>
+
+              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
+                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
+                </div>
+                <h2 className="text-4xl font-bold mb-4">🎯 Sniper Only</h2>
+                <p className="text-xl mb-4">One shot, one kill!</p>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => setMenuScreen('main')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-black text-white flex items-center justify-center p-8">
+        <div className="absolute top-4 right-4 flex gap-3 z-50">
+          {isLoggedIn ? (
+            <div className="flex items-center gap-3">
+              <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg px-6 py-3 rounded-xl border-2 border-cyan-500">
+                <div className="text-sm text-cyan-300">Logged in as</div>
+                <div className="font-bold">{currentUser?.username || currentUser?.email}</div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+              >
+                <LogOut size={20} />
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  setAuthMode('login');
+                  setShowAuthModal(true);
+                }}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+              >
+                <LogIn size={20} />
+                Login
+              </button>
+              <button
+                onClick={() => {
+                  setAuthMode('signup');
+                  setShowAuthModal(true);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+              >
+                <UserPlus size={20} />
+                Sign Up
+              </button>
+            </>
+          )}
+        </div>
+
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ top: '10%', left: '10%' }} />
+          <div className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ bottom: '10%', right: '10%', animationDelay: '1s' }} />
+        </div>
+
+        <div className="max-w-2xl w-full relative z-10">
+          <div className="text-center mb-12 animate-bounce">
+            <h1 className="text-8xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 drop-shadow-2xl">
+              JUDELE ROYAL
+            </h1>
+            <p className="text-2xl text-cyan-300 font-bold tracking-wider">LAST ONE STANDING WINS</p>
+          </div>
+
+          <div className="bg-gray-900 bg-opacity-70 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border-4 border-purple-500">
+            <input
+              type="text"
+              placeholder="Enter Your Name..."
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="w-full p-4 mb-6 bg-gray-800 border-2 border-purple-500 rounded-xl text-xl focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
+              maxLength={15}
+            />
+
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <button
+                onClick={() => setMenuScreen('modes')}
+                className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-5 px-6 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
+              >
+                <Play size={28} /> PLAY NOW
+              </button>
+
+              <button
+                onClick={() => setMenuScreen('leaderboard')}
+                className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
+              >
+                <Crown size={24} /> LEADERBOARD
+              </button>
+
+              <button
+                onClick={() => setMenuScreen('locker')}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
+              >
+                <Users size={24} /> LOCKER
+              </button>
+
+              <button
+                onClick={() => setMenuScreen('store')}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
+              >
+                <Zap size={24} /> ITEM SHOP
+              </button>
+            </div>
+
+            <div className="text-center mt-6 space-y-3">
+              <div className="flex items-center justify-center gap-3 text-2xl font-bold text-yellow-400">
+                <Trophy size={28} />
+                <span>{points} Points</span>
+              </div>
+              
+              {isLoggedIn && (
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-cyan-400">{totalWins}</div>
+                    <div className="text-xs text-gray-400">Wins</div>
+                  </div>
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-red-400">{totalKills}</div>
+                    <div className="text-xs text-gray-400">Kills</div>
+                  </div>
+                  <div className="bg-gray-800 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-400">{gamesPlayed}</div>
+                    <div className="text-xs text-gray-400">Games</div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-4 text-lg">
+                <span className="text-cyan-300">Selected Skin:</span>
+                <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
+                  {skinImages.current[selectedSkin] ? (
+                    <img
+                      src={SKINS.find(s => s.id === selectedSkin)?.img}
+                      alt="Selected"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full"
+                      style={{ backgroundColor: SKINS.find(s => s.id === selectedSkin)?.color }}
+                    />
+                  )}
+                  <span className="font-bold">{SKINS.find(s => s.id === selectedSkin)?.name}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => setSoundEnabled(prev => !prev)}
+              className="bg-gray-800 hover:bg-gray-700 p-4 rounded-full transition-all duration-300 transform hover:scale-110"
+            >
+              {soundEnabled ? <Volume2 size={28} className="text-cyan-400" /> : <VolumeX size={28} className="text-red-500" />}
+            </button>
+          </div>
+        </div>
+
+        {showAuthModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 p-8 rounded-3xl max-w-md w-full border-4 border-cyan-500 shadow-2xl">
+              <h2 className="text-4xl font-black mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600">
+                {authMode === 'login' ? 'LOGIN' : 'SIGN UP'}
+              </h2>
+
+              <input
+                type="email"
+                placeholder="Email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                className="w-full p-4 mb-4 bg-gray-800 border-2 border-purple-500 rounded-xl text-lg focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
+              />
+
+              <input
+                type="password"
+                placeholder="Password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                className="w-full p-4 mb-6 bg-gray-800 border-2 border-purple-500 rounded-xl text-lg focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
+              />
+
+              <div className="flex gap-4">
+                <button
+                  onClick={authMode === 'login' ? handleLogin : handleSignup}
+                  className="flex-1 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  {authMode === 'login' ? 'Login' : 'Sign Up'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    setAuthEmail('');
+                    setAuthPassword('');
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                  className="text-cyan-400 hover:text-cyan-300 underline"
+                >
+                  {authMode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Login'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderLobby = () => {
+    const selectedSkinData = SKINS.find(s => s.id === selectedSkin);
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white flex items-center justify-center p-8">
+        <div className="max-w-4xl w-full">
+          <div className="text-center mb-12">
+            <h1 className="text-7xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600 animate-pulse">
+              PREPARING FOR BATTLE
+            </h1>
+            <div className="text-6xl font-black text-yellow-400 mb-8">{lobbyTimer}</div>
+          </div>
+
+          <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-12 rounded-3xl shadow-2xl border-4 border-cyan-500 mb-8">
+            <div className="flex items-center justify-center gap-8 mb-8">
+              <div className="text-center">
+                {skinImages.current[selectedSkin] ? (
+                  <img
+                    src={selectedSkinData?.img}
+                    alt={selectedSkinData?.name}
+                    className="w-32 h-32 mx-auto mb-4 shadow-2xl ring-4 ring-cyan-400 animate-pulse rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-32 h-32 rounded-full mx-auto mb-4 shadow-2xl ring-4 ring-cyan-400 animate-pulse"
+                    style={{ backgroundColor: selectedSkinData?.color }}
+                  />
+                )}
+                <div className="text-3xl font-bold">{playerName}</div>
+                <div className="text-xl text-cyan-300">{selectedSkinData?.name}</div>
+              </div>
+            </div>
+
+            <div className="text-center space-y-4">
+              <div className="text-3xl font-bold">
+                <span className="text-cyan-400">{players.length}</span>
+                <span className="text-gray-400"> / </span>
+                <span className="text-purple-400">{MAX_PLAYERS}</span>
+                <span className="text-gray-300"> Players</span>
+              </div>
+              <div className="text-xl text-gray-400">Waiting for more players...</div>
+            </div>
+          </div>
+
+          <div className="bg-gray-900 bg-opacity-60 p-6 rounded-2xl">
+            <h3 className="text-2xl font-bold mb-4 text-cyan-300">CONTROLS</h3>
+            <div className="grid grid-cols-2 gap-4 text-lg">
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">WASD</kbd> Move</div>
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Mouse</kbd> Aim</div>
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Click</kbd> Shoot</div>
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">1-3</kbd> Switch Weapon</div>
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Shift</kbd> Sprint</div>
+              <div><kbd className="bg-gray-700 px-3 py-1 rounded">M</kbd> Toggle Map</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderGameOver = () => {
+    const player = players.find(p => p.id === playerId.current);
+    const winner = players.find(p => !p.isDead);
+    const placement = players.filter(p => p.isDead).length + 1;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex items-center justify-center p-8">
+        <div className="max-w-3xl w-full">
+          <div className="text-center mb-12">
+            {wonGame ? (
+              <>
+                <Trophy size={120} className="text-yellow-400 mx-auto mb-6 animate-bounce" />
+                <h1 className="text-8xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-500">
+                  VICTORY ROYALE!
+                </h1>
+              </>
+            ) : (
+              <h1 className="text-7xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-pink-600">
+                GAME OVER
+              </h1>
+            )}
+          </div>
+
+          <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border-4 border-purple-500 mb-8">
+            <div className="grid grid-cols-2 gap-8 text-center mb-8">
+              <div>
+                <div className="text-6xl font-black text-cyan-400 mb-2">{player?.kills || 0}</div>
+                <div className="text-2xl text-gray-300">Eliminations</div>
+              </div>
+              <div>
+                <div className="text-6xl font-black text-purple-400 mb-2">#{placement}</div>
+                <div className="text-2xl text-gray-300">Placement</div>
+              </div>
+            </div>
+
+            {winner && (
+              <div className="text-center mb-8 p-6 bg-gradient-to-r from-yellow-900 to-orange-900 rounded-2xl">
+                <div className="text-2xl text-yellow-400 mb-2">🏆 Winner</div>
+                <div className="text-4xl font-black text-white">{winner.name}</div>
+                <div className="text-xl text-yellow-300">{winner.kills} Kills</div>
+              </div>
+            )}
+
+            <div className="text-center p-6 bg-gradient-to-r from-green-900 to-emerald-900 rounded-2xl">
+              <div className="text-2xl text-green-400 mb-2">💰 Points Earned</div>
+              <div className="text-5xl font-black text-yellow-400">
+                +{wonGame ? 100 : (player?.kills || 0) * 10}
+              </div>
+              <div className="text-xl text-green-300 mt-2">Total: {points}</div>
+            </div>
+          </div>
+
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={startGame}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-5 px-12 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+            >
+              PLAY AGAIN
+            </button>
+            <button
+              onClick={() => {
+                setGameState('menu');
+                setMenuScreen('main');
+              }}
+              className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-5 px-12 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
+            >
+              MENU
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-black">
+      {gameState === 'menu' && renderMenu()}
+      {gameState === 'lobby' && renderLobby()}
+      {gameState === 'gameover' && renderGameOver()}
+      {gameState === 'playing' && (
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={VIEWPORT_WIDTH}
+            height={VIEWPORT_HEIGHT}
+            className="block mx-auto"
+            style={{ cursor: 'crosshair' }}
+          />
+
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+            <div className="bg-black bg-opacity-60 px-6 py-3 rounded-full">
+              <Crosshair size={32} className="text-cyan-400 animate-pulse" />
+            </div>
+          </div>
+
+          <div className="absolute top-4 right-4 flex gap-2">
+            <button
+              onClick={() => setSoundEnabled(prev => !prev)}
+              className="bg-gray-900 bg-opacity-80 hover:bg-opacity-100 p-3 rounded-full transition-all"
+            >
+              {soundEnabled ? <Volume2 size={24} className="text-white" /> : <VolumeX size={24} className="text-red-500" />}
+            </button>
+          </div>
+
+          <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 text-center">
+            <div className="bg-purple-600 bg-opacity-90 px-6 py-2 rounded-full">
+              <span className="text-white font-bold text-lg">⚠️ STORM CLOSING IN ⚠️</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default JudeleRoyal;
