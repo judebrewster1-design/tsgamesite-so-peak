@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Crosshair, Volume2, VolumeX, Trophy, Settings, Play, Users, Zap, LogIn, UserPlus, LogOut, Crown, Star, Award } from 'lucide-react';
 
+// 🔥 BACKEND URL - CHANGE THIS TO YOUR SERVER URL
+const API_URL = 'http://localhost:3000/api';
+// For production, change to: const API_URL = 'https://your-domain.com/api';
+
 const GAME_WIDTH = 6000;
 const GAME_HEIGHT = 4500;
 const VIEWPORT_WIDTH = 1400;
