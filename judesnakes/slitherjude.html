@@ -1,1929 +1,2987 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Crosshair, Volume2, VolumeX, Trophy, Settings, Play, Users, Zap, LogIn, UserPlus, LogOut, Crown, Star, Award } from 'lucide-react';
-
-// 🔥 BACKEND URL - CHANGE THIS TO YOUR SERVER URL
-const API_URL = 'http://localhost:3000/api';
-// For production, change to: const API_URL = 'https://your-domain.com/api';
-
-const GAME_WIDTH = 6000;
-const GAME_HEIGHT = 4500;
-const VIEWPORT_WIDTH = 1400;
-const VIEWPORT_HEIGHT = 900;
-const PLAYER_SIZE = 30;
-const BULLET_SIZE = 8;
-const WEAPON_SIZE = 20;
-const HOUSE_SIZE = 140;
-const OBSTACLE_SIZE = 40;
-const MAX_PLAYERS = 15;
-const LOBBY_TIME = 15;
-const MINIMAP_SIZE = 220;
-const STORM_DAMAGE = 5;
-const STORM_TICK_RATE = 1000;
-const HEALTH_PACK_SIZE = 25;
-const HEALTH_PACK_HEAL = 30;
-
-const WEAPONS = [
-  { id: 1, name: 'Plasma Rifle', damage: 35, fireRate: 400, range: 350, speed: 12, color: '#00ffff', bullets: 30, style: 'plasma', icon: '🔫', rarity: 'common' },
-  { id: 2, name: 'Shotgun', damage: 60, fireRate: 800, range: 200, speed: 8, color: '#ff6600', bullets: 8, spread: 5, style: 'shotgun', icon: '💥', rarity: 'uncommon' },
-  { id: 3, name: 'Sniper', damage: 90, fireRate: 1500, range: 600, speed: 20, color: '#ff0000', bullets: 5, style: 'sniper', icon: '🎯', rarity: 'rare' },
-  { id: 4, name: 'Machine Gun', damage: 20, fireRate: 100, range: 300, speed: 15, color: '#ffff00', bullets: 100, style: 'machinegun', icon: '⚡', rarity: 'common' },
-  { id: 5, name: 'Rocket', damage: 100, fireRate: 2000, range: 400, speed: 6, color: '#ff00ff', bullets: 4, explosive: true, style: 'rocket', icon: '🚀', rarity: 'legendary' },
-  { id: 6, name: 'Laser Beam', damage: 15, fireRate: 50, range: 500, speed: 25, color: '#00ff00', bullets: 200, style: 'laser', icon: '✨', rarity: 'epic' },
-  { id: 7, name: 'Freeze Ray', damage: 25, fireRate: 600, range: 280, speed: 10, color: '#aaffff', bullets: 20, freeze: true, style: 'freeze', icon: '❄️', rarity: 'rare' },
-  { id: 8, name: 'Flamethrower', damage: 30, fireRate: 80, range: 180, speed: 7, color: '#ff4400', bullets: 50, style: 'flame', icon: '🔥', rarity: 'uncommon' },
-  { id: 9, name: 'Railgun', damage: 120, fireRate: 2500, range: 700, speed: 30, color: '#ffffff', bullets: 3, pierce: true, style: 'rail', icon: '⚔️', rarity: 'legendary' },
-  { id: 10, name: 'Grenade', damage: 80, fireRate: 1200, range: 350, speed: 5, color: '#88ff00', bullets: 10, arc: true, style: 'grenade', icon: '💣', rarity: 'epic' }
-];
-
-const SKINS = [
-  { id: 'chase', name: 'Chase', cost: 1500, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chase.png', color: '#ff1744', rarity: 'legendary' },
-  { id: 'caleb', name: 'Caleb', cost: 1200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/caleb.png', color: '#7c4dff', rarity: 'epic' },
-  { id: 'brody', name: 'Brody', cost: 1000, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/brody.png', color: '#00e676', rarity: 'epic' },
-  { id: 'connorV', name: 'Connor', cost: 900, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/sixseven.png', color: '#ffc400', rarity: 'rare' },
-  { id: 'jaxon', name: 'Jaxon', cost: 800, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jaxon.png', color: '#00b0ff', rarity: 'rare' },
-  { id: 'luca', name: 'Luca', cost: 400, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/luca.png', color: '#d500f9', rarity: 'uncommon' },
-  { id: 'charlie', name: 'Charlie', cost: 300, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/charlie.png', color: '#ff6d00', rarity: 'uncommon' },
-  { id: 'harly', name: 'Harly', cost: 250, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/harly.png', color: '#76ff03', rarity: 'common' },
-  { id: 'ollie', name: 'Ollie', cost: 200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ollie.png', color: '#18ffff', rarity: 'common' },
-  { id: 'connorD', name: 'Connor', cost: 175, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/connord.png', color: '#ff3d00', rarity: 'common' },
-  { id: 'jackn', name: 'Jackn', cost: 150, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jackn.png', color: '#651fff', rarity: 'common' },
-  { id: 'liam', name: 'Liam', cost: 125, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/liam.png', color: '#00e5ff', rarity: 'common' },
-  { id: 'jet', name: 'Jet', cost: 100, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jet.png', color: '#ffea00', rarity: 'common' },
-  { id: 'gavin', name: 'Gavin', cost: 75, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/gavin.png', color: '#ff1744', rarity: 'common' },
-  { id: 'ginger', name: 'Ginger', cost: 50, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ginger.png', color: '#ff9100', rarity: 'common' },
-  { id: 'chay', name: 'Chay', cost: 25, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chay.png', color: '#00e676', rarity: 'common' },
-  { id: 'jude', name: 'Jude', cost: 0, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jude.png', color: '#2979ff', rarity: 'starter' }
-];
-
-const generateMap = () => {
-  const houses = [];
-  const spacing = 500;
-  const margin = 400;
-  
-  for (let x = margin; x < GAME_WIDTH - margin; x += spacing) {
-    for (let y = margin; y < GAME_HEIGHT - margin; y += spacing) {
-      houses.push({
-        x: x + (Math.random() - 0.5) * 150,
-        y: y + (Math.random() - 0.5) * 150,
-        width: HOUSE_SIZE,
-        height: HOUSE_SIZE
-      });
-    }
-  }
-  
-  const obstacles = [];
-  for (let i = 0; i < 120; i++) {
-    obstacles.push({
-      x: Math.random() * GAME_WIDTH,
-      y: Math.random() * GAME_HEIGHT,
-      type: Math.random() > 0.5 ? 'tree' : 'rock'
-    });
-  }
-  
-  return { houses, obstacles };
-};
-
-const MAP_DATA = generateMap();
-
-const JudeleRoyal = () => {
-  const [gameState, setGameState] = useState('menu');
-  const [menuScreen, setMenuScreen] = useState('main');
-  const [playerName, setPlayerName] = useState('');
-  const [selectedSkin, setSelectedSkin] = useState('jude');
-  const [ownedSkins, setOwnedSkins] = useState(['jude']);
-  const [points, setPoints] = useState(0);
-  const [totalKills, setTotalKills] = useState(0);
-  const [totalWins, setTotalWins] = useState(0);
-  const [gamesPlayed, setGamesPlayed] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [leaderboard, setLeaderboard] = useState([]);
-  
-  const [lobbyTimer, setLobbyTimer] = useState(LOBBY_TIME);
-  const [players, setPlayers] = useState([]);
-  const [bullets, setBullets] = useState([]);
-  const [effects, setEffects] = useState([]);
-  const [pickups, setPickups] = useState([]);
-  const [keys, setKeys] = useState({});
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [worldMousePos, setWorldMousePos] = useState({ x: 0, y: 0 });
-  const [camera, setCamera] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(0.7);
-  const [showMinimap, setShowMinimap] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [stormRadius, setStormRadius] = useState(Math.max(GAME_WIDTH, GAME_HEIGHT));
-  const [stormCenter] = useState({ x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 });
-  const [wonGame, setWonGame] = useState(false);
-  const [killFeed, setKillFeed] = useState([]);
-
-  const canvasRef = useRef(null);
-  const gameLoopRef = useRef(null);
-  const stormTickRef = useRef(null);
-  const playerId = useRef(Math.random().toString(36).substr(2, 9));
-  const skinImages = useRef({});
-
-  // Load skin images
-  useEffect(() => {
-    SKINS.forEach(skin => {
-      const img = new Image();
-      img.src = skin.img;
-      img.onload = () => {
-        skinImages.current[skin.id] = img;
-      };
-    });
-  }, []);
-
-  // Load data from memory (simulated account system)
-  useEffect(() => {
-    const userData = JSON.parse(sessionStorage.getItem('judeleRoyalUser') || 'null');
-    if (userData) {
-      setIsLoggedIn(true);
-      setCurrentUser(userData);
-      setPoints(userData.points || 0);
-      setOwnedSkins(userData.ownedSkins || ['jude']);
-      setSelectedSkin(userData.selectedSkin || 'jude');
-      setTotalKills(userData.totalKills || 0);
-      setTotalWins(userData.totalWins || 0);
-      setGamesPlayed(userData.gamesPlayed || 0);
-      setPlayerName(userData.username || '');
-    }
-
-    // Load leaderboard
-    const storedLeaderboard = JSON.parse(sessionStorage.getItem('judeleRoyalLeaderboard') || '[]');
-    setLeaderboard(storedLeaderboard);
-  }, []);
-
-  // Save user data
-  const saveUserData = useCallback(() => {
-    if (isLoggedIn && currentUser) {
-      const userData = {
-        ...currentUser,
-        points,
-        ownedSkins,
-        selectedSkin,
-        totalKills,
-        totalWins,
-        gamesPlayed,
-        username: playerName
-      };
-      sessionStorage.setItem('judeleRoyalUser', JSON.stringify(userData));
-      
-      // Update leaderboard
-      let lb = [...leaderboard];
-      const userIndex = lb.findIndex(u => u.email === currentUser.email);
-      if (userIndex >= 0) {
-        lb[userIndex] = { ...lb[userIndex], ...userData };
-      } else {
-        lb.push(userData);
-      }
-      lb.sort((a, b) => (b.points || 0) - (a.points || 0));
-      setLeaderboard(lb);
-      sessionStorage.setItem('judeleRoyalLeaderboard', JSON.stringify(lb));
-    }
-  }, [isLoggedIn, currentUser, points, ownedSkins, selectedSkin, totalKills, totalWins, gamesPlayed, playerName, leaderboard]);
-
-  useEffect(() => {
-    saveUserData();
-  }, [points, ownedSkins, selectedSkin, totalKills, totalWins, gamesPlayed]);
-
-  // Authentication functions
-  const handleLogin = () => {
-    if (!authEmail || !authPassword) {
-      alert('Please enter email and password');
-      return;
-    }
-    
-    const users = JSON.parse(sessionStorage.getItem('judeleRoyalUsers') || '{}');
-    const user = users[authEmail];
-    
-    if (user && user.password === authPassword) {
-      setIsLoggedIn(true);
-      setCurrentUser(user);
-      setPoints(user.points || 0);
-      setOwnedSkins(user.ownedSkins || ['jude']);
-      setSelectedSkin(user.selectedSkin || 'jude');
-      setTotalKills(user.totalKills || 0);
-      setTotalWins(user.totalWins || 0);
-      setGamesPlayed(user.gamesPlayed || 0);
-      setPlayerName(user.username || authEmail.split('@')[0]);
-      sessionStorage.setItem('judeleRoyalUser', JSON.stringify(user));
-      setShowAuthModal(false);
-      setAuthEmail('');
-      setAuthPassword('');
-    } else {
-      alert('Invalid credentials');
-    }
-  };
-
-  const handleSignup = () => {
-    if (!authEmail || !authPassword) {
-      alert('Please enter email and password');
-      return;
-    }
-    
-    const users = JSON.parse(sessionStorage.getItem('judeleRoyalUsers') || '{}');
-    
-    if (users[authEmail]) {
-      alert('User already exists');
-      return;
-    }
-    
-    const newUser = {
-      email: authEmail,
-      password: authPassword,
-      username: authEmail.split('@')[0],
-      points: 0,
-      ownedSkins: ['jude'],
-      selectedSkin: 'jude',
-      totalKills: 0,
-      totalWins: 0,
-      gamesPlayed: 0,
-      createdAt: new Date().toISOString()
-    };
-    
-    users[authEmail] = newUser;
-    sessionStorage.setItem('judeleRoyalUsers', JSON.stringify(users));
-    
-    setIsLoggedIn(true);
-    setCurrentUser(newUser);
-    setPlayerName(newUser.username);
-    sessionStorage.setItem('judeleRoyalUser', JSON.stringify(newUser));
-    setShowAuthModal(false);
-    setAuthEmail('');
-    setAuthPassword('');
-  };
-
-  const handleLogout = () => {
-    saveUserData();
-    setIsLoggedIn(false);
-    setCurrentUser(null);
-    sessionStorage.removeItem('judeleRoyalUser');
-    setPoints(0);
-    setOwnedSkins(['jude']);
-    setSelectedSkin('jude');
-    setTotalKills(0);
-    setTotalWins(0);
-    setGamesPlayed(0);
-    setPlayerName('');
-  };
-
-  const playSound = useCallback((type) => {
-    if (!soundEnabled) return;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    switch(type) {
-      case 'shoot':
-        oscillator.frequency.value = 800;
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.1);
-        break;
-      case 'hit':
-        oscillator.frequency.value = 200;
-        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.15);
-        break;
-      case 'kill':
-        oscillator.frequency.value = 400;
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.3);
-        break;
-    }
-  }, [soundEnabled]);
-
-  const addKillFeed = useCallback((killerName, victimName, weapon) => {
-    const feed = {
-      id: Math.random(),
-      killer: killerName,
-      victim: victimName,
-      weapon: weapon.icon,
-      time: Date.now()
-    };
-    setKillFeed(prev => [feed, ...prev].slice(0, 5));
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      setKeys(prev => ({ ...prev, [e.key.toLowerCase()]: true }));
-      if (e.key >= '1' && e.key <= '3') {
-        const slot = parseInt(e.key) - 1;
-        setPlayers(prev => prev.map(p => 
-          p.id === playerId.current ? { ...p, currentWeaponSlot: slot } : p
-        ));
-      }
-      if (e.key === 'm' || e.key === 'M') setShowMinimap(prev => !prev);
-    };
-
-    const handleKeyUp = (e) => {
-      setKeys(prev => ({ ...prev, [e.key.toLowerCase()]: false }));
-    };
-
-    const handleMouseMove = (e) => {
-      if (canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const screenX = e.clientX - rect.left;
-        const screenY = e.clientY - rect.top;
-        setMousePos({ x: screenX, y: screenY });
-        setWorldMousePos({
-          x: camera.x + screenX / zoom,
-          y: camera.y + screenY / zoom
-        });
-      }
-    };
-
-    const handleMouseDown = (e) => {
-      if (gameState === 'playing' && e.button === 0) {
-        setKeys(prev => ({ ...prev, mouse: true }));
-      }
-    };
-
-    const handleMouseUp = (e) => {
-      if (e.button === 0) {
-        setKeys(prev => ({ ...prev, mouse: false }));
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [gameState, camera, zoom]);
-
-  const startGame = () => {
-    if (!playerName.trim()) {
-      alert('Please enter your name!');
-      return;
-    }
-
-    setGameState('lobby');
-    setLobbyTimer(LOBBY_TIME);
-    setWonGame(false);
-    setStormRadius(Math.max(GAME_WIDTH, GAME_HEIGHT));
-    setKillFeed([]);
-
-    const newPlayer = {
-      id: playerId.current,
-      name: playerName,
-      skin: selectedSkin,
-      x: GAME_WIDTH / 2,
-      y: GAME_HEIGHT / 2,
-      health: 100,
-      maxHealth: 100,
-      weapons: [null, null, null],
-      currentWeaponSlot: 0,
-      angle: 0,
-      isPlayer: true,
-      kills: 0,
-      lastShot: 0,
-      speed: 5,
-      frozen: false,
-      frozenUntil: 0,
-      isDead: false
-    };
-
-    setPlayers([newPlayer]);
-
-    const initialPickups = [];
-    MAP_DATA.houses.forEach(house => {
-      const numPickups = Math.floor(Math.random() * 3) + 3;
-      for (let i = 0; i < numPickups; i++) {
-        if (Math.random() < 0.75) {
-          initialPickups.push({
-            id: Math.random(),
-            type: 'weapon',
-            item: WEAPONS[Math.floor(Math.random() * WEAPONS.length)],
-            x: house.x + Math.random() * (house.width - 40) + 20,
-            y: house.y + Math.random() * (house.height - 40) + 20
-          });
-        } else {
-          initialPickups.push({
-            id: Math.random(),
-            type: 'health',
-            x: house.x + Math.random() * (house.width - 40) + 20,
-            y: house.y + Math.random() * (house.height - 40) + 20
-          });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judele Royal - Battle Royale Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    });
 
-    setPickups(initialPickups);
-    setBullets([]);
-    setEffects([]);
-  };
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
 
-  useEffect(() => {
-    if (gameState === 'lobby') {
-      const timer = setInterval(() => {
-        setLobbyTimer(prev => {
-          if (prev <= 1) {
-            const aiCount = MAX_PLAYERS - players.length;
-            const aiBots = [];
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .menu-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3a8a 0%, #7e22ce 50%, #000 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-bg-effect {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.2;
+        }
+
+        .menu-bg-effect.purple {
+            width: 400px;
+            height: 400px;
+            background: #a855f7;
+            top: 10%;
+            left: 10%;
+            animation: pulse 3s infinite;
+        }
+
+        .menu-bg-effect.blue {
+            width: 400px;
+            height: 400px;
+            background: #3b82f6;
+            bottom: 10%;
+            right: 10%;
+            animation: pulse 3s infinite 1s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .menu-content {
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: bounce 2s infinite;
+        }
+
+        .title h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #22d3ee, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+            margin-bottom: 1rem;
+        }
+
+        .title p {
+            font-size: 1.5rem;
+            color: #22d3ee;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+        }
+
+        .menu-box {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 4px solid #a855f7;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            background: #1f2937;
+            border: 2px solid #a855f7;
+            border-radius: 0.75rem;
+            font-size: 1.25rem;
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.3);
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #f97316, #dc2626);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #eab308, #f97316);
+            color: white;
+        }
+
+        .btn-tertiary {
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            color: white;
+        }
+
+        .btn-quaternary {
+            background: linear-gradient(to right, #059669, #10b981);
+            color: white;
+        }
+
+        .btn-back {
+            background: linear-gradient(to right, #7c3aed, #2563eb);
+            color: white;
+        }
+
+        .stats-container {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .points-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-box {
+            background: #1f2937;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .skin-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 1.125rem;
+            margin-top: 1rem;
+        }
+
+        .skin-preview {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1f2937;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .skin-circle {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+        }
+
+        .skin-img {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .auth-buttons {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            z-index: 50;
+        }
+
+        .auth-btn {
+            background: #0891b2;
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .auth-btn:hover {
+            transform: scale(1.05);
+            background: #0e7490;
+        }
+
+        .auth-btn.signup {
+            background: #7c3aed;
+        }
+
+        .auth-btn.signup:hover {
+            background: #6d28d9;
+        }
+
+        .auth-btn.logout {
+            background: #dc2626;
+        }
+
+        .auth-btn.logout:hover {
+            background: #b91c1c;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-badge {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            border: 2px solid #22d3ee;
+        }
+
+        .user-label {
+            font-size: 0.875rem;
+            color: #22d3ee;
+        }
+
+        .user-name {
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: #111827;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            border: 4px solid #22d3ee;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            background: linear-gradient(to right, #22d3ee, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(to right, #0891b2, #7c3aed);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #374151;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .modal-link {
+            text-align: center;
+            margin-top: 1rem;
+            color: #22d3ee;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .modal-link:hover {
+            color: #06b6d4;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            color: #fca5a5;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            color: #86efac;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .skin-card {
+            background: rgba(31, 41, 55, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .skin-card:hover {
+            transform: scale(1.05);
+        }
+
+        .skin-card.selected {
+            border: 4px solid #22d3ee;
+            transform: scale(1.05);
+        }
+
+        .skin-card.owned {
+            border: 2px solid #10b981;
+        }
+
+        .rarity-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 0.5rem;
+            border-radius: 1rem 1rem 0 0;
+        }
+
+        .rarity-legendary {
+            background: linear-gradient(to right, #eab308, #f97316);
+        }
+
+        .rarity-epic {
+            background: linear-gradient(to right, #a855f7, #ec4899);
+        }
+
+        .rarity-rare {
+            background: linear-gradient(to right, #3b82f6, #06b6d4);
+        }
+
+        .rarity-uncommon {
+            background: linear-gradient(to right, #10b981, #059669);
+        }
+
+        .rarity-common {
+            background: linear-gradient(to right, #6b7280, #4b5563);
+        }
+
+        .rarity-starter {
+            background: linear-gradient(to right, #6b7280, #4b5563);
+        }
+
+        .skin-image-container {
+            width: 6rem;
+            height: 6rem;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .skin-name {
+            font-size: 1.125rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .skin-rarity {
+            font-size: 0.75rem;
+            text-align: center;
+            color: #9ca3af;
+            text-transform: capitalize;
+            margin-bottom: 0.75rem;
+        }
+
+        .skin-price {
+            width: 100%;
+            padding: 0.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .skin-price.owned {
+            background: #10b981;
+            color: white;
+            cursor: default;
+        }
+
+        .skin-price.affordable {
+            background: linear-gradient(to right, #10b981, #059669);
+            color: white;
+        }
+
+        .skin-price.expensive {
+            background: #4b5563;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #22d3ee;
+            color: black;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.75rem;
+            background: #1f2937;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: linear-gradient(to right, #eab308, #f97316);
+        }
+
+        .leaderboard-entry.rank-2 {
+            background: linear-gradient(to right, #9ca3af, #6b7280);
+        }
+
+        .leaderboard-entry.rank-3 {
+            background: linear-gradient(to right, #f97316, #eab308);
+        }
+
+        .leaderboard-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .leaderboard-rank {
+            font-size: 1.875rem;
+            font-weight: 900;
+            width: 3rem;
+            text-align: center;
+        }
+
+        .leaderboard-info {
+            text-align: left;
+        }
+
+        .leaderboard-name {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .leaderboard-stats {
+            font-size: 0.875rem;
+            color: #d1d5db;
+        }
+
+        .leaderboard-points {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 1.25rem;
+            padding: 3rem;
+        }
+
+        .game-canvas {
+            display: block;
+            margin: 0 auto;
+            cursor: crosshair;
+        }
+
+        .crosshair-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .crosshair-box {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+        }
+
+        .crosshair-icon {
+            width: 2rem;
+            height: 2rem;
+            color: #22d3ee;
+            animation: pulse 2s infinite;
+        }
+
+        .sound-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(17, 24, 39, 0.8);
+            padding: 0.75rem;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(31, 41, 55, 1);
+            transform: scale(1.1);
+        }
+
+        .storm-warning {
+            position: absolute;
+            bottom: 6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .storm-badge {
+            background: rgba(147, 51, 234, 0.9);
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+        }
+
+        .storm-text {
+            color: white;
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        .lobby-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #7e22ce 0%, #1e3a8a 50%, #000 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .lobby-content {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .lobby-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .lobby-title h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, #22d3ee, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 2s infinite;
+            margin-bottom: 1rem;
+        }
+
+        .lobby-timer {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #fbbf24;
+            margin-bottom: 2rem;
+        }
+
+        .lobby-box {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 4px solid #22d3ee;
+            margin-bottom: 2rem;
+        }
+
+        .lobby-player {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .lobby-player-avatar {
+            width: 8rem;
+            height: 8rem;
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 4px solid #22d3ee;
+            animation: pulse 2s infinite;
+            object-fit: cover;
+        }
+
+        .lobby-player-info {
+            text-align: center;
+        }
+
+        .lobby-player-name {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .lobby-player-skin {
+            font-size: 1.25rem;
+            color: #22d3ee;
+        }
+
+        .lobby-status {
+            text-align: center;
+        }
+
+        .lobby-count {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .lobby-waiting {
+            font-size: 1.25rem;
+            color: #9ca3af;
+        }
+
+        .controls-box {
+            background: rgba(17, 24, 39, 0.6);
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+
+        .controls-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #22d3ee;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .control-item kbd {
+            background: #374151;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            margin-right: 0.5rem;
+        }
+
+        .gameover-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #111827 0%, #7e22ce 50%, #000 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .gameover-content {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .gameover-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .trophy-icon {
+            width: 7.5rem;
+            height: 7.5rem;
+            color: #fbbf24;
+            margin: 0 auto 1.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        .gameover-title {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .victory-title {
+            background: linear-gradient(to right, #fbbf24, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .defeat-title {
+            background: linear-gradient(to right, #ef4444, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gameover-box {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 4px solid #a855f7;
+            margin-bottom: 2rem;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .stat-large {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-large.cyan {
+            color: #22d3ee;
+        }
+
+        .stat-large.purple {
+            color: #a855f7;
+        }
+
+        .stat-desc {
+            font-size: 1.5rem;
+            color: #d1d5db;
+        }
+
+        .winner-box {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(to right, rgba(234, 179, 8, 0.3), rgba(249, 115, 22, 0.3));
+            border-radius: 1rem;
+        }
+
+        .winner-label {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            margin-bottom: 0.5rem;
+        }
+
+        .winner-name {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .winner-kills {
+            font-size: 1.25rem;
+            color: #fde047;
+        }
+
+        .points-box {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(to right, rgba(5, 150, 105, 0.3), rgba(16, 185, 129, 0.3));
+            border-radius: 1rem;
+        }
+
+        .points-label {
+            font-size: 1.5rem;
+            color: #34d399;
+            margin-bottom: 0.5rem;
+        }
+
+        .points-earned {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #fbbf24;
+            margin-bottom: 0.5rem;
+        }
+
+        .points-total {
+            font-size: 1.25rem;
+            color: #6ee7b7;
+        }
+
+        .gameover-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .gameover-btn {
+            padding: 1.25rem 3rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .gameover-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .gameover-btn.play-again {
+            background: linear-gradient(to right, #2563eb, #7c3aed);
+            color: white;
+        }
+
+        .gameover-btn.menu {
+            background: linear-gradient(to right, #4b5563, #374151);
+            color: white;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .mode-card {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-card:hover {
+            transform: scale(1.05);
+        }
+
+        .mode-card.disabled {
+            background: rgba(75, 85, 99, 0.5);
+            position: relative;
+            overflow: hidden;
+            cursor: not-allowed;
+        }
+
+        .mode-card.disabled::before {
+            content: 'COMING SOON';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fbbf24;
+            z-index: 10;
+        }
+
+        .mode-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .mode-desc {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .mode-select {
+            background: white;
+            color: #2563eb;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-select:hover {
+            background: #e5e7eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // API Configuration
+        const API_URL = 'http://localhost:3000/api';
+        
+        // Game Constants
+        const GAME_WIDTH = 6000;
+        const GAME_HEIGHT = 4500;
+        const VIEWPORT_WIDTH = 1400;
+        const VIEWPORT_HEIGHT = 900;
+        const PLAYER_SIZE = 30;
+        const BULLET_SIZE = 8;
+        const WEAPON_SIZE = 20;
+        const HOUSE_SIZE = 140;
+        const OBSTACLE_SIZE = 40;
+        const MAX_PLAYERS = 15;
+        const LOBBY_TIME = 15;
+        const MINIMAP_SIZE = 220;
+        const STORM_DAMAGE = 5;
+        const STORM_TICK_RATE = 1000;
+        const HEALTH_PACK_SIZE = 25;
+        const HEALTH_PACK_HEAL = 30;
+
+        // Weapons Data
+        const WEAPONS = [
+            { id: 1, name: 'Plasma Rifle', damage: 35, fireRate: 400, range: 350, speed: 12, color: '#00ffff', bullets: 30, style: 'plasma', icon: '🔫', rarity: 'common' },
+            { id: 2, name: 'Shotgun', damage: 60, fireRate: 800, range: 200, speed: 8, color: '#ff6600', bullets: 8, spread: 5, style: 'shotgun', icon: '💥', rarity: 'uncommon' },
+            { id: 3, name: 'Sniper', damage: 90, fireRate: 1500, range: 600, speed: 20, color: '#ff0000', bullets: 5, style: 'sniper', icon: '🎯', rarity: 'rare' },
+            { id: 4, name: 'Machine Gun', damage: 20, fireRate: 100, range: 300, speed: 15, color: '#ffff00', bullets: 100, style: 'machinegun', icon: '⚡', rarity: 'common' },
+            { id: 5, name: 'Rocket', damage: 100, fireRate: 2000, range: 400, speed: 6, color: '#ff00ff', bullets: 4, explosive: true, style: 'rocket', icon: '🚀', rarity: 'legendary' },
+            { id: 6, name: 'Laser Beam', damage: 15, fireRate: 50, range: 500, speed: 25, color: '#00ff00', bullets: 200, style: 'laser', icon: '✨', rarity: 'epic' },
+            { id: 7, name: 'Freeze Ray', damage: 25, fireRate: 600, range: 280, speed: 10, color: '#aaffff', bullets: 20, freeze: true, style: 'freeze', icon: '❄️', rarity: 'rare' },
+            { id: 8, name: 'Flamethrower', damage: 30, fireRate: 80, range: 180, speed: 7, color: '#ff4400', bullets: 50, style: 'flame', icon: '🔥', rarity: 'uncommon' },
+            { id: 9, name: 'Railgun', damage: 120, fireRate: 2500, range: 700, speed: 30, color: '#ffffff', bullets: 3, pierce: true, style: 'rail', icon: '⚔️', rarity: 'legendary' },
+            { id: 10, name: 'Grenade', damage: 80, fireRate: 1200, range: 350, speed: 5, color: '#88ff00', bullets: 10, arc: true, style: 'grenade', icon: '💣', rarity: 'epic' }
+        ];
+
+        // Skins Data
+        const SKINS = [
+            { id: 'chase', name: 'Chase', cost: 1500, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chase.png', color: '#ff1744', rarity: 'legendary' },
+            { id: 'caleb', name: 'Caleb', cost: 1200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/caleb.png', color: '#7c4dff', rarity: 'epic' },
+            { id: 'brody', name: 'Brody', cost: 1000, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/brody.png', color: '#00e676', rarity: 'epic' },
+            { id: 'connorV', name: 'Connor', cost: 900, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/sixseven.png', color: '#ffc400', rarity: 'rare' },
+            { id: 'jaxon', name: 'Jaxon', cost: 800, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jaxon.png', color: '#00b0ff', rarity: 'rare' },
+            { id: 'luca', name: 'Luca', cost: 400, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/luca.png', color: '#d500f9', rarity: 'uncommon' },
+            { id: 'charlie', name: 'Charlie', cost: 300, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/charlie.png', color: '#ff6d00', rarity: 'uncommon' },
+            { id: 'harly', name: 'Harly', cost: 250, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/harly.png', color: '#76ff03', rarity: 'common' },
+            { id: 'ollie', name: 'Ollie', cost: 200, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ollie.png', color: '#18ffff', rarity: 'common' },
+            { id: 'connorD', name: 'Connor', cost: 175, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/connord.png', color: '#ff3d00', rarity: 'common' },
+            { id: 'jackn', name: 'Jackn', cost: 150, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jackn.png', color: '#651fff', rarity: 'common' },
+            { id: 'liam', name: 'Liam', cost: 125, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/liam.png', color: '#00e5ff', rarity: 'common' },
+            { id: 'jet', name: 'Jet', cost: 100, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jet.png', color: '#ffea00', rarity: 'common' },
+            { id: 'gavin', name: 'Gavin', cost: 75, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/gavin.png', color: '#ff1744', rarity: 'common' },
+            { id: 'ginger', name: 'Ginger', cost: 50, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/ginger.png', color: '#ff9100', rarity: 'common' },
+            { id: 'chay', name: 'Chay', cost: 25, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/chay.png', color: '#00e676', rarity: 'common' },
+            { id: 'jude', name: 'Jude', cost: 0, img: 'https://raw.githubusercontent.com/judebrewster1-design/tsgamesite-so-peak/main/judesnakes/jude.png', color: '#2979ff', rarity: 'starter' }
+        ];
+
+        // API Helper Functions
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const token = localStorage.getItem('authToken');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
             
-            for (let i = 0; i < aiCount; i++) {
-              const randomSkin = SKINS[Math.floor(Math.random() * SKINS.length)];
-              aiBots.push({
-                id: `ai_${i}`,
-                name: `Bot ${i + 1}`,
-                skin: randomSkin.id,
-                x: Math.random() * (GAME_WIDTH - 400) + 200,
-                y: Math.random() * (GAME_HEIGHT - 400) + 200,
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const options = {
+                method,
+                headers
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'API request failed');
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Game State
+        const gameState = {
+            screen: 'menu',
+            menuScreen: 'main',
+            playerName: '',
+            selectedSkin: 'jude',
+            ownedSkins: ['jude'],
+            points: 0,
+            totalKills: 0,
+            totalWins: 0,
+            gamesPlayed: 0,
+            isLoggedIn: false,
+            currentUser: null,
+            authToken: null,
+            showAuthModal: false,
+            authMode: 'login',
+            authEmail: '',
+            authPassword: '',
+            authError: '',
+            authLoading: false,
+            leaderboard: [],
+            lobbyTimer: LOBBY_TIME,
+            players: [],
+            bullets: [],
+            effects: [],
+            pickups: [],
+            keys: {},
+            mousePos: { x: 0, y: 0 },
+            worldMousePos: { x: 0, y: 0 },
+            camera: { x: 0, y: 0 },
+            zoom: 0.7,
+            showMinimap: true,
+            soundEnabled: true,
+            stormRadius: Math.max(GAME_WIDTH, GAME_HEIGHT),
+            stormCenter: { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
+            wonGame: false,
+            killFeed: [],
+            playerId: Math.random().toString(36).substr(2, 9),
+            skinImages: {},
+            mapData: null,
+            gameLoopInterval: null,
+            stormTickInterval: null,
+            lobbyInterval: null,
+            canvas: null,
+            ctx: null
+        };
+
+        // Generate Map
+        function generateMap() {
+            const houses = [];
+            const spacing = 500;
+            const margin = 400;
+            
+            for (let x = margin; x < GAME_WIDTH - margin; x += spacing) {
+                for (let y = margin; y < GAME_HEIGHT - margin; y += spacing) {
+                    houses.push({
+                        x: x + (Math.random() - 0.5) * 150,
+                        y: y + (Math.random() - 0.5) * 150,
+                        width: HOUSE_SIZE,
+                        height: HOUSE_SIZE
+                    });
+                }
+            }
+            
+            const obstacles = [];
+            for (let i = 0; i < 120; i++) {
+                obstacles.push({
+                    x: Math.random() * GAME_WIDTH,
+                    y: Math.random() * GAME_HEIGHT,
+                    type: Math.random() > 0.5 ? 'tree' : 'rock'
+                });
+            }
+            
+            return { houses, obstacles };
+        }
+
+        // Load skin images
+        function loadSkinImages() {
+            SKINS.forEach(skin => {
+                const img = new Image();
+                img.src = skin.img;
+                img.onload = () => {
+                    gameState.skinImages[skin.id] = img;
+                };
+            });
+        }
+
+        // Load user data from token
+        async function loadUserData() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    const data = await apiCall('/auth/me');
+                    gameState.isLoggedIn = true;
+                    gameState.authToken = token;
+                    gameState.currentUser = data.user;
+                    gameState.points = data.user.points || 0;
+                    gameState.ownedSkins = data.user.ownedSkins || ['jude'];
+                    gameState.selectedSkin = data.user.selectedSkin || 'jude';
+                    gameState.totalKills = data.user.totalKills || 0;
+                    gameState.totalWins = data.user.totalWins || 0;
+                    gameState.gamesPlayed = data.user.gamesPlayed || 0;
+                    gameState.playerName = data.user.username || '';
+                } catch (error) {
+                    console.error('Failed to load user data:', error);
+                    localStorage.removeItem('authToken');
+                }
+            }
+
+            // Load leaderboard
+            try {
+                const data = await apiCall('/leaderboard');
+                gameState.leaderboard = data.leaderboard || [];
+            } catch (error) {
+                console.error('Failed to load leaderboard:', error);
+            }
+        }
+
+        // Save user data to backend
+        async function saveUserData() {
+            if (gameState.isLoggedIn && gameState.authToken) {
+                try {
+                    await apiCall('/user/profile', 'PUT', {
+                        username: gameState.playerName,
+                        selectedSkin: gameState.selectedSkin
+                    });
+                } catch (error) {
+                    console.error('Failed to save user data:', error);
+                }
+            }
+        }
+
+        // Play sound
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch(type) {
+                case 'shoot':
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'hit':
+                    oscillator.frequency.value = 200;
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.15);
+                    break;
+                case 'kill':
+                    oscillator.frequency.value = 400;
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+            }
+        }
+
+        // Add kill feed
+        function addKillFeed(killerName, victimName, weapon) {
+            const feed = {
+                id: Math.random(),
+                killer: killerName,
+                victim: victimName,
+                weapon: weapon.icon,
+                time: Date.now()
+            };
+            gameState.killFeed = [feed, ...gameState.killFeed].slice(0, 5);
+        }
+
+        // Authentication functions
+        async function handleLogin() {
+            if (!gameState.authEmail || !gameState.authPassword) {
+                gameState.authError = 'Please enter email and password';
+                render();
+                return;
+            }
+            
+            gameState.authLoading = true;
+            gameState.authError = '';
+            render();
+
+            try {
+                const data = await apiCall('/auth/login', 'POST', {
+                    email: gameState.authEmail,
+                    password: gameState.authPassword
+                });
+
+                localStorage.setItem('authToken', data.token);
+                gameState.isLoggedIn = true;
+                gameState.authToken = data.token;
+                gameState.currentUser = data.user;
+                gameState.points = data.user.points || 0;
+                gameState.ownedSkins = data.user.ownedSkins || ['jude'];
+                gameState.selectedSkin = data.user.selectedSkin || 'jude';
+                gameState.totalKills = data.user.totalKills || 0;
+                gameState.totalWins = data.user.totalWins || 0;
+                gameState.gamesPlayed = data.user.gamesPlayed || 0;
+                gameState.playerName = data.user.username || '';
+                gameState.showAuthModal = false;
+                gameState.authEmail = '';
+                gameState.authPassword = '';
+                gameState.authError = '';
+                
+                // Reload leaderboard
+                const leaderboardData = await apiCall('/leaderboard');
+                gameState.leaderboard = leaderboardData.leaderboard || [];
+                
+                render();
+            } catch (error) {
+                gameState.authError = error.message || 'Login failed';
+                render();
+            } finally {
+                gameState.authLoading = false;
+            }
+        }
+
+        async function handleSignup() {
+            if (!gameState.authEmail || !gameState.authPassword) {
+                gameState.authError = 'Please enter email and password';
+                render();
+                return;
+            }
+
+            if (gameState.authPassword.length < 6) {
+                gameState.authError = 'Password must be at least 6 characters';
+                render();
+                return;
+            }
+            
+            gameState.authLoading = true;
+            gameState.authError = '';
+            render();
+
+            try {
+                const username = gameState.authEmail.split('@')[0];
+                const data = await apiCall('/auth/register', 'POST', {
+                    email: gameState.authEmail,
+                    password: gameState.authPassword,
+                    username: username
+                });
+
+                localStorage.setItem('authToken', data.token);
+                gameState.isLoggedIn = true;
+                gameState.authToken = data.token;
+                gameState.currentUser = data.user;
+                gameState.points = data.user.points || 0;
+                gameState.ownedSkins = data.user.ownedSkins || ['jude'];
+                gameState.selectedSkin = data.user.selectedSkin || 'jude';
+                gameState.totalKills = data.user.totalKills || 0;
+                gameState.totalWins = data.user.totalWins || 0;
+                gameState.gamesPlayed = data.user.gamesPlayed || 0;
+                gameState.playerName = data.user.username || username;
+                gameState.showAuthModal = false;
+                gameState.authEmail = '';
+                gameState.authPassword = '';
+                gameState.authError = '';
+                
+                // Reload leaderboard
+                const leaderboardData = await apiCall('/leaderboard');
+                gameState.leaderboard = leaderboardData.leaderboard || [];
+                
+                render();
+            } catch (error) {
+                gameState.authError = error.message || 'Signup failed';
+                render();
+            } finally {
+                gameState.authLoading = false;
+            }
+        }
+
+        async function handleLogout() {
+            await saveUserData();
+            localStorage.removeItem('authToken');
+            gameState.isLoggedIn = false;
+            gameState.authToken = null;
+            gameState.currentUser = null;
+            gameState.points = 0;
+            gameState.ownedSkins = ['jude'];
+            gameState.selectedSkin = 'jude';
+            gameState.totalKills = 0;
+            gameState.totalWins = 0;
+            gameState.gamesPlayed = 0;
+            gameState.playerName = '';
+            render();
+        }
+
+        // Buy skin
+        async function buySkin(skin) {
+            if (gameState.points >= skin.cost && !gameState.ownedSkins.includes(skin.id)) {
+                try {
+                    const data = await apiCall('/user/buy-skin', 'POST', {
+                        skinId: skin.id,
+                        cost: skin.cost
+                    });
+
+                    gameState.points = data.user.points;
+                    gameState.ownedSkins = data.user.ownedSkins;
+                    gameState.selectedSkin = data.user.selectedSkin;
+                    playSound('hit');
+                    render();
+                } catch (error) {
+                    console.error('Failed to buy skin:', error);
+                    alert(error.message || 'Failed to purchase skin');
+                }
+            }
+        }
+
+        // Update game stats
+        async function updateGameStats(kills, won) {
+            if (!gameState.isLoggedIn) return;
+
+            const pointsEarned = won ? 100 : kills * 10;
+
+            try {
+                const data = await apiCall('/user/update-stats', 'POST', {
+                    kills: kills,
+                    won: won,
+                    pointsEarned: pointsEarned
+                });
+
+                gameState.points = data.user.points;
+                gameState.totalKills = data.user.totalKills;
+                gameState.totalWins = data.user.totalWins;
+                gameState.gamesPlayed = data.user.gamesPlayed;
+
+                // Reload leaderboard
+                const leaderboardData = await apiCall('/leaderboard');
+                gameState.leaderboard = leaderboardData.leaderboard || [];
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+
+        // Start game
+        function startGame() {
+            if (!gameState.playerName.trim()) {
+                alert('Please enter your name!');
+                return;
+            }
+
+            gameState.screen = 'lobby';
+            gameState.lobbyTimer = LOBBY_TIME;
+            gameState.wonGame = false;
+            gameState.stormRadius = Math.max(GAME_WIDTH, GAME_HEIGHT);
+            gameState.killFeed = [];
+
+            const newPlayer = {
+                id: gameState.playerId,
+                name: gameState.playerName,
+                skin: gameState.selectedSkin,
+                x: GAME_WIDTH / 2,
+                y: GAME_HEIGHT / 2,
                 health: 100,
                 maxHealth: 100,
                 weapons: [null, null, null],
                 currentWeaponSlot: 0,
                 angle: 0,
-                isAI: true,
+                isPlayer: true,
                 kills: 0,
                 lastShot: 0,
-                speed: 4,
-                aiState: 'roam',
-                aiTarget: null,
-                aiDestination: {
-                  x: Math.random() * GAME_WIDTH,
-                  y: Math.random() * GAME_HEIGHT
-                },
+                speed: 5,
                 frozen: false,
                 frozenUntil: 0,
                 isDead: false
-              });
+            };
+
+            gameState.players = [newPlayer];
+
+            const initialPickups = [];
+            gameState.mapData.houses.forEach(house => {
+                const numPickups = Math.floor(Math.random() * 3) + 3;
+                for (let i = 0; i < numPickups; i++) {
+                    if (Math.random() < 0.75) {
+                        initialPickups.push({
+                            id: Math.random(),
+                            type: 'weapon',
+                            item: WEAPONS[Math.floor(Math.random() * WEAPONS.length)],
+                            x: house.x + Math.random() * (house.width - 40) + 20,
+                            y: house.y + Math.random() * (house.height - 40) + 20
+                        });
+                    } else {
+                        initialPickups.push({
+                            id: Math.random(),
+                            type: 'health',
+                            x: house.x + Math.random() * (house.width - 40) + 20,
+                            y: house.y + Math.random() * (house.height - 40) + 20
+                        });
+                    }
+                }
+            });
+
+            gameState.pickups = initialPickups;
+            gameState.bullets = [];
+            gameState.effects = [];
+
+            render();
+            startLobbyTimer();
+        }
+
+        // Lobby timer
+        function startLobbyTimer() {
+            gameState.lobbyInterval = setInterval(() => {
+                gameState.lobbyTimer--;
+                render();
+                
+                if (gameState.lobbyTimer <= 0) {
+                    clearInterval(gameState.lobbyInterval);
+                    
+                    const aiCount = MAX_PLAYERS - gameState.players.length;
+                    const aiBots = [];
+                    
+                    for (let i = 0; i < aiCount; i++) {
+                        const randomSkin = SKINS[Math.floor(Math.random() * SKINS.length)];
+                        aiBots.push({
+                            id: `ai_${i}`,
+                            name: `Bot ${i + 1}`,
+                            skin: randomSkin.id,
+                            x: Math.random() * (GAME_WIDTH - 400) + 200,
+                            y: Math.random() * (GAME_HEIGHT - 400) + 200,
+                            health: 100,
+                            maxHealth: 100,
+                            weapons: [null, null, null],
+                            currentWeaponSlot: 0,
+                            angle: 0,
+                            isAI: true,
+                            kills: 0,
+                            lastShot: 0,
+                            speed: 4,
+                            aiState: 'roam',
+                            aiTarget: null,
+                            aiDestination: {
+                                x: Math.random() * GAME_WIDTH,
+                                y: Math.random() * GAME_HEIGHT
+                            },
+                            frozen: false,
+                            frozenUntil: 0,
+                            isDead: false
+                        });
+                    }
+                    
+                    gameState.players = [...gameState.players, ...aiBots];
+                    gameState.screen = 'playing';
+                    render();
+                    startGameLoop();
+                    startStormTick();
+                }
+            }, 1000);
+        }
+
+        // Shoot bullet
+        function shootBullet(player, weapon, angle) {
+            if (player.isDead) return;
+            
+            playSound('shoot');
+            
+            gameState.effects.push({
+                id: Math.random(),
+                type: 'muzzle',
+                x: player.x,
+                y: player.y,
+                color: weapon.color,
+                angle: angle,
+                life: 0,
+                maxLife: 8
+            });
+
+            const spreadCount = weapon.spread || 1;
+            
+            for (let i = 0; i < spreadCount; i++) {
+                const bulletAngle = angle + (i - Math.floor(spreadCount / 2)) * 0.2;
+                gameState.bullets.push({
+                    id: Math.random(),
+                    x: player.x,
+                    y: player.y,
+                    angle: bulletAngle,
+                    speed: weapon.speed,
+                    weapon: weapon,
+                    ownerId: player.id,
+                    distance: 0
+                });
             }
             
-            setPlayers(prev => [...prev, ...aiBots]);
-            setGameState('playing');
-            setGamesPlayed(prev => prev + 1);
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [gameState, players.length]);
-
-  useEffect(() => {
-    if (gameState === 'playing') {
-      stormTickRef.current = setInterval(() => {
-        setStormRadius(prev => Math.max(300, prev - 30));
-        
-        setPlayers(prevPlayers => prevPlayers.map(player => {
-          if (player.isDead) return player;
-          
-          const distFromCenter = Math.hypot(
-            player.x - stormCenter.x,
-            player.y - stormCenter.y
-          );
-          
-          if (distFromCenter > stormRadius) {
-            const newHealth = Math.max(0, player.health - STORM_DAMAGE);
-            if (newHealth === 0 && player.health > 0) {
-              playSound('kill');
-              addKillFeed('⚡ Storm', player.name, { icon: '💀' });
-              return { ...player, health: newHealth, isDead: true };
-            }
-            return { ...player, health: newHealth };
-          }
-          
-          return player;
-        }));
-      }, STORM_TICK_RATE);
-      
-      return () => clearInterval(stormTickRef.current);
-    }
-  }, [gameState, stormRadius, stormCenter, playSound, addKillFeed]);
-
-  const shootBullet = useCallback((player, weapon, angle) => {
-    if (player.isDead) return;
-    
-    playSound('shoot');
-    
-    setEffects(prev => [...prev, {
-      id: Math.random(),
-      type: 'muzzle',
-      x: player.x,
-      y: player.y,
-      color: weapon.color,
-      angle: angle,
-      life: 0,
-      maxLife: 8
-    }]);
-
-    const spreadCount = weapon.spread || 1;
-    let newBullets = [];
-    
-    for (let i = 0; i < spreadCount; i++) {
-      const bulletAngle = angle + (i - Math.floor(spreadCount / 2)) * 0.2;
-      newBullets.push({
-        id: Math.random(),
-        x: player.x,
-        y: player.y,
-        angle: bulletAngle,
-        speed: weapon.speed,
-        weapon: weapon,
-        ownerId: player.id,
-        distance: 0
-      });
-    }
-    
-    setBullets(prev => [...prev, ...newBullets]);
-    
-    setPlayers(prev => prev.map(p => {
-      if (p.id === player.id) {
-        const newWeapons = [...p.weapons];
-        if (newWeapons[p.currentWeaponSlot]) {
-          newWeapons[p.currentWeaponSlot] = {
-            ...newWeapons[p.currentWeaponSlot],
-            ammo: Math.max(0, newWeapons[p.currentWeaponSlot].ammo - 1)
-          };
-        }
-        return { ...p, weapons: newWeapons, lastShot: Date.now() };
-      }
-      return p;
-    }));
-  }, [playSound]);
-
-  useEffect(() => {
-    if (gameState === 'playing') {
-      gameLoopRef.current = setInterval(() => {
-        setEffects(prev => 
-          prev.map(e => ({ ...e, life: e.life + 1 }))
-              .filter(e => e.life < e.maxLife)
-        );
-
-        setPlayers(prev => {
-          const currentTime = Date.now();
-          
-          return prev.map(player => {
-            if (player.isDead) return player;
-
-            let newX = player.x;
-            let newY = player.y;
-            let newAngle = player.angle;
-            let newWeapons = [...player.weapons];
-            let newFrozen = player.frozen;
-
-            if (player.frozen && currentTime > player.frozenUntil) {
-              newFrozen = false;
-            }
-
-            if (player.isPlayer && !newFrozen) {
-              let currentSpeed = player.speed;
-              if (keys.shift) currentSpeed *= 1.5;
-              
-              if (keys.w) newY -= currentSpeed;
-              if (keys.s) newY += currentSpeed;
-              if (keys.a) newX -= currentSpeed;
-              if (keys.d) newX += currentSpeed;
-
-              newAngle = Math.atan2(
-                worldMousePos.y - player.y,
-                worldMousePos.x - player.x
-              );
-
-              const weapon = player.weapons[player.currentWeaponSlot];
-              if (keys.mouse && weapon && weapon.ammo > 0 && 
-                  currentTime - player.lastShot > weapon.fireRate) {
-                shootBullet(player, weapon, newAngle);
-              }
-            } else if (player.isAI && !newFrozen) {
-              const aliveOpponents = prev.filter(p => 
-                p.id !== player.id && p.health > 0 && !p.isDead
-              );
-              
-              const closestPlayer = aliveOpponents
-                .map(p => ({
-                  ...p,
-                  dist: Math.hypot(p.x - player.x, p.y - player.y)
-                }))
-                .sort((a, b) => a.dist - b.dist)[0];
-
-              const needsWeapon = player.weapons.every(w => !w || w.ammo <= 0);
-
-              if (needsWeapon) {
-                const nearestPickup = pickups
-                  .filter(p => p.type === 'weapon')
-                  .map(pickup => ({
-                    ...pickup,
-                    dist: Math.hypot(pickup.x - player.x, pickup.y - player.y)
-                  }))
-                  .sort((a, b) => a.dist - b.dist)[0];
-
-                if (nearestPickup) {
-                  newAngle = Math.atan2(
-                    nearestPickup.y - player.y,
-                    nearestPickup.x - player.x
-                  );
-                  newX += Math.cos(newAngle) * player.speed;
-                  newY += Math.sin(newAngle) * player.speed;
+            const playerIndex = gameState.players.findIndex(p => p.id === player.id);
+            if (playerIndex !== -1) {
+                const newWeapons = [...gameState.players[playerIndex].weapons];
+                if (newWeapons[gameState.players[playerIndex].currentWeaponSlot]) {
+                    newWeapons[gameState.players[playerIndex].currentWeaponSlot] = {
+                        ...newWeapons[gameState.players[playerIndex].currentWeaponSlot],
+                        ammo: Math.max(0, newWeapons[gameState.players[playerIndex].currentWeaponSlot].ammo - 1)
+                    };
                 }
-              } else if (closestPlayer && closestPlayer.dist < 500) {
-                newAngle = Math.atan2(
-                  closestPlayer.y - player.y,
-                  closestPlayer.x - player.x
-                );
+                gameState.players[playerIndex].weapons = newWeapons;
+                gameState.players[playerIndex].lastShot = Date.now();
+            }
+        }
 
-                if (closestPlayer.dist > 200) {
-                  newX += Math.cos(newAngle) * player.speed;
-                  newY += Math.sin(newAngle) * player.speed;
+        // Game loop
+        function startGameLoop() {
+            gameState.gameLoopInterval = setInterval(() => {
+                const currentTime = Date.now();
+                
+                // Update effects
+                gameState.effects = gameState.effects
+                    .map(e => ({ ...e, life: e.life + 1 }))
+                    .filter(e => e.life < e.maxLife);
+
+                // Update players
+                gameState.players = gameState.players.map(player => {
+                    if (player.isDead) return player;
+
+                    let newX = player.x;
+                    let newY = player.y;
+                    let newAngle = player.angle;
+                    let newWeapons = [...player.weapons];
+                    let newFrozen = player.frozen;
+
+                    if (player.frozen && currentTime > player.frozenUntil) {
+                        newFrozen = false;
+                    }
+
+                    if (player.isPlayer && !newFrozen) {
+                        let currentSpeed = player.speed;
+                        if (gameState.keys.shift) currentSpeed *= 1.5;
+                        
+                        if (gameState.keys.w) newY -= currentSpeed;
+                        if (gameState.keys.s) newY += currentSpeed;
+                        if (gameState.keys.a) newX -= currentSpeed;
+                        if (gameState.keys.d) newX += currentSpeed;
+
+                        newAngle = Math.atan2(
+                            gameState.worldMousePos.y - player.y,
+                            gameState.worldMousePos.x - player.x
+                        );
+
+                        const weapon = player.weapons[player.currentWeaponSlot];
+                        if (gameState.keys.mouse && weapon && weapon.ammo > 0 && 
+                            currentTime - player.lastShot > weapon.fireRate) {
+                            shootBullet(player, weapon, newAngle);
+                        }
+                    } else if (player.isAI && !newFrozen) {
+                        const aliveOpponents = gameState.players.filter(p => 
+                            p.id !== player.id && p.health > 0 && !p.isDead
+                        );
+                        
+                        const closestPlayer = aliveOpponents
+                            .map(p => ({
+                                ...p,
+                                dist: Math.hypot(p.x - player.x, p.y - player.y)
+                            }))
+                            .sort((a, b) => a.dist - b.dist)[0];
+
+                        const needsWeapon = player.weapons.every(w => !w || w.ammo <= 0);
+
+                        if (needsWeapon) {
+                            const nearestPickup = gameState.pickups
+                                .filter(p => p.type === 'weapon')
+                                .map(pickup => ({
+                                    ...pickup,
+                                    dist: Math.hypot(pickup.x - player.x, pickup.y - player.y)
+                                }))
+                                .sort((a, b) => a.dist - b.dist)[0];
+
+                            if (nearestPickup) {
+                                newAngle = Math.atan2(
+                                    nearestPickup.y - player.y,
+                                    nearestPickup.x - player.x
+                                );
+                                newX += Math.cos(newAngle) * player.speed;
+                                newY += Math.sin(newAngle) * player.speed;
+                            }
+                        } else if (closestPlayer && closestPlayer.dist < 500) {
+                            newAngle = Math.atan2(
+                                closestPlayer.y - player.y,
+                                closestPlayer.x - player.x
+                            );
+
+                            if (closestPlayer.dist > 200) {
+                                newX += Math.cos(newAngle) * player.speed;
+                                newY += Math.sin(newAngle) * player.speed;
+                            }
+
+                            const weapon = player.weapons[player.currentWeaponSlot];
+                            if (weapon && weapon.ammo > 0 && 
+                                currentTime - player.lastShot > weapon.fireRate &&
+                                closestPlayer.dist < weapon.range) {
+                                shootBullet(player, weapon, newAngle + (Math.random() - 0.5) * 0.15);
+                            }
+                        } else {
+                            const distToDest = Math.hypot(
+                                player.aiDestination.x - player.x,
+                                player.aiDestination.y - player.y
+                            );
+
+                            if (distToDest < 50 || Math.random() < 0.01) {
+                                player.aiDestination = {
+                                    x: Math.random() * GAME_WIDTH,
+                                    y: Math.random() * GAME_HEIGHT
+                                };
+                            }
+
+                            newAngle = Math.atan2(
+                                player.aiDestination.y - player.y,
+                                player.aiDestination.x - player.x
+                            );
+                            newX += Math.cos(newAngle) * player.speed * 0.6;
+                            newY += Math.sin(newAngle) * player.speed * 0.6;
+                        }
+                    }
+
+                    newX = Math.max(PLAYER_SIZE, Math.min(GAME_WIDTH - PLAYER_SIZE, newX));
+                    newY = Math.max(PLAYER_SIZE, Math.min(GAME_HEIGHT - PLAYER_SIZE, newY));
+
+                    gameState.mapData.obstacles.forEach(obs => {
+                        const dist = Math.hypot(newX - obs.x, newY - obs.y);
+                        if (dist < OBSTACLE_SIZE) {
+                            const pushAngle = Math.atan2(newY - obs.y, newX - obs.x);
+                            newX = obs.x + Math.cos(pushAngle) * OBSTACLE_SIZE;
+                            newY = obs.y + Math.sin(pushAngle) * OBSTACLE_SIZE;
+                        }
+                    });
+
+                    gameState.pickups = gameState.pickups.filter(pickup => {
+                        const dist = Math.hypot(pickup.x - newX, pickup.y - newY);
+                        if (dist < PLAYER_SIZE / 2 + WEAPON_SIZE / 2) {
+                            if (pickup.type === 'weapon') {
+                                const emptySlot = newWeapons.findIndex(w => !w || w.ammo <= 0);
+                                if (emptySlot !== -1) {
+                                    newWeapons[emptySlot] = { ...pickup.item, ammo: pickup.item.bullets };
+                                    playSound('hit');
+                                    return false;
+                                }
+                            } else if (pickup.type === 'health' && player.health < player.maxHealth) {
+                                player.health = Math.min(player.maxHealth, player.health + HEALTH_PACK_HEAL);
+                                playSound('hit');
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+
+                    return {
+                        ...player,
+                        x: newX,
+                        y: newY,
+                        angle: newAngle,
+                        weapons: newWeapons,
+                        frozen: newFrozen
+                    };
+                });
+
+                // Update bullets
+                let updatedBullets = gameState.bullets.map(bullet => {
+                    let newX = bullet.x + Math.cos(bullet.angle) * bullet.speed;
+                    let newY = bullet.y + Math.sin(bullet.angle) * bullet.speed;
+                    
+                    return {
+                        ...bullet,
+                        x: newX,
+                        y: newY,
+                        distance: bullet.distance + bullet.speed
+                    };
+                });
+
+                const bulletsToRemove = new Set();
+
+                updatedBullets.forEach((bullet, bulletIdx) => {
+                    if (bullet.distance > bullet.weapon.range ||
+                        bullet.x < 0 || bullet.x > GAME_WIDTH ||
+                        bullet.y < 0 || bullet.y > GAME_HEIGHT) {
+                        bulletsToRemove.add(bulletIdx);
+                        return;
+                    }
+
+                    gameState.mapData.obstacles.forEach(obs => {
+                        const dist = Math.hypot(bullet.x - obs.x, bullet.y - obs.y);
+                        if (dist < OBSTACLE_SIZE && !bullet.weapon.pierce) {
+                            bulletsToRemove.add(bulletIdx);
+                            gameState.effects.push({
+                                id: Math.random(),
+                                type: 'hit',
+                                x: bullet.x,
+                                y: bullet.y,
+                                color: bullet.weapon.color,
+                                life: 0,
+                                maxLife: 20
+                            });
+                        }
+                    });
+
+                    gameState.players = gameState.players.map(player => {
+                        if (player.id !== bullet.ownerId && player.health > 0 && !player.isDead) {
+                            const dist = Math.hypot(bullet.x - player.x, bullet.y - player.y);
+                            if (dist < PLAYER_SIZE / 2) {
+                                if (!bullet.weapon.pierce) {
+                                    bulletsToRemove.add(bulletIdx);
+                                }
+
+                                gameState.effects.push({
+                                    id: Math.random(),
+                                    type: 'hit',
+                                    x: player.x,
+                                    y: player.y,
+                                    color: bullet.weapon.color,
+                                    life: 0,
+                                    maxLife: 20
+                                });
+
+                                playSound('hit');
+
+                                if (bullet.weapon.explosive) {
+                                    gameState.effects.push({
+                                        id: Math.random(),
+                                        type: 'explosion',
+                                        x: bullet.x,
+                                        y: bullet.y,
+                                        color: bullet.weapon.color,
+                                        life: 0,
+                                        maxLife: 30
+                                    });
+                                }
+
+                                const newHealth = Math.max(0, player.health - bullet.weapon.damage);
+                                let frozen = player.frozen;
+                                let frozenUntil = player.frozenUntil;
+
+                                if (bullet.weapon.freeze) {
+                                    frozen = true;
+                                    frozenUntil = Date.now() + 2500;
+                                }
+
+                                if (newHealth === 0 && player.health > 0) {
+                                    playSound('kill');
+                                    
+                                    const killer = gameState.players.find(p => p.id === bullet.ownerId);
+                                    if (killer) {
+                                        addKillFeed(killer.name, player.name, bullet.weapon);
+                                    }
+                                    
+                                    const killerIndex = gameState.players.findIndex(p => p.id === bullet.ownerId);
+                                    if (killerIndex !== -1) {
+                                        gameState.players[killerIndex].kills++;
+                                    }
+                                    
+                                    return { ...player, health: newHealth, isDead: true };
+                                }
+
+                                return { ...player, health: newHealth, frozen, frozenUntil };
+                            }
+                        }
+                        return player;
+                    });
+                });
+
+                gameState.bullets = updatedBullets.filter((_, idx) => !bulletsToRemove.has(idx));
+
+                // Check win condition
+                const alivePlayers = gameState.players.filter(p => p.health > 0 && !p.isDead);
+                if (alivePlayers.length === 1) {
+                    const winner = alivePlayers[0];
+                    if (winner.id === gameState.playerId && !gameState.wonGame) {
+                        gameState.wonGame = true;
+                        playSound('kill');
+                    }
+                    
+                    const player = gameState.players.find(p => p.id === gameState.playerId);
+                    if (player) {
+                        updateGameStats(player.kills, gameState.wonGame);
+                    }
+                    
+                    setTimeout(() => {
+                        clearInterval(gameState.gameLoopInterval);
+                        clearInterval(gameState.stormTickInterval);
+                        gameState.screen = 'gameover';
+                        render();
+                    }, 2000);
+                }
+
+                // Update camera
+                const player = gameState.players.find(p => p.id === gameState.playerId);
+                if (player && !player.isDead) {
+                    const targetX = player.x - VIEWPORT_WIDTH / (2 * gameState.zoom);
+                    const targetY = player.y - VIEWPORT_HEIGHT / (2 * gameState.zoom);
+                    gameState.camera = {
+                        x: Math.max(0, Math.min(GAME_WIDTH - VIEWPORT_WIDTH / gameState.zoom, targetX)),
+                        y: Math.max(0, Math.min(GAME_HEIGHT - VIEWPORT_HEIGHT / gameState.zoom, targetY))
+                    };
+                }
+
+                drawGame();
+            }, 1000 / 60);
+        }
+
+        // Storm tick
+        function startStormTick() {
+            gameState.stormTickInterval = setInterval(() => {
+                gameState.stormRadius = Math.max(300, gameState.stormRadius - 30);
+                
+                gameState.players = gameState.players.map(player => {
+                    if (player.isDead) return player;
+                    
+                    const distFromCenter = Math.hypot(
+                        player.x - gameState.stormCenter.x,
+                        player.y - gameState.stormCenter.y
+                    );
+                    
+                    if (distFromCenter > gameState.stormRadius) {
+                        const newHealth = Math.max(0, player.health - STORM_DAMAGE);
+                        if (newHealth === 0 && player.health > 0) {
+                            playSound('kill');
+                            addKillFeed('⚡ Storm', player.name, { icon: '💀' });
+                            return { ...player, health: newHealth, isDead: true };
+                        }
+                        return { ...player, health: newHealth };
+                    }
+                    
+                    return player;
+                });
+            }, STORM_TICK_RATE);
+        }
+
+        // Draw weapon
+        function drawWeapon(ctx, weapon, x, y, size, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+
+            const style = weapon.style;
+            ctx.fillStyle = weapon.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = weapon.color;
+
+            if (style === 'plasma') {
+                ctx.fillRect(-size / 2, -size / 8, size * 0.8, size / 4);
+                ctx.fillRect(size / 4, -size / 6, size / 8, size / 3);
+            } else if (style === 'shotgun') {
+                ctx.fillRect(-size / 2, -size / 6, size * 0.7, size / 3);
+                ctx.fillRect(size / 6, -size / 4, size / 10, size / 2);
+            } else if (style === 'sniper') {
+                ctx.strokeStyle = weapon.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(-size / 2, 0);
+                ctx.lineTo(size / 2, 0);
+                ctx.stroke();
+                ctx.fillRect(size / 3, -size / 6, size / 6, size / 3);
+            } else if (style === 'rocket') {
+                ctx.beginPath();
+                ctx.moveTo(size / 2, 0);
+                ctx.lineTo(-size / 3, -size / 4);
+                ctx.lineTo(-size / 2, 0);
+                ctx.lineTo(-size / 3, size / 4);
+                ctx.closePath();
+                ctx.fill();
+            } else if (style === 'laser') {
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-size / 2, 0);
+                ctx.lineTo(size / 2, 0);
+                ctx.stroke();
+            } else if (style === 'freeze') {
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 6; i++) {
+                    const a = (Math.PI * 2 / 6) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(a) * size / 2, Math.sin(a) * size / 2);
+                    ctx.stroke();
+                }
+            } else if (style === 'flame') {
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.arc(i * size / 4 - size / 4, 0, size / 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (style === 'rail') {
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(-size / 2, 0);
+                ctx.lineTo(size / 2, 0);
+                ctx.stroke();
+            } else if (style === 'grenade') {
+                ctx.beginPath();
+                ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(-size / 10, -size / 2, size / 5, size / 4);
+            } else {
+                ctx.fillRect(-size / 2, -size / 8, size * 0.7, size / 4);
+                ctx.fillRect(size / 6, -size / 6, size / 8, size / 3);
+            }
+
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        // Draw game
+        function drawGame() {
+            if (!gameState.canvas || !gameState.ctx) return;
+            
+            const ctx = gameState.ctx;
+            ctx.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+
+            ctx.save();
+            ctx.scale(gameState.zoom, gameState.zoom);
+            ctx.translate(-gameState.camera.x, -gameState.camera.y);
+
+            // Draw background
+            ctx.fillStyle = '#2a5a2a';
+            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            ctx.strokeStyle = '#1a4a1a';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < GAME_WIDTH; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, GAME_HEIGHT);
+                ctx.stroke();
+            }
+            for (let i = 0; i < GAME_HEIGHT; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(GAME_WIDTH, i);
+                ctx.stroke();
+            }
+
+            // Draw houses
+            gameState.mapData.houses.forEach(house => {
+                ctx.fillStyle = '#8b4513';
+                ctx.fillRect(house.x, house.y, house.width, house.height);
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(house.x, house.y, house.width, house.height);
+                
+                ctx.fillStyle = '#333';
+                ctx.fillRect(house.x + house.width / 2 - 18, house.y + house.height - 35, 36, 35);
+                
+                ctx.fillStyle = '#87ceeb';
+                ctx.fillRect(house.x + 25, house.y + 25, 30, 30);
+                ctx.fillRect(house.x + house.width - 55, house.y + 25, 30, 30);
+                
+                ctx.fillStyle = '#a0522d';
+                ctx.beginPath();
+                ctx.moveTo(house.x, house.y);
+                ctx.lineTo(house.x + house.width / 2, house.y - 35);
+                ctx.lineTo(house.x + house.width, house.y);
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            // Draw obstacles
+            gameState.mapData.obstacles.forEach(obs => {
+                if (obs.type === 'tree') {
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(obs.x - 6, obs.y - 6, 12, 24);
+                    ctx.fillStyle = '#228b22';
+                    ctx.beginPath();
+                    ctx.arc(obs.x, obs.y - 12, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#808080';
+                    ctx.beginPath();
+                    ctx.arc(obs.x, obs.y, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // Draw storm
+            ctx.strokeStyle = '#ff00ff';
+            ctx.lineWidth = 8;
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff00ff';
+            ctx.beginPath();
+            ctx.arc(gameState.stormCenter.x, gameState.stormCenter.y, gameState.stormRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Draw pickups
+            gameState.pickups.forEach(pickup => {
+                ctx.save();
+                ctx.shadowBlur = 20;
+                if (pickup.type === 'weapon') {
+                    ctx.shadowColor = pickup.item.color;
+                    ctx.strokeStyle = pickup.item.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(pickup.x, pickup.y, WEAPON_SIZE, 0, Math.PI * 2);
+                    ctx.stroke();
+                    drawWeapon(ctx, pickup.item, pickup.x, pickup.y, 18, 0);
+                } else {
+                    ctx.shadowColor = '#00ff00';
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(pickup.x, pickup.y, HEALTH_PACK_SIZE, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fillRect(pickup.x - 3, pickup.y - 10, 6, 20);
+                    ctx.fillRect(pickup.x - 10, pickup.y - 3, 20, 6);
+                }
+                ctx.restore();
+            });
+
+            // Draw players
+            gameState.players.forEach(player => {
+                if (player.isDead) return;
+
+                const skinData = SKINS.find(s => s.id === player.skin);
+                const skinColor = skinData?.color || '#ffffff';
+                const skinImage = gameState.skinImages[player.skin];
+
+                ctx.save();
+                ctx.translate(player.x, player.y);
+
+                if (skinImage && skinImage.complete && skinImage.naturalWidth > 0) {
+                    ctx.save();
+                    ctx.rotate(player.angle + Math.PI / 2);
+                    ctx.drawImage(skinImage, -PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = skinColor;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, PLAYER_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
                 }
 
                 const weapon = player.weapons[player.currentWeaponSlot];
-                if (weapon && weapon.ammo > 0 && 
-                    currentTime - player.lastShot > weapon.fireRate &&
-                    closestPlayer.dist < weapon.range) {
-                  shootBullet(player, weapon, newAngle + (Math.random() - 0.5) * 0.15);
-                }
-              } else {
-                const distToDest = Math.hypot(
-                  player.aiDestination.x - player.x,
-                  player.aiDestination.y - player.y
-                );
-
-                if (distToDest < 50 || Math.random() < 0.01) {
-                  player.aiDestination = {
-                    x: Math.random() * GAME_WIDTH,
-                    y: Math.random() * GAME_HEIGHT
-                  };
+                if (weapon) {
+                    ctx.save();
+                    ctx.rotate(player.angle);
+                    ctx.translate(PLAYER_SIZE / 2, 0);
+                    drawWeapon(ctx, weapon, 0, 0, WEAPON_SIZE, 0);
+                    ctx.restore();
                 }
 
-                newAngle = Math.atan2(
-                  player.aiDestination.y - player.y,
-                  player.aiDestination.x - player.x
-                );
-                newX += Math.cos(newAngle) * player.speed * 0.6;
-                newY += Math.sin(newAngle) * player.speed * 0.6;
-              }
-            }
+                ctx.restore();
 
-            newX = Math.max(PLAYER_SIZE, Math.min(GAME_WIDTH - PLAYER_SIZE, newX));
-            newY = Math.max(PLAYER_SIZE, Math.min(GAME_HEIGHT - PLAYER_SIZE, newY));
+                if (player.frozen) {
+                    ctx.fillStyle = 'rgba(170, 255, 255, 0.4)';
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y, PLAYER_SIZE / 2 + 5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
 
-            MAP_DATA.obstacles.forEach(obs => {
-              const dist = Math.hypot(newX - obs.x, newY - obs.y);
-              if (dist < OBSTACLE_SIZE) {
-                const pushAngle = Math.atan2(newY - obs.y, newX - obs.x);
-                newX = obs.x + Math.cos(pushAngle) * OBSTACLE_SIZE;
-                newY = obs.y + Math.sin(pushAngle) * OBSTACLE_SIZE;
-              }
+                ctx.fillStyle = '#333';
+                ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, 40, 5);
+                ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
+                ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, (player.health / player.maxHealth) * 40, 5);
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
+                ctx.fillText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
             });
 
-            setPickups(prevPickups => {
-              return prevPickups.filter(pickup => {
-                const dist = Math.hypot(pickup.x - newX, pickup.y - newY);
-                if (dist < PLAYER_SIZE / 2 + WEAPON_SIZE / 2) {
-                  if (pickup.type === 'weapon') {
-                    const emptySlot = newWeapons.findIndex(w => !w || w.ammo <= 0);
-                    if (emptySlot !== -1) {
-                      newWeapons[emptySlot] = { ...pickup.item, ammo: pickup.item.bullets };
-                      playSound('hit');
-                      return false;
-                    }
-                  } else if (pickup.type === 'health' && player.health < player.maxHealth) {
-                    player.health = Math.min(player.maxHealth, player.health + HEALTH_PACK_HEAL);
-                    playSound('hit');
-                    return false;
-                  }
-                }
-                return true;
-              });
+            // Draw bullets
+            gameState.bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.weapon.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = bullet.weapon.color;
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, BULLET_SIZE / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
             });
 
-            return {
-              ...player,
-              x: newX,
-              y: newY,
-              angle: newAngle,
-              weapons: newWeapons,
-              frozen: newFrozen
-            };
-          });
-        });
+            // Draw effects
+            gameState.effects.forEach(effect => {
+                const progress = effect.life / effect.maxLife;
+                ctx.globalAlpha = 1 - progress;
 
-        setBullets(prevBullets => {
-          let updatedBullets = prevBullets.map(bullet => {
-            let newX = bullet.x + Math.cos(bullet.angle) * bullet.speed;
-            let newY = bullet.y + Math.sin(bullet.angle) * bullet.speed;
-            
-            return {
-              ...bullet,
-              x: newX,
-              y: newY,
-              distance: bullet.distance + bullet.speed
-            };
-          });
+                if (effect.type === 'muzzle') {
+                    ctx.fillStyle = effect.color;
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = effect.color;
+                    ctx.beginPath();
+                    ctx.arc(
+                        effect.x + Math.cos(effect.angle) * 20,
+                        effect.y + Math.sin(effect.angle) * 20,
+                        15 * (1 - progress),
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                } else if (effect.type === 'explosion') {
+                    ctx.strokeStyle = effect.color;
+                    ctx.lineWidth = 6;
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = effect.color;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, 60 * progress, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (effect.type === 'hit') {
+                    ctx.strokeStyle = effect.color;
+                    ctx.lineWidth = 4;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = effect.color;
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (Math.PI * 2 / 6) * i;
+                        ctx.beginPath();
+                        ctx.moveTo(effect.x, effect.y);
+                        ctx.lineTo(
+                            effect.x + Math.cos(angle) * 20 * progress,
+                            effect.y + Math.sin(angle) * 20 * progress
+                        );
+                        ctx.stroke();
+                    }
+                }
 
-          const bulletsToRemove = new Set();
-
-          updatedBullets.forEach((bullet, bulletIdx) => {
-            if (bullet.distance > bullet.weapon.range ||
-                bullet.x < 0 || bullet.x > GAME_WIDTH ||
-                bullet.y < 0 || bullet.y > GAME_HEIGHT) {
-              bulletsToRemove.add(bulletIdx);
-              return;
-            }
-
-            MAP_DATA.obstacles.forEach(obs => {
-              const dist = Math.hypot(bullet.x - obs.x, bullet.y - obs.y);
-              if (dist < OBSTACLE_SIZE && !bullet.weapon.pierce) {
-                bulletsToRemove.add(bulletIdx);
-                setEffects(prev => [...prev, {
-                  id: Math.random(),
-                  type: 'hit',
-                  x: bullet.x,
-                  y: bullet.y,
-                  color: bullet.weapon.color,
-                  life: 0,
-                  maxLife: 20
-                }]);
-              }
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
             });
 
-            setPlayers(prevPlayers => prevPlayers.map(player => {
-              if (player.id !== bullet.ownerId && player.health > 0 && !player.isDead) {
-                const dist = Math.hypot(bullet.x - player.x, bullet.y - player.y);
-                if (dist < PLAYER_SIZE / 2) {
-                  if (!bullet.weapon.pierce) {
-                    bulletsToRemove.add(bulletIdx);
-                  }
+            ctx.restore();
 
-                  setEffects(prev => [...prev, {
-                    id: Math.random(),
-                    type: 'hit',
-                    x: player.x,
-                    y: player.y,
-                    color: bullet.weapon.color,
-                    life: 0,
-                    maxLife: 20
-                  }]);
-
-                  playSound('hit');
-
-                  if (bullet.weapon.explosive) {
-                    setEffects(prev => [...prev, {
-                      id: Math.random(),
-                      type: 'explosion',
-                      x: bullet.x,
-                      y: bullet.y,
-                      color: bullet.weapon.color,
-                      life: 0,
-                      maxLife: 30
-                    }]);
-                  }
-
-                  const newHealth = Math.max(0, player.health - bullet.weapon.damage);
-                  let frozen = player.frozen;
-                  let frozenUntil = player.frozenUntil;
-
-                  if (bullet.weapon.freeze) {
-                    frozen = true;
-                    frozenUntil = Date.now() + 2500;
-                  }
-
-                  if (newHealth === 0 && player.health > 0) {
-                    playSound('kill');
+            // Draw HUD
+            const player = gameState.players.find(p => p.id === gameState.playerId);
+            
+            if (player && !player.isDead) {
+                const weapon = player.weapons[player.currentWeaponSlot];
+                if (weapon) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    ctx.fillRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
+                    ctx.strokeStyle = weapon.color;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
                     
-                    const killer = prevPlayers.find(p => p.id === bullet.ownerId);
-                    if (killer) {
-                      addKillFeed(killer.name, player.name, bullet.weapon);
-                    }
+                    drawWeapon(ctx, weapon, VIEWPORT_WIDTH / 2 - 70, VIEWPORT_HEIGHT - 40, 35, 0);
                     
-                    if (bullet.ownerId === playerId.current) {
-                      setPoints(prev => prev + 10);
-                      setTotalKills(prev => prev + 1);
-                    }
-                    
-                    setPlayers(prev2 => prev2.map(p2 => 
-                      p2.id === bullet.ownerId ? { ...p2, kills: p2.kills + 1 } : p2
-                    ));
-                    
-                    return { ...player, health: newHealth, isDead: true };
-                  }
-
-                  return { ...player, health: newHealth, frozen, frozenUntil };
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(weapon.name, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 50);
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText(`${weapon.ammo}/${weapon.bullets}`, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 28);
                 }
-              }
-              return player;
-            }));
-          });
 
-          return updatedBullets.filter((_, idx) => !bulletsToRemove.has(idx));
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(20, VIEWPORT_HEIGHT - 70, 180, 60);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`HP: ${player.health}`, 30, VIEWPORT_HEIGHT - 40);
+                ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
+                ctx.fillRect(30, VIEWPORT_HEIGHT - 25, (player.health / player.maxHealth) * 150, 15);
+
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(VIEWPORT_WIDTH - 200, VIEWPORT_HEIGHT - 70, 180, 60);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH - 30, VIEWPORT_HEIGHT - 40);
+
+                const aliveCount = gameState.players.filter(p => !p.isDead).length;
+                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillRect(VIEWPORT_WIDTH / 2 - 100, 20, 200, 50);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 26px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Alive: ${aliveCount}/${MAX_PLAYERS}`, VIEWPORT_WIDTH / 2, 52);
+
+                if (gameState.killFeed.length > 0) {
+                    gameState.killFeed.slice(0, 5).forEach((feed, index) => {
+                        const age = Date.now() - feed.time;
+                        if (age < 5000) {
+                            ctx.globalAlpha = Math.max(0, 1 - age / 5000);
+                            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                            ctx.fillRect(VIEWPORT_WIDTH - 320, 80 + index * 35, 300, 30);
+                            ctx.fillStyle = '#fff';
+                            ctx.font = 'bold 14px Arial';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(`${feed.killer} ${feed.weapon} ${feed.victim}`, VIEWPORT_WIDTH - 30, 100 + index * 35);
+                            ctx.globalAlpha = 1;
+                        }
+                    });
+                }
+
+                if (gameState.showMinimap) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    ctx.fillRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
+
+                    const scaleX = MINIMAP_SIZE / GAME_WIDTH;
+                    const scaleY = MINIMAP_SIZE / GAME_HEIGHT;
+
+                    ctx.strokeStyle = '#ff00ff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(
+                        VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + gameState.stormCenter.x * scaleX,
+                        20 + gameState.stormCenter.y * scaleY,
+                        gameState.stormRadius * scaleX,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.stroke();
+
+                    gameState.players.forEach(p => {
+                        if (p.isDead) return;
+                        if (p.id === gameState.playerId) {
+                            ctx.fillStyle = '#00f';
+                        } else {
+                            ctx.fillStyle = '#f00';
+                        }
+                        ctx.beginPath();
+                        ctx.arc(
+                            VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + p.x * scaleX,
+                            20 + p.y * scaleY,
+                            4,
+                            0,
+                            Math.PI * 2
+                        );
+                        ctx.fill();
+                    });
+                }
+            } else if (player && player.isDead) {
+                ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+                ctx.fillStyle = '#ff0000';
+                ctx.font = 'bold 72px Arial';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                ctx.strokeText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
+                ctx.fillText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 32px Arial';
+                ctx.strokeText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
+                ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
+            }
+        }
+
+        // Render UI
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (gameState.screen === 'menu') {
+                app.innerHTML = renderMenu();
+                attachMenuEventListeners();
+            } else if (gameState.screen === 'lobby') {
+                app.innerHTML = renderLobby();
+            } else if (gameState.screen === 'playing') {
+                app.innerHTML = renderPlaying();
+                setupCanvas();
+            } else if (gameState.screen === 'gameover') {
+                app.innerHTML = renderGameOver();
+                attachGameOverEventListeners();
+            }
+        }
+
+        function renderMenu() {
+            if (gameState.menuScreen === 'leaderboard') {
+                return `
+                    <div class="menu-container">
+                        <div class="menu-content" style="max-width: 1000px;">
+                            <div class="title">
+                                <h1 style="font-size: 4rem;">🏆 LEADERBOARD 🏆</h1>
+                            </div>
+                            
+                            <div class="menu-box">
+                                ${gameState.leaderboard.slice(0, 10).map((user, index) => `
+                                    <div class="leaderboard-entry ${index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : ''}">
+                                        <div class="leaderboard-left">
+                                            <div class="leaderboard-rank">
+                                                ${index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                            </div>
+                                            <div class="leaderboard-info">
+                                                <div class="leaderboard-name">${user.username || user.email}</div>
+                                                <div class="leaderboard-stats">${user.totalWins || 0} Wins • ${user.totalKills || 0} Kills</div>
+                                            </div>
+                                        </div>
+                                        <div class="leaderboard-points">${user.points || 0} pts</div>
+                                    </div>
+                                `).join('')}
+                                
+                                ${gameState.leaderboard.length === 0 ? '<div class="empty-state">No players yet. Be the first!</div>' : ''}
+                            </div>
+
+                            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                                <button class="btn btn-back" onclick="changeMenuScreen('main')">Back</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (gameState.menuScreen === 'locker') {
+                return `
+                    <div class="menu-container" style="background: linear-gradient(135deg, #7e22ce 0%, #1e3a8a 50%, #000 100%);">
+                        <div class="menu-content" style="max-width: 1200px;">
+                            <div class="title">
+                                <h1 style="font-size: 4rem;">LOCKER</h1>
+                                <p style="font-size: 1.5rem;">Equip Your Skins</p>
+                            </div>
+
+                            <div class="grid-container">
+                                ${SKINS.filter(skin => gameState.ownedSkins.includes(skin.id)).map(skin => `
+                                    <div class="skin-card ${gameState.selectedSkin === skin.id ? 'selected' : ''}" onclick="selectSkin('${skin.id}')">
+                                        <div class="rarity-bar rarity-${skin.rarity}"></div>
+                                        ${gameState.selectedSkin === skin.id ? '<div class="checkmark">✓</div>' : ''}
+                                        <div class="skin-image-container">
+                                            ${gameState.skinImages[skin.id] ? 
+                                                `<img src="${skin.img}" class="skin-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` :
+                                                `<div class="skin-circle" style="width: 100%; height: 100%; background: ${skin.color};"></div>`
+                                            }
+                                        </div>
+                                        <div class="skin-name">${skin.name}</div>
+                                        <div class="skin-rarity">${skin.rarity}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                                <button class="btn btn-back" onclick="changeMenuScreen('main')">Back</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (gameState.menuScreen === 'store') {
+                return `
+                    <div class="menu-container" style="background: linear-gradient(135deg, #065f46 0%, #047857 50%, #000 100%);">
+                        <div class="menu-content" style="max-width: 1200px;">
+                            <div class="title">
+                                <h1 style="font-size: 4rem;">ITEM SHOP</h1>
+                            </div>
+                            
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <span style="font-size: 2rem; font-weight: bold; color: #fbbf24;">💰 ${gameState.points} Points</span>
+                            </div>
+
+                            <div class="grid-container">
+                                ${SKINS.map(skin => {
+                                    const owned = gameState.ownedSkins.includes(skin.id);
+                                    const canBuy = gameState.points >= skin.cost;
+                                    
+                                    return `
+                                        <div class="skin-card ${owned ? 'owned' : ''}">
+                                            <div class="rarity-bar rarity-${skin.rarity}"></div>
+                                            <div class="skin-image-container">
+                                                ${gameState.skinImages[skin.id] ? 
+                                                    `<img src="${skin.img}" class="skin-img" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` :
+                                                    `<div class="skin-circle" style="width: 100%; height: 100%; background: ${skin.color};"></div>`
+                                                }
+                                            </div>
+                                            <div class="skin-name">${skin.name}</div>
+                                            <div class="skin-rarity">${skin.rarity}</div>
+                                            ${owned ? 
+                                                '<button class="skin-price owned">OWNED</button>' :
+                                                `<button class="skin-price ${canBuy ? 'affordable' : 'expensive'}" ${canBuy ? `onclick="buySkinById('${skin.id}')"` : 'disabled'}>💰 ${skin.cost}</button>`
+                                            }
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                                <button class="btn btn-back" onclick="changeMenuScreen('main')">Back</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (gameState.menuScreen === 'modes') {
+                return `
+                    <div class="menu-container" style="background: linear-gradient(135deg, #9a3412 0%, #dc2626 50%, #000 100%);">
+                        <div class="menu-content" style="max-width: 1000px;">
+                            <div class="title">
+                                <h1 style="font-size: 4rem;">GAME MODES</h1>
+                            </div>
+
+                            <div class="mode-grid">
+                                <div class="mode-card" onclick="changeMenuScreen('main')">
+                                    <div class="mode-title">🔫 Battle Royale</div>
+                                    <div class="mode-desc">Classic last-man-standing action!</div>
+                                    <button class="mode-select">SELECT</button>
+                                </div>
+
+                                <div class="mode-card disabled">
+                                    <div class="mode-title">👥 Team Deathmatch</div>
+                                    <div class="mode-desc">Work together to dominate!</div>
+                                </div>
+
+                                <div class="mode-card disabled">
+                                    <div class="mode-title">⚡ Lightning Round</div>
+                                    <div class="mode-desc">Fast-paced 5-minute matches!</div>
+                                </div>
+
+                                <div class="mode-card disabled">
+                                    <div class="mode-title">🎯 Sniper Only</div>
+                                    <div class="mode-desc">One shot, one kill!</div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                                <button class="btn btn-back" onclick="changeMenuScreen('main')">Back</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="menu-container">
+                    <div class="menu-bg-effect purple"></div>
+                    <div class="menu-bg-effect blue"></div>
+                    
+                    <div class="auth-buttons">
+                        ${gameState.isLoggedIn ? `
+                            <div class="user-info">
+                                <div class="user-badge">
+                                    <div class="user-label">Logged in as</div>
+                                    <div class="user-name">${gameState.currentUser?.username || gameState.currentUser?.email}</div>
+                                </div>
+                                <button class="auth-btn logout" onclick="handleLogout()">
+                                    Logout
+                                </button>
+                            </div>
+                        ` : `
+                            <button class="auth-btn" onclick="showAuth('login')">Login</button>
+                            <button class="auth-btn signup" onclick="showAuth('signup')">Sign Up</button>
+                        `}
+                    </div>
+
+                    <div class="menu-content">
+                        <div class="title">
+                            <h1>JUDELE ROYAL</h1>
+                            <p>LAST ONE STANDING WINS</p>
+                        </div>
+
+                        <div class="menu-box">
+                            <input 
+                                type="text" 
+                                class="input-field" 
+                                placeholder="Enter Your Name..." 
+                                value="${gameState.playerName}"
+                                maxlength="15"
+                                onchange="updatePlayerName(this.value)"
+                            />
+
+                            <button class="btn btn-primary" onclick="changeMenuScreen('modes')">
+                                ▶ PLAY NOW
+                            </button>
+
+                            <button class="btn btn-secondary" onclick="changeMenuScreen('leaderboard')">
+                                👑 LEADERBOARD
+                            </button>
+
+                            <button class="btn btn-tertiary" onclick="changeMenuScreen('locker')">
+                                👥 LOCKER
+                            </button>
+
+                            <button class="btn btn-quaternary" onclick="changeMenuScreen('store')">
+                                ⚡ ITEM SHOP
+                            </button>
+
+                            <div class="stats-container">
+                                <div class="points-display">
+                                    <span>🏆</span>
+                                    <span>${gameState.points} Points</span>
+                                </div>
+                                
+                                ${gameState.isLoggedIn ? `
+                                    <div class="stats-grid">
+                                        <div class="stat-box">
+                                            <div class="stat-value" style="color: #22d3ee;">${gameState.totalWins}</div>
+                                            <div class="stat-label">Wins</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-value" style="color: #ef4444;">${gameState.totalKills}</div>
+                                            <div class="stat-label">Kills</div>
+                                        </div>
+                                        <div class="stat-box">
+                                            <div class="stat-value" style="color: #a855f7;">${gameState.gamesPlayed}</div>
+                                            <div class="stat-label">Games</div>
+                                        </div>
+                                    </div>
+                                ` : ''}
+
+                                <div class="skin-selector">
+                                    <span style="color: #22d3ee;">Selected Skin:</span>
+                                    <div class="skin-preview">
+                                        ${gameState.skinImages[gameState.selectedSkin] ? 
+                                            `<img src="${SKINS.find(s => s.id === gameState.selectedSkin)?.img}" class="skin-img" />` :
+                                            `<div class="skin-circle" style="background: ${SKINS.find(s => s.id === gameState.selectedSkin)?.color};"></div>`
+                                        }
+                                        <span style="font-weight: bold;">${SKINS.find(s => s.id === gameState.selectedSkin)?.name}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; justify-center; margin-top: 1.5rem;">
+                            <button class="sound-toggle" onclick="toggleSound()">
+                                ${gameState.soundEnabled ? 
+                                    '<svg width="28" height="28" fill="none" stroke="#22d3ee" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>' :
+                                    '<svg width="28" height="28" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>'
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    ${gameState.showAuthModal ? `
+                        <div class="modal-overlay" onclick="if(event.target === this) closeAuthModal()">
+                            <div class="modal-content">
+                                <h2 class="modal-title">${gameState.authMode === 'login' ? 'LOGIN' : 'SIGN UP'}</h2>
+
+                                ${gameState.authError ? `<div class="error-message">${gameState.authError}</div>` : ''}
+
+                                <input 
+                                    type="email" 
+                                    class="input-field" 
+                                    placeholder="Email"
+                                    value="${gameState.authEmail}"
+                                    onchange="updateAuthEmail(this.value)"
+                                    ${gameState.authLoading ? 'disabled' : ''}
+                                />
+
+                                <input 
+                                    type="password" 
+                                    class="input-field" 
+                                    placeholder="Password"
+                                    value="${gameState.authPassword}"
+                                    onchange="updateAuthPassword(this.value)"
+                                    ${gameState.authLoading ? 'disabled' : ''}
+                                />
+
+                                <div class="modal-buttons">
+                                    <button class="modal-btn primary" onclick="${gameState.authMode === 'login' ? 'handleLogin()' : 'handleSignup()'}" ${gameState.authLoading ? 'disabled' : ''}>
+                                        ${gameState.authLoading ? '<span class="loading"></span>' : (gameState.authMode === 'login' ? 'Login' : 'Sign Up')}
+                                    </button>
+                                    <button class="modal-btn secondary" onclick="closeAuthModal()" ${gameState.authLoading ? 'disabled' : ''}>
+                                        Cancel
+                                    </button>
+                                </div>
+
+                                <div class="modal-link" onclick="toggleAuthMode()">
+                                    ${gameState.authMode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Login'}
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function renderLobby() {
+            const selectedSkinData = SKINS.find(s => s.id === gameState.selectedSkin);
+            
+            return `
+                <div class="lobby-container">
+                    <div class="lobby-content">
+                        <div class="lobby-title">
+                            <h1>PREPARING FOR BATTLE</h1>
+                            <div class="lobby-timer">${gameState.lobbyTimer}</div>
+                        </div>
+
+                        <div class="lobby-box">
+                            <div class="lobby-player">
+                                <div>
+                                    ${gameState.skinImages[gameState.selectedSkin] ? 
+                                        `<img src="${selectedSkinData?.img}" class="lobby-player-avatar" />` :
+                                        `<div class="lobby-player-avatar" style="background: ${selectedSkinData?.color};"></div>`
+                                    }
+                                </div>
+                                <div class="lobby-player-info">
+                                    <div class="lobby-player-name">${gameState.playerName}</div>
+                                    <div class="lobby-player-skin">${selectedSkinData?.name}</div>
+                                </div>
+                            </div>
+
+                            <div class="lobby-status">
+                                <div class="lobby-count">
+                                    <span style="color: #22d3ee;">${gameState.players.length}</span>
+                                    <span style="color: #9ca3af;"> / </span>
+                                    <span style="color: #a855f7;">${MAX_PLAYERS}</span>
+                                    <span style="color: #d1d5db;"> Players</span>
+                                </div>
+                                <div class="lobby-waiting">Waiting for more players...</div>
+                            </div>
+                        </div>
+
+                        <div class="controls-box">
+                            <h3 class="controls-title">CONTROLS</h3>
+                            <div class="controls-grid">
+                                <div class="control-item"><kbd>WASD</kbd> Move</div>
+                                <div class="control-item"><kbd>Mouse</kbd> Aim</div>
+                                <div class="control-item"><kbd>Click</kbd> Shoot</div>
+                                <div class="control-item"><kbd>1-3</kbd> Switch Weapon</div>
+                                <div class="control-item"><kbd>Shift</kbd> Sprint</div>
+                                <div class="control-item"><kbd>M</kbd> Toggle Map</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPlaying() {
+            return `
+                <div style="position: relative;">
+                    <canvas id="gameCanvas" class="game-canvas" width="${VIEWPORT_WIDTH}" height="${VIEWPORT_HEIGHT}"></canvas>
+
+                    <div class="crosshair-overlay">
+                        <div class="crosshair-box">
+                            <svg class="crosshair-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <button class="sound-toggle" onclick="toggleSound()">
+                        ${gameState.soundEnabled ? 
+                            '<svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>' :
+                            '<svg width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"/></svg>'
+                        }
+                    </button>
+
+                    <div class="storm-warning">
+                        <div class="storm-badge">
+                            <span class="storm-text">⚠️ STORM CLOSING IN ⚠️</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGameOver() {
+            const player = gameState.players.find(p => p.id === gameState.playerId);
+            const winner = gameState.players.find(p => !p.isDead);
+            const placement = gameState.players.filter(p => p.isDead).length + 1;
+            const pointsEarned = gameState.wonGame ? 100 : (player?.kills || 0) * 10;
+
+            return `
+                <div class="gameover-container">
+                    <div class="gameover-content">
+                        <div class="gameover-header">
+                            ${gameState.wonGame ? `
+                                <svg class="trophy-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M12 22V12M8 22h8M12 12a5 5 0 01-5-5V3h10v4a5 5 0 01-5 5z"/>
+                                </svg>
+                                <h1 class="gameover-title victory-title">VICTORY ROYALE!</h1>
+                            ` : `
+                                <h1 class="gameover-title defeat-title">GAME OVER</h1>
+                            `}
+                        </div>
+
+                        <div class="gameover-box">
+                            <div class="stats-row">
+                                <div>
+                                    <div class="stat-large cyan">${player?.kills || 0}</div>
+                                    <div class="stat-desc">Eliminations</div>
+                                </div>
+                                <div>
+                                    <div class="stat-large purple">#${placement}</div>
+                                    <div class="stat-desc">Placement</div>
+                                </div>
+                            </div>
+
+                            ${winner ? `
+                                <div class="winner-box">
+                                    <div class="winner-label">🏆 Winner</div>
+                                    <div class="winner-name">${winner.name}</div>
+                                    <div class="winner-kills">${winner.kills} Kills</div>
+                                </div>
+                            ` : ''}
+
+                            <div class="points-box">
+                                <div class="points-label">💰 Points Earned</div>
+                                <div class="points-earned">+${pointsEarned}</div>
+                                <div class="points-total">Total: ${gameState.points}</div>
+                            </div>
+                        </div>
+
+                        <div class="gameover-buttons">
+                            <button class="gameover-btn play-again" onclick="startGame()">PLAY AGAIN</button>
+                            <button class="gameover-btn menu" onclick="backToMenu()">MENU</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setupCanvas() {
+            gameState.canvas = document.getElementById('gameCanvas');
+            if (gameState.canvas) {
+                gameState.ctx = gameState.canvas.getContext('2d');
+            }
+        }
+
+        function attachMenuEventListeners() {
+            // Event listeners are handled via onclick attributes in HTML
+        }
+
+        function attachGameOverEventListeners() {
+            // Event listeners are handled via onclick attributes in HTML
+        }
+
+        // Global functions for onclick handlers
+        window.changeMenuScreen = (screen) => {
+            gameState.menuScreen = screen;
+            render();
+        };
+
+        window.updatePlayerName = (value) => {
+            gameState.playerName = value;
+            saveUserData();
+        };
+
+        window.selectSkin = (skinId) => {
+            gameState.selectedSkin = skinId;
+            saveUserData();
+            render();
+        };
+
+        window.buySkinById = (skinId) => {
+            const skin = SKINS.find(s => s.id === skinId);
+            if (skin) {
+                buySkin(skin);
+            }
+        };
+
+        window.showAuth = (mode) => {
+            gameState.authMode = mode;
+            gameState.showAuthModal = true;
+            gameState.authError = '';
+            render();
+        };
+
+        window.closeAuthModal = () => {
+            gameState.showAuthModal = false;
+            gameState.authEmail = '';
+            gameState.authPassword = '';
+            gameState.authError = '';
+            render();
+        };
+
+        window.toggleAuthMode = () => {
+            gameState.authMode = gameState.authMode === 'login' ? 'signup' : 'login';
+            gameState.authError = '';
+            render();
+        };
+
+        window.updateAuthEmail = (value) => {
+            gameState.authEmail = value;
+        };
+
+        window.updateAuthPassword = (value) => {
+            gameState.authPassword = value;
+        };
+
+        window.handleLogin = handleLogin;
+        window.handleSignup = handleSignup;
+        window.handleLogout = handleLogout;
+
+        window.toggleSound = () => {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            render();
+        };
+
+        window.startGame = startGame;
+
+        window.backToMenu = () => {
+            gameState.screen = 'menu';
+            gameState.menuScreen = 'main';
+            render();
+        };
+
+        // Keyboard and mouse event handlers
+        document.addEventListener('keydown', (e) => {
+            gameState.keys[e.key.toLowerCase()] = true;
+            if (e.key >= '1' && e.key <= '3') {
+                const slot = parseInt(e.key) - 1;
+                const playerIndex = gameState.players.findIndex(p => p.id === gameState.playerId);
+                if (playerIndex !== -1) {
+                    gameState.players[playerIndex].currentWeaponSlot = slot;
+                }
+            }
+            if (e.key === 'm' || e.key === 'M') {
+                gameState.showMinimap = !gameState.showMinimap;
+            }
         });
 
-        const alivePlayers = players.filter(p => p.health > 0 && !p.isDead);
-        if (alivePlayers.length === 1) {
-          const winner = alivePlayers[0];
-          if (winner.id === playerId.current && !wonGame) {
-            setWonGame(true);
-            setPoints(prev => prev + 100);
-            setTotalWins(prev => prev + 1);
-            playSound('kill');
-          }
-          setTimeout(() => {
-            setGameState('gameover');
-          }, 2000);
-        }
-      }, 1000 / 60);
-
-      return () => clearInterval(gameLoopRef.current);
-    }
-  }, [gameState, keys, worldMousePos, players, pickups, wonGame, shootBullet, playSound, addKillFeed]);
-
-  useEffect(() => {
-    if (gameState === 'playing') {
-      const player = players.find(p => p.id === playerId.current);
-      if (player && !player.isDead) {
-        const targetX = player.x - VIEWPORT_WIDTH / (2 * zoom);
-        const targetY = player.y - VIEWPORT_HEIGHT / (2 * zoom);
-        setCamera({
-          x: Math.max(0, Math.min(GAME_WIDTH - VIEWPORT_WIDTH / zoom, targetX)),
-          y: Math.max(0, Math.min(GAME_HEIGHT - VIEWPORT_HEIGHT / zoom, targetY))
+        document.addEventListener('keyup', (e) => {
+            gameState.keys[e.key.toLowerCase()] = false;
         });
-      }
-    }
-  }, [players, gameState, zoom]);
 
-  const buySkin = (skin) => {
-    if (points >= skin.cost && !ownedSkins.includes(skin.id)) {
-      setPoints(prev => prev - skin.cost);
-      setOwnedSkins(prev => [...prev, skin.id]);
-      setSelectedSkin(skin.id);
-      playSound('hit');
-    }
-  };
-
-  const getRarityColor = (rarity) => {
-    switch(rarity) {
-      case 'legendary': return 'from-yellow-500 to-orange-500';
-      case 'epic': return 'from-purple-500 to-pink-500';
-      case 'rare': return 'from-blue-500 to-cyan-500';
-      case 'uncommon': return 'from-green-500 to-emerald-500';
-      default: return 'from-gray-500 to-gray-600';
-    }
-  };
-
-  const drawWeapon = (ctx, weapon, x, y, size, angle) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-
-    const style = weapon.style;
-    ctx.fillStyle = weapon.color;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = weapon.color;
-
-    if (style === 'plasma') {
-      ctx.fillRect(-size / 2, -size / 8, size * 0.8, size / 4);
-      ctx.fillRect(size / 4, -size / 6, size / 8, size / 3);
-    } else if (style === 'shotgun') {
-      ctx.fillRect(-size / 2, -size / 6, size * 0.7, size / 3);
-      ctx.fillRect(size / 6, -size / 4, size / 10, size / 2);
-    } else if (style === 'sniper') {
-      ctx.strokeStyle = weapon.color;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(-size / 2, 0);
-      ctx.lineTo(size / 2, 0);
-      ctx.stroke();
-      ctx.fillRect(size / 3, -size / 6, size / 6, size / 3);
-    } else if (style === 'rocket') {
-      ctx.beginPath();
-      ctx.moveTo(size / 2, 0);
-      ctx.lineTo(-size / 3, -size / 4);
-      ctx.lineTo(-size / 2, 0);
-      ctx.lineTo(-size / 3, size / 4);
-      ctx.closePath();
-      ctx.fill();
-    } else if (style === 'laser') {
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-size / 2, 0);
-      ctx.lineTo(size / 2, 0);
-      ctx.stroke();
-    } else if (style === 'freeze') {
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI * 2 / 6) * i;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * size / 2, Math.sin(a) * size / 2);
-        ctx.stroke();
-      }
-    } else if (style === 'flame') {
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.arc(i * size / 4 - size / 4, 0, size / 6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (style === 'rail') {
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(-size / 2, 0);
-      ctx.lineTo(size / 2, 0);
-      ctx.stroke();
-    } else if (style === 'grenade') {
-      ctx.beginPath();
-      ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ff0000';
-      ctx.fillRect(-size / 10, -size / 2, size / 5, size / 4);
-    } else {
-      ctx.fillRect(-size / 2, -size / 8, size * 0.7, size / 4);
-      ctx.fillRect(size / 6, -size / 6, size / 8, size / 3);
-    }
-
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  };
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    ctx.clearRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-
-    ctx.save();
-    ctx.scale(zoom, zoom);
-    ctx.translate(-camera.x, -camera.y);
-
-    ctx.fillStyle = '#2a5a2a';
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-    ctx.strokeStyle = '#1a4a1a';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < GAME_WIDTH; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, GAME_HEIGHT);
-      ctx.stroke();
-    }
-    for (let i = 0; i < GAME_HEIGHT; i += 50) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(GAME_WIDTH, i);
-      ctx.stroke();
-    }
-
-    MAP_DATA.houses.forEach(house => {
-      ctx.fillStyle = '#8b4513';
-      ctx.fillRect(house.x, house.y, house.width, house.height);
-      ctx.strokeStyle = '#654321';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(house.x, house.y, house.width, house.height);
-      
-      ctx.fillStyle = '#333';
-      ctx.fillRect(house.x + house.width / 2 - 18, house.y + house.height - 35, 36, 35);
-      
-      ctx.fillStyle = '#87ceeb';
-      ctx.fillRect(house.x + 25, house.y + 25, 30, 30);
-      ctx.fillRect(house.x + house.width - 55, house.y + 25, 30, 30);
-      
-      ctx.fillStyle = '#a0522d';
-      ctx.beginPath();
-      ctx.moveTo(house.x, house.y);
-      ctx.lineTo(house.x + house.width / 2, house.y - 35);
-      ctx.lineTo(house.x + house.width, house.y);
-      ctx.closePath();
-      ctx.fill();
-    });
-
-    MAP_DATA.obstacles.forEach(obs => {
-      if (obs.type === 'tree') {
-        ctx.fillStyle = '#654321';
-        ctx.fillRect(obs.x - 6, obs.y - 6, 12, 24);
-        ctx.fillStyle = '#228b22';
-        ctx.beginPath();
-        ctx.arc(obs.x, obs.y - 12, 22, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = '#808080';
-        ctx.beginPath();
-        ctx.arc(obs.x, obs.y, 22, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-
-    ctx.strokeStyle = '#ff00ff';
-    ctx.lineWidth = 8;
-    ctx.shadowBlur = 30;
-    ctx.shadowColor = '#ff00ff';
-    ctx.beginPath();
-    ctx.arc(stormCenter.x, stormCenter.y, stormRadius, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    pickups.forEach(pickup => {
-      ctx.save();
-      ctx.shadowBlur = 20;
-      if (pickup.type === 'weapon') {
-        ctx.shadowColor = pickup.item.color;
-        ctx.strokeStyle = pickup.item.color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(pickup.x, pickup.y, WEAPON_SIZE, 0, Math.PI * 2);
-        ctx.stroke();
-        drawWeapon(ctx, pickup.item, pickup.x, pickup.y, 18, 0);
-      } else {
-        ctx.shadowColor = '#00ff00';
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(pickup.x, pickup.y, HEALTH_PACK_SIZE, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#00ff00';
-        ctx.fillRect(pickup.x - 3, pickup.y - 10, 6, 20);
-        ctx.fillRect(pickup.x - 10, pickup.y - 3, 20, 6);
-      }
-      ctx.restore();
-    });
-
-    players.forEach(player => {
-      if (player.isDead) return;
-
-      const skinColor = SKINS.find(s => s.id === player.skin)?.color || '#ffffff';
-      const skinImage = skinImages.current[player.skin];
-
-      ctx.save();
-      ctx.translate(player.x, player.y);
-
-      if (skinImage && skinImage.complete && skinImage.naturalWidth > 0) {
-        ctx.save();
-        ctx.rotate(player.angle + Math.PI / 2);
-        ctx.drawImage(skinImage, -PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = skinColor;
-        ctx.beginPath();
-        ctx.arc(0, 0, PLAYER_SIZE / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      const weapon = player.weapons[player.currentWeaponSlot];
-      if (weapon) {
-        ctx.save();
-        ctx.rotate(player.angle);
-        ctx.translate(PLAYER_SIZE / 2, 0);
-        drawWeapon(ctx, weapon, 0, 0, WEAPON_SIZE, 0);
-        ctx.restore();
-      }
-
-      ctx.restore();
-
-      if (player.frozen) {
-        ctx.fillStyle = 'rgba(170, 255, 255, 0.4)';
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, PLAYER_SIZE / 2 + 5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = '#333';
-      ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, 40, 5);
-      ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
-      ctx.fillRect(player.x - 20, player.y - PLAYER_SIZE / 2 - 15, (player.health / player.maxHealth) * 40, 5);
-
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'center';
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 3;
-      ctx.strokeText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
-      ctx.fillText(player.name, player.x, player.y - PLAYER_SIZE / 2 - 22);
-    });
-
-    bullets.forEach(bullet => {
-      ctx.fillStyle = bullet.weapon.color;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = bullet.weapon.color;
-      ctx.beginPath();
-      ctx.arc(bullet.x, bullet.y, BULLET_SIZE / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-
-    effects.forEach(effect => {
-      const progress = effect.life / effect.maxLife;
-      ctx.globalAlpha = 1 - progress;
-
-      if (effect.type === 'muzzle') {
-        ctx.fillStyle = effect.color;
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = effect.color;
-        ctx.beginPath();
-        ctx.arc(
-          effect.x + Math.cos(effect.angle) * 20,
-          effect.y + Math.sin(effect.angle) * 20,
-          15 * (1 - progress),
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      } else if (effect.type === 'explosion') {
-        ctx.strokeStyle = effect.color;
-        ctx.lineWidth = 6;
-        ctx.shadowBlur = 40;
-        ctx.shadowColor = effect.color;
-        ctx.beginPath();
-        ctx.arc(effect.x, effect.y, 60 * progress, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (effect.type === 'hit') {
-        ctx.strokeStyle = effect.color;
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = effect.color;
-        for (let i = 0; i < 6; i++) {
-          const angle = (Math.PI * 2 / 6) * i;
-          ctx.beginPath();
-          ctx.moveTo(effect.x, effect.y);
-          ctx.lineTo(
-            effect.x + Math.cos(angle) * 20 * progress,
-            effect.y + Math.sin(angle) * 20 * progress
-          );
-          ctx.stroke();
-        }
-      }
-
-      ctx.globalAlpha = 1;
-      ctx.shadowBlur = 0;
-    });
-
-    ctx.restore();
-
-    if (gameState === 'playing') {
-      const player = players.find(p => p.id === playerId.current);
-      
-      if (player && !player.isDead) {
-        const weapon = player.weapons[player.currentWeaponSlot];
-        if (weapon) {
-          ctx.fillStyle = 'rgba(0,0,0,0.8)';
-          ctx.fillRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
-          ctx.strokeStyle = weapon.color;
-          ctx.lineWidth = 3;
-          ctx.strokeRect(VIEWPORT_WIDTH / 2 - 120, VIEWPORT_HEIGHT - 70, 240, 60);
-          
-          drawWeapon(ctx, weapon, VIEWPORT_WIDTH / 2 - 70, VIEWPORT_HEIGHT - 40, 35, 0);
-          
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 18px Arial';
-          ctx.textAlign = 'left';
-          ctx.fillText(weapon.name, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 50);
-          ctx.font = 'bold 14px Arial';
-          ctx.fillText(`${weapon.ammo}/${weapon.bullets}`, VIEWPORT_WIDTH / 2 - 30, VIEWPORT_HEIGHT - 28);
-        }
-
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(20, VIEWPORT_HEIGHT - 70, 180, 60);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'left';
-        ctx.fillText(`HP: ${player.health}`, 30, VIEWPORT_HEIGHT - 40);
-        ctx.fillStyle = player.health > 50 ? '#0f0' : player.health > 25 ? '#ff0' : '#f00';
-        ctx.fillRect(30, VIEWPORT_HEIGHT - 25, (player.health / player.maxHealth) * 150, 15);
-
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(VIEWPORT_WIDTH - 200, VIEWPORT_HEIGHT - 70, 180, 60);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH - 30, VIEWPORT_HEIGHT - 40);
-
-        const aliveCount = players.filter(p => !p.isDead).length;
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
-        ctx.fillRect(VIEWPORT_WIDTH / 2 - 100, 20, 200, 50);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 26px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`Alive: ${aliveCount}/${MAX_PLAYERS}`, VIEWPORT_WIDTH / 2, 52);
-
-        if (killFeed.length > 0) {
-          killFeed.slice(0, 5).forEach((feed, index) => {
-            const age = Date.now() - feed.time;
-            if (age < 5000) {
-              ctx.globalAlpha = Math.max(0, 1 - age / 5000);
-              ctx.fillStyle = 'rgba(0,0,0,0.7)';
-              ctx.fillRect(VIEWPORT_WIDTH - 320, 80 + index * 35, 300, 30);
-              ctx.fillStyle = '#fff';
-              ctx.font = 'bold 14px Arial';
-              ctx.textAlign = 'right';
-              ctx.fillText(`${feed.killer} ${feed.weapon} ${feed.victim}`, VIEWPORT_WIDTH - 30, 100 + index * 35);
-              ctx.globalAlpha = 1;
+        document.addEventListener('mousemove', (e) => {
+            if (gameState.canvas) {
+                const rect = gameState.canvas.getBoundingClientRect();
+                const screenX = e.clientX - rect.left;
+                const screenY = e.clientY - rect.top;
+                gameState.mousePos = { x: screenX, y: screenY };
+                gameState.worldMousePos = {
+                    x: gameState.camera.x + screenX / gameState.zoom,
+                    y: gameState.camera.y + screenY / gameState.zoom
+                };
             }
-          });
-        }
+        });
 
-        if (showMinimap) {
-          ctx.fillStyle = 'rgba(0,0,0,0.8)';
-          ctx.fillRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(VIEWPORT_WIDTH - MINIMAP_SIZE - 20, 20, MINIMAP_SIZE, MINIMAP_SIZE);
-
-          const scaleX = MINIMAP_SIZE / GAME_WIDTH;
-          const scaleY = MINIMAP_SIZE / GAME_HEIGHT;
-
-          ctx.strokeStyle = '#ff00ff';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(
-            VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + stormCenter.x * scaleX,
-            20 + stormCenter.y * scaleY,
-            stormRadius * scaleX,
-            0,
-            Math.PI * 2
-          );
-          ctx.stroke();
-
-          players.forEach(p => {
-            if (p.isDead) return;
-            if (p.id === playerId.current) {
-              ctx.fillStyle = '#00f';
-            } else {
-              ctx.fillStyle = '#f00';
+        document.addEventListener('mousedown', (e) => {
+            if (gameState.screen === 'playing' && e.button === 0) {
+                gameState.keys.mouse = true;
             }
-            ctx.beginPath();
-            ctx.arc(
-              VIEWPORT_WIDTH - MINIMAP_SIZE - 20 + p.x * scaleX,
-              20 + p.y * scaleY,
-              4,
-              0,
-              Math.PI * 2
-            );
-            ctx.fill();
-          });
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (e.button === 0) {
+                gameState.keys.mouse = false;
+            }
+        });
+
+        // Initialize game
+        async function init() {
+            gameState.mapData = generateMap();
+            loadSkinImages();
+            await loadUserData();
+            render();
         }
-      } else if (player && player.isDead) {
-        ctx.fillStyle = 'rgba(0,0,0,0.85)';
-        ctx.fillRect(0, 0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-        ctx.fillStyle = '#ff0000';
-        ctx.font = 'bold 72px Arial';
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 4;
-        ctx.strokeText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
-        ctx.fillText('YOU DIED', VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 - 40);
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 32px Arial';
-        ctx.strokeText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
-        ctx.fillText(`Kills: ${player.kills}`, VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2 + 30);
-      }
-    }
-  }, [players, camera, zoom, gameState, pickups, effects, bullets, showMinimap, stormRadius, stormCenter, killFeed]);
 
-  const renderMenu = () => {
-    if (menuScreen === 'leaderboard') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-yellow-900 via-orange-900 to-black text-white p-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-6xl font-black text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-600">
-              🏆 LEADERBOARD 🏆
-            </h1>
-            
-            <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border-4 border-yellow-500 mb-8">
-              {leaderboard.slice(0, 10).map((user, index) => (
-                <div
-                  key={user.email}
-                  className={`flex items-center justify-between p-4 mb-3 rounded-xl ${
-                    index === 0 ? 'bg-gradient-to-r from-yellow-600 to-orange-600' :
-                    index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                    index === 2 ? 'bg-gradient-to-r from-orange-700 to-yellow-700' :
-                    'bg-gray-800'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl font-black w-12 text-center">
-                      {index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-                    </div>
-                    <div>
-                      <div className="text-xl font-bold">{user.username || user.email}</div>
-                      <div className="text-sm text-gray-300">
-                        {user.totalWins || 0} Wins • {user.totalKills || 0} Kills
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-2xl font-bold text-yellow-300">
-                    {user.points || 0} pts
-                  </div>
-                </div>
-              ))}
-              
-              {leaderboard.length === 0 && (
-                <div className="text-center text-gray-400 text-xl py-12">
-                  No players yet. Be the first!
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setMenuScreen('main')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (menuScreen === 'locker') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white p-8">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-6xl font-black text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600">
-              LOCKER
-            </h1>
-            <p className="text-center text-2xl mb-8 text-cyan-300">Equip Your Skins</p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
-              {SKINS.filter(skin => ownedSkins.includes(skin.id)).map(skin => (
-                <div
-                  key={skin.id}
-                  onClick={() => setSelectedSkin(skin.id)}
-                  className={`relative bg-gray-800 bg-opacity-60 backdrop-blur-sm p-6 rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
-                    selectedSkin === skin.id ? 'ring-4 ring-cyan-400 scale-105' : 'hover:ring-2 hover:ring-purple-400'
-                  }`}
-                >
-                  <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-2xl bg-gradient-to-r ${getRarityColor(skin.rarity)}`} />
-                  
-                  {skinImages.current[skin.id] ? (
-                    <img
-                      src={skin.img}
-                      alt={skin.name}
-                      className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl"
-                      style={{ backgroundColor: skin.color }}
-                    />
-                  )}
-                  
-                  <h3 className="text-lg font-bold text-center">{skin.name}</h3>
-                  <p className="text-xs text-center text-gray-400 capitalize">{skin.rarity}</p>
-                  
-                  {selectedSkin === skin.id && (
-                    <div className="absolute top-2 right-2 bg-cyan-400 text-black rounded-full w-8 h-8 flex items-center justify-center">
-                      ✓
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setMenuScreen('main')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (menuScreen === 'store') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-green-900 via-emerald-900 to-black text-white p-8">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-6xl font-black text-center mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600">
-              ITEM SHOP
-            </h1>
-            
-            <div className="text-center mb-8">
-              <span className="text-3xl font-bold text-yellow-400">💰 {points} Points</span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-8">
-              {SKINS.map(skin => {
-                const owned = ownedSkins.includes(skin.id);
-                const canBuy = points >= skin.cost;
-                
-                return (
-                  <div
-                    key={skin.id}
-                    className={`relative bg-gray-800 bg-opacity-60 backdrop-blur-sm p-6 rounded-2xl transition-all duration-300 transform hover:scale-105 ${
-                      owned ? 'ring-2 ring-green-500' : canBuy ? 'ring-2 ring-yellow-500' : 'opacity-70'
-                    }`}
-                  >
-                    <div className={`absolute top-0 left-0 right-0 h-2 rounded-t-2xl bg-gradient-to-r ${getRarityColor(skin.rarity)}`} />
-                    
-                    {skinImages.current[skin.id] ? (
-                      <img
-                        src={skin.img}
-                        alt={skin.name}
-                        className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-24 h-24 mx-auto rounded-full mb-4 shadow-2xl"
-                        style={{ backgroundColor: skin.color }}
-                      />
-                    )}
-                    
-                    <h3 className="text-lg font-bold text-center mb-2">{skin.name}</h3>
-                    <p className="text-xs text-center text-gray-400 capitalize mb-3">{skin.rarity}</p>
-                    
-                    {owned ? (
-                      <div className="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-center">
-                        OWNED
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => buySkin(skin)}
-                        disabled={!canBuy}
-                        className={`w-full font-bold py-2 px-4 rounded-lg transition-all duration-300 ${
-                          canBuy
-                            ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white'
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        💰 {skin.cost}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setMenuScreen('main')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (menuScreen === 'modes') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-900 via-red-900 to-black text-white p-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-6xl font-black text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-red-600">
-              GAME MODES
-            </h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              <div className="bg-gradient-to-br from-blue-600 to-purple-700 p-8 rounded-3xl cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-2xl">
-                <h2 className="text-4xl font-bold mb-4">🔫 Battle Royale</h2>
-                <p className="text-xl mb-4">Classic last-man-standing action!</p>
-                <button
-                  onClick={() => setMenuScreen('main')}
-                  className="bg-white text-blue-600 font-bold py-3 px-8 rounded-xl hover:bg-gray-200 transition-all"
-                >
-                  SELECT
-                </button>
-              </div>
-
-              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
-                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
-                </div>
-                <h2 className="text-4xl font-bold mb-4">👥 Team Deathmatch</h2>
-                <p className="text-xl mb-4">Work together to dominate!</p>
-              </div>
-
-              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
-                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
-                </div>
-                <h2 className="text-4xl font-bold mb-4">⚡ Lightning Round</h2>
-                <p className="text-xl mb-4">Fast-paced 5-minute matches!</p>
-              </div>
-
-              <div className="bg-gray-700 bg-opacity-50 p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
-                  <span className="text-4xl font-black text-yellow-400">COMING SOON</span>
-                </div>
-                <h2 className="text-4xl font-bold mb-4">🎯 Sniper Only</h2>
-                <p className="text-xl mb-4">One shot, one kill!</p>
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={() => setMenuScreen('main')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-black text-white flex items-center justify-center p-8">
-        <div className="absolute top-4 right-4 flex gap-3 z-50">
-          {isLoggedIn ? (
-            <div className="flex items-center gap-3">
-              <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg px-6 py-3 rounded-xl border-2 border-cyan-500">
-                <div className="text-sm text-cyan-300">Logged in as</div>
-                <div className="font-bold">{currentUser?.username || currentUser?.email}</div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-              >
-                <LogOut size={20} />
-                Logout
-              </button>
-            </div>
-          ) : (
-            <>
-              <button
-                onClick={() => {
-                  setAuthMode('login');
-                  setShowAuthModal(true);
-                }}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-              >
-                <LogIn size={20} />
-                Login
-              </button>
-              <button
-                onClick={() => {
-                  setAuthMode('signup');
-                  setShowAuthModal(true);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
-              >
-                <UserPlus size={20} />
-                Sign Up
-              </button>
-            </>
-          )}
-        </div>
-
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute w-96 h-96 bg-purple-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ top: '10%', left: '10%' }} />
-          <div className="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 animate-pulse" style={{ bottom: '10%', right: '10%', animationDelay: '1s' }} />
-        </div>
-
-        <div className="max-w-2xl w-full relative z-10">
-          <div className="text-center mb-12 animate-bounce">
-            <h1 className="text-8xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 drop-shadow-2xl">
-              JUDELE ROYAL
-            </h1>
-            <p className="text-2xl text-cyan-300 font-bold tracking-wider">LAST ONE STANDING WINS</p>
-          </div>
-
-          <div className="bg-gray-900 bg-opacity-70 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border-4 border-purple-500">
-            <input
-              type="text"
-              placeholder="Enter Your Name..."
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="w-full p-4 mb-6 bg-gray-800 border-2 border-purple-500 rounded-xl text-xl focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
-              maxLength={15}
-            />
-
-            <div className="grid grid-cols-1 gap-4 mb-6">
-              <button
-                onClick={() => setMenuScreen('modes')}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold py-5 px-6 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
-              >
-                <Play size={28} /> PLAY NOW
-              </button>
-
-              <button
-                onClick={() => setMenuScreen('leaderboard')}
-                className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
-              >
-                <Crown size={24} /> LEADERBOARD
-              </button>
-
-              <button
-                onClick={() => setMenuScreen('locker')}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
-              >
-                <Users size={24} /> LOCKER
-              </button>
-
-              <button
-                onClick={() => setMenuScreen('store')}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105 shadow-2xl flex items-center justify-center gap-3"
-              >
-                <Zap size={24} /> ITEM SHOP
-              </button>
-            </div>
-
-            <div className="text-center mt-6 space-y-3">
-              <div className="flex items-center justify-center gap-3 text-2xl font-bold text-yellow-400">
-                <Trophy size={28} />
-                <span>{points} Points</span>
-              </div>
-              
-              {isLoggedIn && (
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="bg-gray-800 p-3 rounded-lg">
-                    <div className="text-2xl font-bold text-cyan-400">{totalWins}</div>
-                    <div className="text-xs text-gray-400">Wins</div>
-                  </div>
-                  <div className="bg-gray-800 p-3 rounded-lg">
-                    <div className="text-2xl font-bold text-red-400">{totalKills}</div>
-                    <div className="text-xs text-gray-400">Kills</div>
-                  </div>
-                  <div className="bg-gray-800 p-3 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-400">{gamesPlayed}</div>
-                    <div className="text-xs text-gray-400">Games</div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-center gap-4 text-lg">
-                <span className="text-cyan-300">Selected Skin:</span>
-                <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
-                  {skinImages.current[selectedSkin] ? (
-                    <img
-                      src={SKINS.find(s => s.id === selectedSkin)?.img}
-                      alt="Selected"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-8 h-8 rounded-full"
-                      style={{ backgroundColor: SKINS.find(s => s.id === selectedSkin)?.color }}
-                    />
-                  )}
-                  <span className="font-bold">{SKINS.find(s => s.id === selectedSkin)?.name}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-6">
-            <button
-              onClick={() => setSoundEnabled(prev => !prev)}
-              className="bg-gray-800 hover:bg-gray-700 p-4 rounded-full transition-all duration-300 transform hover:scale-110"
-            >
-              {soundEnabled ? <Volume2 size={28} className="text-cyan-400" /> : <VolumeX size={28} className="text-red-500" />}
-            </button>
-          </div>
-        </div>
-
-        {showAuthModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 p-8 rounded-3xl max-w-md w-full border-4 border-cyan-500 shadow-2xl">
-              <h2 className="text-4xl font-black mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600">
-                {authMode === 'login' ? 'LOGIN' : 'SIGN UP'}
-              </h2>
-
-              <input
-                type="email"
-                placeholder="Email"
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                className="w-full p-4 mb-4 bg-gray-800 border-2 border-purple-500 rounded-xl text-lg focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full p-4 mb-6 bg-gray-800 border-2 border-purple-500 rounded-xl text-lg focus:outline-none focus:ring-4 focus:ring-cyan-500 text-white placeholder-gray-400"
-              />
-
-              <div className="flex gap-4">
-                <button
-                  onClick={authMode === 'login' ? handleLogin : handleSignup}
-                  className="flex-1 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  {authMode === 'login' ? 'Login' : 'Sign Up'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    setAuthEmail('');
-                    setAuthPassword('');
-                  }}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl text-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  Cancel
-                </button>
-              </div>
-
-              <div className="text-center mt-4">
-                <button
-                  onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
-                  className="text-cyan-400 hover:text-cyan-300 underline"
-                >
-                  {authMode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Login'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderLobby = () => {
-    const selectedSkinData = SKINS.find(s => s.id === selectedSkin);
-    
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white flex items-center justify-center p-8">
-        <div className="max-w-4xl w-full">
-          <div className="text-center mb-12">
-            <h1 className="text-7xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-600 animate-pulse">
-              PREPARING FOR BATTLE
-            </h1>
-            <div className="text-6xl font-black text-yellow-400 mb-8">{lobbyTimer}</div>
-          </div>
-
-          <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-12 rounded-3xl shadow-2xl border-4 border-cyan-500 mb-8">
-            <div className="flex items-center justify-center gap-8 mb-8">
-              <div className="text-center">
-                {skinImages.current[selectedSkin] ? (
-                  <img
-                    src={selectedSkinData?.img}
-                    alt={selectedSkinData?.name}
-                    className="w-32 h-32 mx-auto mb-4 shadow-2xl ring-4 ring-cyan-400 animate-pulse rounded-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="w-32 h-32 rounded-full mx-auto mb-4 shadow-2xl ring-4 ring-cyan-400 animate-pulse"
-                    style={{ backgroundColor: selectedSkinData?.color }}
-                  />
-                )}
-                <div className="text-3xl font-bold">{playerName}</div>
-                <div className="text-xl text-cyan-300">{selectedSkinData?.name}</div>
-              </div>
-            </div>
-
-            <div className="text-center space-y-4">
-              <div className="text-3xl font-bold">
-                <span className="text-cyan-400">{players.length}</span>
-                <span className="text-gray-400"> / </span>
-                <span className="text-purple-400">{MAX_PLAYERS}</span>
-                <span className="text-gray-300"> Players</span>
-              </div>
-              <div className="text-xl text-gray-400">Waiting for more players...</div>
-            </div>
-          </div>
-
-          <div className="bg-gray-900 bg-opacity-60 p-6 rounded-2xl">
-            <h3 className="text-2xl font-bold mb-4 text-cyan-300">CONTROLS</h3>
-            <div className="grid grid-cols-2 gap-4 text-lg">
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">WASD</kbd> Move</div>
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Mouse</kbd> Aim</div>
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Click</kbd> Shoot</div>
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">1-3</kbd> Switch Weapon</div>
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">Shift</kbd> Sprint</div>
-              <div><kbd className="bg-gray-700 px-3 py-1 rounded">M</kbd> Toggle Map</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderGameOver = () => {
-    const player = players.find(p => p.id === playerId.current);
-    const winner = players.find(p => !p.isDead);
-    const placement = players.filter(p => p.isDead).length + 1;
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white flex items-center justify-center p-8">
-        <div className="max-w-3xl w-full">
-          <div className="text-center mb-12">
-            {wonGame ? (
-              <>
-                <Trophy size={120} className="text-yellow-400 mx-auto mb-6 animate-bounce" />
-                <h1 className="text-8xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-500">
-                  VICTORY ROYALE!
-                </h1>
-              </>
-            ) : (
-              <h1 className="text-7xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-pink-600">
-                GAME OVER
-              </h1>
-            )}
-          </div>
-
-          <div className="bg-gray-900 bg-opacity-80 backdrop-blur-lg p-10 rounded-3xl shadow-2xl border-4 border-purple-500 mb-8">
-            <div className="grid grid-cols-2 gap-8 text-center mb-8">
-              <div>
-                <div className="text-6xl font-black text-cyan-400 mb-2">{player?.kills || 0}</div>
-                <div className="text-2xl text-gray-300">Eliminations</div>
-              </div>
-              <div>
-                <div className="text-6xl font-black text-purple-400 mb-2">#{placement}</div>
-                <div className="text-2xl text-gray-300">Placement</div>
-              </div>
-            </div>
-
-            {winner && (
-              <div className="text-center mb-8 p-6 bg-gradient-to-r from-yellow-900 to-orange-900 rounded-2xl">
-                <div className="text-2xl text-yellow-400 mb-2">🏆 Winner</div>
-                <div className="text-4xl font-black text-white">{winner.name}</div>
-                <div className="text-xl text-yellow-300">{winner.kills} Kills</div>
-              </div>
-            )}
-
-            <div className="text-center p-6 bg-gradient-to-r from-green-900 to-emerald-900 rounded-2xl">
-              <div className="text-2xl text-green-400 mb-2">💰 Points Earned</div>
-              <div className="text-5xl font-black text-yellow-400">
-                +{wonGame ? 100 : (player?.kills || 0) * 10}
-              </div>
-              <div className="text-xl text-green-300 mt-2">Total: {points}</div>
-            </div>
-          </div>
-
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={startGame}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-5 px-12 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-            >
-              PLAY AGAIN
-            </button>
-            <button
-              onClick={() => {
-                setGameState('menu');
-                setMenuScreen('main');
-              }}
-              className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-5 px-12 rounded-xl text-2xl transition-all duration-300 transform hover:scale-105 shadow-2xl"
-            >
-              MENU
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black">
-      {gameState === 'menu' && renderMenu()}
-      {gameState === 'lobby' && renderLobby()}
-      {gameState === 'gameover' && renderGameOver()}
-      {gameState === 'playing' && (
-        <div className="relative">
-          <canvas
-            ref={canvasRef}
-            width={VIEWPORT_WIDTH}
-            height={VIEWPORT_HEIGHT}
-            className="block mx-auto"
-            style={{ cursor: 'crosshair' }}
-          />
-
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
-            <div className="bg-black bg-opacity-60 px-6 py-3 rounded-full">
-              <Crosshair size={32} className="text-cyan-400 animate-pulse" />
-            </div>
-          </div>
-
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button
-              onClick={() => setSoundEnabled(prev => !prev)}
-              className="bg-gray-900 bg-opacity-80 hover:bg-opacity-100 p-3 rounded-full transition-all"
-            >
-              {soundEnabled ? <Volume2 size={24} className="text-white" /> : <VolumeX size={24} className="text-red-500" />}
-            </button>
-          </div>
-
-          <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 text-center">
-            <div className="bg-purple-600 bg-opacity-90 px-6 py-2 rounded-full">
-              <span className="text-white font-bold text-lg">⚠️ STORM CLOSING IN ⚠️</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default JudeleRoyal;
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
